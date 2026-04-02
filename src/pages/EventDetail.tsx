@@ -206,7 +206,9 @@ export default function EventDetail() {
         let recent: unknown[] = stored ? JSON.parse(stored) : [];
 
         // Remove if already exists
-        recent = recent.filter((e: any) => e.id !== event.id);
+        recent = recent.filter(
+          (e: unknown) => (e as Record<string, unknown>)?.id !== event.id,
+        );
 
         // Add to front
         recent.unshift({
