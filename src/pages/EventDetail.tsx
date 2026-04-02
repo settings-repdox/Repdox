@@ -784,6 +784,9 @@ export default function EventDetail() {
                       registrationDeadline && now > registrationDeadline;
 
                     if (isBeforeStart) {
+                      const formattedDate = registrationStart
+                        ? formatDate(registrationStart)
+                        : "";
                       return (
                         <Card>
                           <CardHeader>
@@ -791,10 +794,7 @@ export default function EventDetail() {
                           </CardHeader>
                           <CardContent>
                             <p className="text-sm text-muted-foreground">
-                              Registration opens on{" "}
-                              {registrationStart &&
-                                formatDate(registrationStart)}{" "}
-                              at{" "}
+                              Registration opens on {formattedDate} at{" "}
                               {registrationStart?.toLocaleTimeString("en-IN", {
                                 hour: "2-digit",
                                 minute: "2-digit",
