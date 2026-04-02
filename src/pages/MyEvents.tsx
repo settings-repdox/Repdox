@@ -23,7 +23,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Edit, Trash2, Plus, ArrowLeft, Clock } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Edit,
+  Trash2,
+  Plus,
+  ArrowLeft,
+  Clock,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getEventImage } from "@/lib/eventImages";
 
@@ -33,19 +41,23 @@ export default function MyEvents() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
-  const { data: userEvents = [], isLoading: isEventsLoading, refetch } = useQuery({
-    queryKey: ['my-events', user?.id],
+  const {
+    data: userEvents = [],
+    isLoading: isEventsLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["my-events", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('created_by', user.id);
-      
+        .from("events")
+        .select("*")
+        .eq("created_by", user.id);
+
       if (error) throw error;
 
       const now = new Date();
-      
+
       return (data || []).sort((a, b) => {
         const isAExpired = new Date(a.end_at) < now;
         const isBExpired = new Date(b.end_at) < now;
@@ -129,9 +141,9 @@ export default function MyEvents() {
           {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
             <div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="mb-2 -ml-2 text-muted-foreground"
                 onClick={() => navigate(-1)}
               >
@@ -153,15 +165,22 @@ export default function MyEvents() {
           {isEventsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-80 bg-muted animate-pulse rounded-xl" />
+                <div
+                  key={i}
+                  className="h-80 bg-muted animate-pulse rounded-xl"
+                />
               ))}
             </div>
           ) : userEvents.length === 0 ? (
             <Card className="p-12 text-center border-dashed bg-muted/20">
               <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold">No events yet</h3>
-              <p className="text-muted-foreground mb-6">Start by creating your first event!</p>
-              <Button asChild><Link to="/create-event">Create Event</Link></Button>
+              <p className="text-muted-foreground mb-6">
+                Start by creating your first event!
+              </p>
+              <Button asChild>
+                <Link to="/create-event">Create Event</Link>
+              </Button>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -169,21 +188,37 @@ export default function MyEvents() {
                 const isExpired = new Date(event.end_at) < new Date();
 
                 return (
-                  <motion.div key={event.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <Card className={`h-full flex flex-col transition-all duration-300 ${
-                      isExpired ? 'opacity-50 grayscale bg-muted/30 border-dashed ring-0 shadow-none' : 'hover:shadow-md'
-                    }`}>
+                  <motion.div
+                    key={event.id}
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <Card
+                      className={`h-full flex flex-col transition-all duration-300 ${
+                        isExpired
+                          ? "opacity-50 grayscale bg-muted/30 border-dashed ring-0 shadow-none"
+                          : "hover:shadow-md"
+                      }`}
+                    >
                       <CardHeader className="p-0 relative">
                         {isExpired && (
                           <div className="absolute inset-0 z-10 bg-background/20 backdrop-blur-[1px] flex items-center justify-center">
-                            <Badge variant="secondary" className="font-bold border-muted-foreground/50">
+                            <Badge
+                              variant="secondary"
+                              className="font-bold border-muted-foreground/50"
+                            >
                               <Clock className="w-3 h-3 mr-1" /> EXPIRED
                             </Badge>
                           </div>
                         )}
                         <div className="aspect-video w-full overflow-hidden rounded-t-xl">
                           <img
-                            src={getEventImage(event.image_url) || event.image_url || '/placeholder.png'}
+                            src={
+                              getEventImage(event.image_url) ||
+                              event.image_url ||
+                              "/placeholder.png"
+                            }
                             alt={event.title}
                             className="object-cover w-full h-full"
                           />
@@ -192,17 +227,23 @@ export default function MyEvents() {
 
                       <CardContent className="p-5 flex-grow">
                         <div className="flex justify-between items-start mb-3">
-                          <CardTitle className="text-xl line-clamp-1">{event.title}</CardTitle>
-                          {!event.is_active && <Badge variant="destructive">Inactive</Badge>}
+                          <CardTitle className="text-xl line-clamp-1">
+                            {event.title}
+                          </CardTitle>
+                          {!event.is_active && (
+                            <Badge variant="destructive">Inactive</Badge>
+                          )}
                         </div>
                         <div className="space-y-2 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            <span>{new Date(event.start_at).toLocaleDateString()}</span>
+                            <span>{formatDate(event.start_at)}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
-                            <span className="line-clamp-1">{event.location}</span>
+                            <span className="line-clamp-1">
+                              {event.location}
+                            </span>
                           </div>
                         </div>
                       </CardContent>
@@ -212,12 +253,18 @@ export default function MyEvents() {
                           {isExpired ? (
                             <div className="w-full p-2 bg-muted/50 rounded-md">
                               <p className="text-[10px] text-muted-foreground italic text-center">
-                                Hidden from public view. Permanent deletion in 3 months.
+                                Hidden from public view. Permanent deletion in 3
+                                months.
                               </p>
                             </div>
                           ) : (
                             <>
-                              <Button variant="outline" size="sm" className="flex-1" asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                asChild
+                              >
                                 <Link to={`/events/${event.slug}/edit`}>
                                   <Edit className="h-3.5 w-3.5 mr-2" /> Edit
                                 </Link>
@@ -232,8 +279,15 @@ export default function MyEvents() {
                             </>
                           )}
                         </div>
-                        <Button variant="ghost" size="sm" className="w-full text-xs" asChild>
-                          <Link to={`/events/${event.slug}`}>View Event Page</Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-xs"
+                          asChild
+                        >
+                          <Link to={`/events/${event.slug}`}>
+                            View Event Page
+                          </Link>
                         </Button>
                       </CardFooter>
                     </Card>
@@ -250,17 +304,21 @@ export default function MyEvents() {
           <AlertDialogHeader>
             <AlertDialogTitle>Deactivate Event?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will hide the event from everyone else. This action is permanent.
+              This will hide the event from everyone else. This action is
+              permanent.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-white">
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-white"
+            >
               Deactivate
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>  
+      </AlertDialog>
     </div>
   );
 }

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
-import { Clock, Calendar, MapPin } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { getEventImage } from '@/lib/eventImages';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Clock, Calendar, MapPin } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { getEventImage } from "@/lib/eventImages";
 
 interface RecentEvent {
   id: string;
@@ -25,31 +25,34 @@ export default function RecentlyViewedEvents() {
 
   const loadRecentEvents = async () => {
     try {
-      const stored = localStorage.getItem('recentlyViewedEvents');
+      const stored = localStorage.getItem("recentlyViewedEvents");
       if (stored) {
         const events: RecentEvent[] = JSON.parse(stored);
-        
+
         // Filter out events that no longer exist in DB
-        const ids = events.map(e => e.id);
+        const ids = events.map((e) => e.id);
         const { data: existingEvents, error } = await supabase
-          .from('events')
-          .select('id')
-          .in('id', ids);
+          .from("events")
+          .select("id")
+          .in("id", ids);
 
         if (error) throw error;
 
-        const existingIds = new Set(existingEvents?.map(e => e.id));
-        const filtered = events.filter(e => existingIds.has(e.id));
+        const existingIds = new Set(existingEvents?.map((e) => e.id));
+        const filtered = events.filter((e) => existingIds.has(e.id));
 
         // Update localStorage if some were removed
         if (filtered.length !== events.length) {
-          localStorage.setItem('recentlyViewedEvents', JSON.stringify(filtered));
+          localStorage.setItem(
+            "recentlyViewedEvents",
+            JSON.stringify(filtered),
+          );
         }
 
         setRecentEvents(filtered.slice(0, 5));
       }
     } catch (err) {
-      console.error('Error loading recent events:', err);
+      console.error("Error loading recent events:", err);
     }
   };
 
@@ -62,7 +65,7 @@ export default function RecentlyViewedEvents() {
           <Clock className="w-5 h-5 text-muted-foreground" />
           <h3 className="font-semibold">Recently Viewed</h3>
         </div>
-        
+
         <div className="space-y-3">
           {recentEvents.map((event) => (
             <Link
@@ -76,10 +79,12 @@ export default function RecentlyViewedEvents() {
                 className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm line-clamp-1">{event.title}</div>
+                <div className="font-medium text-sm line-clamp-1">
+                  {event.title}
+                </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                   <Calendar className="w-3 h-3" />
-                  {new Date(event.start_at).toLocaleDateString()}
+                  {formatDate(event.start_at)}
                 </div>
               </div>
             </Link>

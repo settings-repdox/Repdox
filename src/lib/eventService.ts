@@ -447,6 +447,9 @@ export async function updateEvent(
         const title = parts[1] || null;
         const description = parts[2] || null;
 
+        // Skip entries without a title
+        if (!title) return null;
+
         let isoStart = null;
         if (start) {
           try {
@@ -466,10 +469,17 @@ export async function updateEvent(
           description,
         };
       })
-      .filter((item) => item.title); // Only include items with a valid title
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
-    if (scheduleInserts.length > 0) {
-      await supabase.from("event_schedules").insert(scheduleInserts);
+    // Deduplicate schedules by title and start_at
+    const uniqueSchedules = Array.from(
+      new Map(
+        scheduleInserts.map((s) => [`${s.start_at || ""}-${s.title}`, s]),
+      ).values(),
+    );
+
+    if (uniqueSchedules.length > 0) {
+      await supabase.from("event_schedules").insert(uniqueSchedules);
     }
   }
 
@@ -479,16 +489,27 @@ export async function updateEvent(
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter(Boolean);
-    const teamInserts = lines.map((line) => {
-      const parts = line.split("|").map((p) => p.trim());
-      return {
-        event_id: eventId,
-        name: parts[0] || "Team",
-        description: parts[1] || null,
-        contact_email: parts[2] || null,
-      };
-    });
-    await supabase.from("event_teams").insert(teamInserts);
+    const teamInserts = lines
+      .map((line) => {
+        const parts = line.split("|").map((p) => p.trim());
+        const name = parts[0]?.trim() || null;
+        // Only create team entries if name is provided and not empty
+        if (!name) return null;
+        return {
+          event_id: eventId,
+          name,
+          description: parts[1] || null,
+          contact_email: parts[2] || null,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+    // Deduplicate teams by name
+    const uniqueTeams = Array.from(
+      new Map(teamInserts.map((t) => [t.name, t])).values(),
+    );
+    if (uniqueTeams.length > 0) {
+      await supabase.from("event_teams").insert(uniqueTeams);
+    }
   }
 
   return data;

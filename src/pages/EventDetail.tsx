@@ -34,6 +34,11 @@ import {
   Instagram,
 } from "lucide-react";
 import {
+  formatDate,
+  formatDateTime,
+  formatDateWithOptions,
+} from "@/lib/timeUtils";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -637,9 +642,7 @@ export default function EventDetail() {
                           }) => (
                             <li key={s.id} className="border rounded p-3">
                               <div className="text-sm text-muted-foreground">
-                                {s.start_at
-                                  ? new Date(s.start_at).toLocaleString()
-                                  : ""}
+                                {s.start_at ? formatDateTime(s.start_at) : ""}
                               </div>
                               <div className="font-medium">{s.title}</div>
                               {s.description && (
@@ -763,123 +766,188 @@ export default function EventDetail() {
                     )}
 
                   {/* Registration Form */}
-                  <Card id="register">
-                    <CardHeader>
-                      <CardTitle>Register Now</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                          <Label htmlFor="name">Name</Label>
-                          <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) =>
-                              setFormData({ ...formData, name: e.target.value })
-                            }
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                email: e.target.value,
-                              })
-                            }
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="phone">Phone</Label>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                phone: e.target.value,
-                              })
-                            }
-                            required
-                          />
-                        </div>
+                  {(() => {
+                    const now = new Date();
+                    const registrationStart = event.registration_start
+                      ? new Date(event.registration_start)
+                      : null;
+                    const registrationDeadline = event.registration_deadline
+                      ? new Date(event.registration_deadline)
+                      : null;
 
-                        {roles && Array.isArray(roles) && roles.length > 0 && (
-                          <div>
-                            <Label htmlFor="role">Role</Label>
-                            <select
-                              id="role"
-                              value={formData.role}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  role: e.target.value,
-                                })
-                              }
-                              className="w-full px-3 py-2 border border-border rounded-lg bg-background"
-                            >
-                              <option value="">Select a role (optional)</option>
-                              {(roles as unknown[]).map(
-                                (r: unknown, i: number) => {
-                                  const obj = r as Record<string, unknown>;
-                                  const name =
-                                    typeof r === "string"
-                                      ? (r as string)
-                                      : typeof obj.name === "string"
-                                        ? (obj.name as string)
-                                        : typeof obj.role === "string"
-                                          ? (obj.role as string)
-                                          : `Role ${i + 1}`;
-                                  const capacityNum =
-                                    typeof obj.capacity === "number"
-                                      ? (obj.capacity as number)
-                                      : null;
-                                  let label = name;
-                                  if (capacityNum != null) {
-                                    const used = roleCounts[name] || 0;
-                                    const remaining = capacityNum - used;
-                                    label = `${name} (cap ${capacityNum}${remaining <= 0 ? ", full" : `, ${remaining} remaining`})`;
-                                  }
-                                  return (
-                                    <option key={i} value={name}>
-                                      {label}
+                    // Check if registration is open
+                    const isBeforeStart =
+                      registrationStart && now < registrationStart;
+                    const isAfterDeadline =
+                      registrationDeadline && now > registrationDeadline;
+
+                    if (isBeforeStart) {
+                      return (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Register Now</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm text-muted-foreground">
+                              Registration opens on{" "}
+                              {registrationStart &&
+                                formatDate(registrationStart)}{" "}
+                              at{" "}
+                              {registrationStart?.toLocaleTimeString("en-IN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    if (isAfterDeadline) {
+                      return (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Registration Closed</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm text-muted-foreground">
+                              Registration for this event has closed.
+                            </p>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    return (
+                      <Card id="register">
+                        <CardHeader>
+                          <CardTitle>Register Now</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                              <Label htmlFor="name">Name</Label>
+                              <Input
+                                id="name"
+                                value={formData.name}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                  })
+                                }
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="email">Email</Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    email: e.target.value,
+                                  })
+                                }
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="phone">Phone</Label>
+                              <Input
+                                id="phone"
+                                type="tel"
+                                value={formData.phone}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    phone: e.target.value,
+                                  })
+                                }
+                                required
+                              />
+                            </div>
+
+                            {roles &&
+                              Array.isArray(roles) &&
+                              roles.length > 0 && (
+                                <div>
+                                  <Label htmlFor="role">Role</Label>
+                                  <select
+                                    id="role"
+                                    value={formData.role}
+                                    onChange={(e) =>
+                                      setFormData({
+                                        ...formData,
+                                        role: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-border rounded-lg bg-background"
+                                  >
+                                    <option value="">
+                                      Select a role (optional)
                                     </option>
-                                  );
-                                },
+                                    {(roles as unknown[]).map(
+                                      (r: unknown, i: number) => {
+                                        const obj = r as Record<
+                                          string,
+                                          unknown
+                                        >;
+                                        const name =
+                                          typeof r === "string"
+                                            ? (r as string)
+                                            : typeof obj.name === "string"
+                                              ? (obj.name as string)
+                                              : typeof obj.role === "string"
+                                                ? (obj.role as string)
+                                                : `Role ${i + 1}`;
+                                        const capacityNum =
+                                          typeof obj.capacity === "number"
+                                            ? (obj.capacity as number)
+                                            : null;
+                                        let label = name;
+                                        if (capacityNum != null) {
+                                          const used = roleCounts[name] || 0;
+                                          const remaining = capacityNum - used;
+                                          label = `${name} (cap ${capacityNum}${remaining <= 0 ? ", full" : `, ${remaining} remaining`})`;
+                                        }
+                                        return (
+                                          <option key={i} value={name}>
+                                            {label}
+                                          </option>
+                                        );
+                                      },
+                                    )}
+                                  </select>
+                                </div>
                               )}
-                            </select>
-                          </div>
-                        )}
 
-                        <div>
-                          <Label htmlFor="message">
-                            Why do you want to attend?
-                          </Label>
-                          <Textarea
-                            id="message"
-                            value={formData.message}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                message: e.target.value,
-                              })
-                            }
-                            rows={4}
-                          />
-                        </div>
-                        <Button type="submit" className="w-full">
-                          Submit Registration
-                        </Button>
-                      </form>
-                    </CardContent>
-                  </Card>
+                            <div>
+                              <Label htmlFor="message">
+                                Why do you want to attend?
+                              </Label>
+                              <Textarea
+                                id="message"
+                                value={formData.message}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    message: e.target.value,
+                                  })
+                                }
+                                rows={4}
+                              />
+                            </div>
+                            <Button type="submit" className="w-full">
+                              Submit Registration
+                            </Button>
+                          </form>
+                        </CardContent>
+                      </Card>
+                    );
+                  })()}
                 </>
               )}
             </div>
@@ -897,11 +965,8 @@ export default function EventDetail() {
                     <div>
                       <p className="font-medium">Date & Time</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(event.start_at).toLocaleDateString("en-IN", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
+                        {formatDateWithOptions(event.start_at, {
+                          weekday: true,
                         })}
                       </p>
                       <p className="text-sm text-muted-foreground">
@@ -913,20 +978,22 @@ export default function EventDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-accent mt-0.5" />
-                    <div>
-                      <p className="font-medium">Location</p>
-                      <p className="text-sm text-muted-foreground">
-                        {event.location}
-                      </p>
-                      <Badge variant="outline" className="mt-1 text-xs">
-                        {Array.isArray(event.format)
-                          ? event.format.join(" / ")
-                          : String(event.format)}
-                      </Badge>
+                  {event.location && event.location.trim() && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-5 w-5 text-accent mt-0.5" />
+                      <div>
+                        <p className="font-medium">Location</p>
+                        <p className="text-sm text-muted-foreground">
+                          {event.location}
+                        </p>
+                        <Badge variant="outline" className="mt-1 text-xs">
+                          {Array.isArray(event.format)
+                            ? event.format.join(" / ")
+                            : String(event.format)}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="pt-4 border-t space-y-2">
                     <Button

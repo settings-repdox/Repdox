@@ -1,7 +1,6 @@
 import React from 'react';
 import { Calendar, MapPin, Users } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { getEventImage } from '@/lib/eventImages';
+import { Badge } from '@/components/ui/badge';import { formatDate } from "@/lib/timeUtils";import { getEventImage } from '@/lib/eventImages';
 
 interface EventCardPreviewProps {
   title?: string;
@@ -76,7 +75,9 @@ export default function EventCardPreview({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4 flex-shrink-0" />
             <span className="truncate">
-              {date ? new Date(date).toLocaleDateString('en-US', { 
+              {date ? (
+                <span>{formatDate(date)}</span>
+              ) : ( 
                 weekday: 'short', 
                 month: 'short', 
                 day: 'numeric',

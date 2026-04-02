@@ -4,7 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import eventService, { RegistrationRow } from "@/lib/eventService";
 import { toast } from "@/hooks/use-toast";
 
-export default function OrganizerRegistrations({ eventId }: { eventId: string }) {
+export default function OrganizerRegistrations({
+  eventId,
+}: {
+  eventId: string;
+}) {
   const [registrations, setRegistrations] = useState<RegistrationRow[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
@@ -16,7 +20,11 @@ export default function OrganizerRegistrations({ eventId }: { eventId: string })
       setRegistrations(regs);
       setCounts(await eventService.countRegistrationsByRole(eventId));
     } catch (err: any) {
-      toast({ title: "Failed to load registrations", description: err?.message || String(err), variant: "destructive" });
+      toast({
+        title: "Failed to load registrations",
+        description: err?.message || String(err),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -30,7 +38,8 @@ export default function OrganizerRegistrations({ eventId }: { eventId: string })
   const handleExport = (format: "csv" | "md") => {
     try {
       let payload = "";
-      if (format === "csv") payload = eventService.registrationsToCSV(registrations);
+      if (format === "csv")
+        payload = eventService.registrationsToCSV(registrations);
       else payload = eventService.registrationsToMarkdown(registrations);
 
       const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
@@ -43,7 +52,11 @@ export default function OrganizerRegistrations({ eventId }: { eventId: string })
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      toast({ title: "Export failed", description: err?.message || String(err), variant: "destructive" });
+      toast({
+        title: "Export failed",
+        description: err?.message || String(err),
+        variant: "destructive",
+      });
     }
   };
 
@@ -58,39 +71,77 @@ export default function OrganizerRegistrations({ eventId }: { eventId: string })
             {loading ? "Loading..." : `${registrations.length} registrations`}
           </div>
           <div className="flex gap-2">
-            <Button size="sm" onClick={() => handleExport("csv")}>Export CSV</Button>
-            <Button size="sm" onClick={() => handleExport("md")}>Export MD</Button>
-            <Button size="sm" onClick={async () => {
-              try {
-                const text = eventService.registrationsToCSV(registrations);
-                await navigator.clipboard.writeText(text);
-                toast({ title: "Copied", description: "CSV copied to clipboard" });
-              } catch (err: any) {
-                toast({ title: "Copy failed", description: err?.message || String(err), variant: "destructive" });
-              }
-            }}>Copy CSV</Button>
-            <Button size="sm" onClick={async () => {
-              try {
-                const text = eventService.registrationsToMarkdown(registrations);
-                await navigator.clipboard.writeText(text);
-                toast({ title: "Copied", description: "Markdown table copied to clipboard" });
-              } catch (err: any) {
-                toast({ title: "Copy failed", description: err?.message || String(err), variant: "destructive" });
-              }
-            }}>Copy MD</Button>
+            <Button size="sm" onClick={() => handleExport("csv")}>
+              Export CSV
+            </Button>
+            <Button size="sm" onClick={() => handleExport("md")}>
+              Export MD
+            </Button>
             <Button
               size="sm"
               onClick={async () => {
                 try {
-                  const res = await eventService.exportRegistrationsXLSX(eventId as string);
+                  const text = eventService.registrationsToCSV(registrations);
+                  await navigator.clipboard.writeText(text);
+                  toast({
+                    title: "Copied",
+                    description: "CSV copied to clipboard",
+                  });
+                } catch (err: any) {
+                  toast({
+                    title: "Copy failed",
+                    description: err?.message || String(err),
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              Copy CSV
+            </Button>
+            <Button
+              size="sm"
+              onClick={async () => {
+                try {
+                  const text =
+                    eventService.registrationsToMarkdown(registrations);
+                  await navigator.clipboard.writeText(text);
+                  toast({
+                    title: "Copied",
+                    description: "Markdown table copied to clipboard",
+                  });
+                } catch (err: any) {
+                  toast({
+                    title: "Copy failed",
+                    description: err?.message || String(err),
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              Copy MD
+            </Button>
+            <Button
+              size="sm"
+              onClick={async () => {
+                try {
+                  const res = await eventService.exportRegistrationsXLSX(
+                    eventId as string,
+                  );
                   if ((res as any).url) {
                     // open signed URL in new tab
                     window.open((res as any).url, "_blank");
-                    toast({ title: "Export ready", description: "A signed download link opened in a new tab." });
+                    toast({
+                      title: "Export ready",
+                      description:
+                        "A signed download link opened in a new tab.",
+                    });
                     return;
                   }
 
-                  const { filename, blob } = res as { filename: string; blob: Blob };
+                  const { filename, blob } = res as {
+                    filename: string;
+                    blob: Blob;
+                  };
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
@@ -100,7 +151,11 @@ export default function OrganizerRegistrations({ eventId }: { eventId: string })
                   a.remove();
                   URL.revokeObjectURL(url);
                 } catch (err: any) {
-                  toast({ title: "XLSX export failed", description: err?.message || String(err), variant: "destructive" });
+                  toast({
+                    title: "XLSX export failed",
+                    description: err?.message || String(err),
+                    variant: "destructive",
+                  });
                 }
               }}
             >
@@ -113,8 +168,12 @@ export default function OrganizerRegistrations({ eventId }: { eventId: string })
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
             {Object.entries(counts).map(([k, v]) => (
               <div key={k} className="border rounded p-2">
-                <div className="font-medium">{k === "__no_role__" ? "Unspecified" : k}</div>
-                <div className="text-sm text-muted-foreground">{v} registrations</div>
+                <div className="font-medium">
+                  {k === "__no_role__" ? "Unspecified" : k}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {v} registrations
+                </div>
               </div>
             ))}
           </div>
@@ -135,7 +194,9 @@ export default function OrganizerRegistrations({ eventId }: { eventId: string })
             <tbody>
               {registrations.map((r) => (
                 <tr key={r.id} className="border-t">
-                  <td className="py-2 text-sm">{new Date(r.created_at).toLocaleString()}</td>
+                  <td className="py-2 text-sm">
+                    {formatDateTime(r.created_at)}
+                  </td>
                   <td className="py-2">{r.name}</td>
                   <td className="py-2 text-sm">{r.email}</td>
                   <td className="py-2 text-sm">{r.phone}</td>
