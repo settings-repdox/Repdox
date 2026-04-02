@@ -313,7 +313,7 @@ export default function AddEvent() {
         if (schedules && schedules.length > 0) {
           const scheduleLines = schedules.map((s) => {
             const start = s.start_at
-              ? new Date(s.start_at).toISOString().slice(0, 16)
+              ? new Date(s.start_at).toISOString().slice(0, 19) + "Z"
               : "";
             return `${start} | ${s.title} | ${s.description || ""}`;
           });

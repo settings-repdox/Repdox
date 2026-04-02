@@ -453,7 +453,11 @@ export async function updateEvent(
         let isoStart = null;
         if (start) {
           try {
-            const d = new Date(start);
+            // If the string ends with Z, it's UTC; parse it directly
+            // Otherwise, treat it as UTC anyway (since we always store in UTC)
+            const isUTC = start.endsWith("Z");
+            const dateString = isUTC ? start : `${start}Z`;
+            const d = new Date(dateString);
             if (!isNaN(d.getTime())) {
               isoStart = d.toISOString();
             }
