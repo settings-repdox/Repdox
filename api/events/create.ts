@@ -1,4 +1,5 @@
 /**
+ * Stray text
  * API Route: POST /api/events/create
  * Creates a new event with duplicate detection and quota enforcement
  *
