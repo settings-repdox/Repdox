@@ -434,56 +434,59 @@ export async function updateEvent(
 
   if (error) throw error;
 
-  await supabase.from("event_schedules").delete().eq("event_id", eventId);
+  // Always delete first
+  const { error: deleteScheduleError } = await supabase
+    .from("event_schedules")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (deleteScheduleError) {
+    console.warn("Failed to delete old schedules", deleteScheduleError);
+  }
+
+  // Only insert if there's actual content
   if (scheduleText && scheduleText.trim()) {
     const lines = scheduleText
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter(Boolean);
+
+    const seen = new Set<string>(); // ← extra dedup guard
     const scheduleInserts = lines
       .map((line) => {
         const parts = line.split("|").map((p) => p.trim());
-        const start = parts[0] || null;
         const title = parts[1] || null;
-        const description = parts[2] || null;
-
-        // Skip entries without a title
         if (!title) return null;
 
-        let isoStart = null;
+        const start = parts[0] || null;
+        let isoStart: string | null = null;
         if (start) {
           try {
-            // If the string ends with Z, it's UTC; parse it directly
-            // Otherwise, treat it as UTC anyway (since we always store in UTC)
-            const isUTC = start.endsWith("Z");
-            const dateString = isUTC ? start : `${start}Z`;
-            const d = new Date(dateString);
-            if (!isNaN(d.getTime())) {
-              isoStart = d.toISOString();
-            }
+            const d = new Date(start);
+            if (!isNaN(d.getTime())) isoStart = d.toISOString();
           } catch (e) {
-            console.warn(`[eventService] Invalid schedule date: ${start}`);
+            // Silently ignore invalid dates
           }
         }
+
+        const key = `${isoStart ?? ""}-${title}`;
+        if (seen.has(key)) return null; // ← skip true duplicates
+        seen.add(key);
 
         return {
           event_id: eventId,
           start_at: isoStart,
           title,
-          description,
+          description: parts[2] || null,
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
 
-    // Deduplicate schedules by title and start_at
-    const uniqueSchedules = Array.from(
-      new Map(
-        scheduleInserts.map((s) => [`${s.start_at || ""}-${s.title}`, s]),
-      ).values(),
-    );
-
-    if (uniqueSchedules.length > 0) {
-      await supabase.from("event_schedules").insert(uniqueSchedules);
+    if (scheduleInserts.length > 0) {
+      const { error: insertError } = await supabase
+        .from("event_schedules")
+        .insert(scheduleInserts);
+      if (insertError) console.warn("Failed to insert schedules", insertError);
     }
   }
 

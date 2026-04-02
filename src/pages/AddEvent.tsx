@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,6 +78,7 @@ export default function AddEvent() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isEditMode = !!slug;
 
   const [loading, setLoading] = useState(false);
@@ -742,6 +744,11 @@ export default function AddEvent() {
           title: "Success",
           description: "Event updated successfully!",
         });
+        // Bust the React Query cache to ensure fresh data
+        queryClient.invalidateQueries({
+          queryKey: ["event_schedules", eventId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["event_teams", eventId] });
         if (updated?.slug) {
           navigate(`/events/${updated.slug}`);
         } else {
