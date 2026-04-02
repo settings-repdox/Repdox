@@ -234,38 +234,42 @@ export async function createEvent(payload: CreateEventPayload) {
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter(Boolean);
-    const scheduleInserts = lines.map((line) => {
-      const parts = line.split("|").map((p) => p.trim());
-      const start = parts[0] || null;
-      const title = parts[1] || "Schedule Item";
-      const description = parts[2] || null;
+    const scheduleInserts = lines
+      .map((line) => {
+        const parts = line.split("|").map((p) => p.trim());
+        const start = parts[0] || null;
+        const title = parts[1] || null;
+        const description = parts[2] || null;
 
-      let isoStart = null;
-      if (start) {
-        try {
-          const d = new Date(start);
-          if (!isNaN(d.getTime())) {
-            isoStart = d.toISOString();
+        let isoStart = null;
+        if (start) {
+          try {
+            const d = new Date(start);
+            if (!isNaN(d.getTime())) {
+              isoStart = d.toISOString();
+            }
+          } catch (e) {
+            console.warn(`[eventService] Invalid schedule date: ${start}`);
           }
-        } catch (e) {
-          console.warn(`[eventService] Invalid schedule date: ${start}`);
         }
+
+        return {
+          event_id: eventId,
+          start_at: isoStart,
+          title,
+          description,
+        };
+      })
+      .filter((item) => item.title); // Only include items with a valid title
+
+    if (scheduleInserts.length > 0) {
+      const { error: schedulesError } = await supabase
+        .from("event_schedules")
+        .insert(scheduleInserts);
+
+      if (schedulesError) {
+        console.warn("Failed to insert schedules", schedulesError);
       }
-
-      return {
-        event_id: eventId,
-        start_at: isoStart,
-        title,
-        description,
-      };
-    });
-
-    const { error: schedulesError } = await supabase
-      .from("event_schedules")
-      .insert(scheduleInserts);
-
-    if (schedulesError) {
-      console.warn("Failed to insert schedules", schedulesError);
     }
   }
 
@@ -436,30 +440,37 @@ export async function updateEvent(
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter(Boolean);
-    const scheduleInserts = lines.map((line) => {
-      const parts = line.split("|").map((p) => p.trim());
-      const start = parts[0] || null;
+    const scheduleInserts = lines
+      .map((line) => {
+        const parts = line.split("|").map((p) => p.trim());
+        const start = parts[0] || null;
+        const title = parts[1] || null;
+        const description = parts[2] || null;
 
-      let isoStart = null;
-      if (start) {
-        try {
-          const d = new Date(start);
-          if (!isNaN(d.getTime())) {
-            isoStart = d.toISOString();
+        let isoStart = null;
+        if (start) {
+          try {
+            const d = new Date(start);
+            if (!isNaN(d.getTime())) {
+              isoStart = d.toISOString();
+            }
+          } catch (e) {
+            console.warn(`[eventService] Invalid schedule date: ${start}`);
           }
-        } catch (e) {
-          console.warn(`[eventService] Invalid schedule date: ${start}`);
         }
-      }
 
-      return {
-        event_id: eventId,
-        start_at: isoStart,
-        title: parts[1] || "Schedule Item",
-        description: parts[2] || null,
-      };
-    });
-    await supabase.from("event_schedules").insert(scheduleInserts);
+        return {
+          event_id: eventId,
+          start_at: isoStart,
+          title,
+          description,
+        };
+      })
+      .filter((item) => item.title); // Only include items with a valid title
+
+    if (scheduleInserts.length > 0) {
+      await supabase.from("event_schedules").insert(scheduleInserts);
+    }
   }
 
   await supabase.from("event_teams").delete().eq("event_id", eventId);

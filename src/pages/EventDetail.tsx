@@ -710,7 +710,7 @@ export default function EventDetail() {
                       <CardTitle>Overview</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <p className="text-muted-foreground leading-relaxed">
+                      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                         {event.overview ||
                           event.long_description ||
                           event.short_blurb}
