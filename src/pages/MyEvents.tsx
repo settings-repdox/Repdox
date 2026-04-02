@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import eventService from "@/lib/eventService";
+import { formatDate } from "@/lib/timeUtils";
 import { Button } from "@/components/ui/button";
 import {
   Card,

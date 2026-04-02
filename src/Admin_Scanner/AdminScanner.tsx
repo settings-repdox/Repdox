@@ -9,6 +9,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import jsQR from "jsqr";
+import { formatDateTime } from "@/lib/timeUtils";
 
 const EnhancedAdminScanner = ({ eventId, onCheckIn, supabaseClient }) => {
   const [scanning, setScanning] = useState(false);

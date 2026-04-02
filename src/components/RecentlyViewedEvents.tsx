@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEventImage } from "@/lib/eventImages";
+import { formatDate } from "@/lib/timeUtils";
 
 interface RecentEvent {
   id: string;

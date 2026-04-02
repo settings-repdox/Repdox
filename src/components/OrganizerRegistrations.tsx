@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import eventService, { RegistrationRow } from "@/lib/eventService";
 import { toast } from "@/hooks/use-toast";
+import { formatDateTime } from "@/lib/timeUtils";
 
 export default function OrganizerRegistrations({
   eventId,
