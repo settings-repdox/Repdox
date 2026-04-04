@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get Resend API key from environment
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
     const SUPPORT_EMAIL = "support@repdox.com";
-    const FROM_EMAIL = "onboarding@resend.dev"; // Default Resend test domain
+    const FROM_EMAIL = "noreply@repdox.com"; // Default Resend test domain
 
     if (!RESEND_API_KEY) {
       console.error("Resend API key not configured", {
