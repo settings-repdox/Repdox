@@ -9,18 +9,35 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
   },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    process.env.ANALYZE === "true" && visualizer({ filename: "dist/bundle-report.html", open: false, gzipSize: true, brotliSize: true }),
+    process.env.ANALYZE === "true" &&
+      visualizer({
+        filename: "dist/bundle-report.html",
+        open: false,
+        gzipSize: true,
+        brotliSize: true,
+      }),
   ].filter(Boolean),
   build: {
     rollupOptions: {
       output: {
         manualChunks: (id) => {
           if (id.includes("node_modules")) {
-            if (id.includes("framer-motion") || id.includes("gsap") || id.includes("@react-spring")) {
+            if (
+              id.includes("framer-motion") ||
+              id.includes("gsap") ||
+              id.includes("@react-spring")
+            ) {
               return "vendor-animations";
             }
             if (
@@ -35,7 +52,11 @@ export default defineConfig(({ mode }) => ({
             if (id.includes("lucide-react") || id.includes("react-icons")) {
               return "vendor-icons";
             }
-            if (id.includes("@radix-ui") || id.includes("cmdk") || id.includes("vaul")) {
+            if (
+              id.includes("@radix-ui") ||
+              id.includes("cmdk") ||
+              id.includes("vaul")
+            ) {
               return "vendor-ui";
             }
           }

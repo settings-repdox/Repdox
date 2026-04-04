@@ -33,7 +33,15 @@ export default function Contact() {
         }),
       });
 
-      const data = await response.json();
+      // Handle empty or non-JSON responses
+      let data = {};
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text) {
+          data = JSON.parse(text);
+        }
+      }
 
       if (!response.ok) {
         setSubmitStatus("error");

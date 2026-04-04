@@ -90,9 +90,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify(supportEmailPayload),
     });
 
+    const supportResponseData = await supportResponse.json();
+
     if (!supportResponse.ok) {
-      const errorText = await supportResponse.text();
-      console.error("Resend error:", errorText);
+      console.error("Resend error:", supportResponseData);
       return res.status(500).json({
         error: "Failed to send email",
       });
@@ -114,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `,
     };
 
-    await fetch("https://api.resend.com/emails", {
+    const confirmationResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${RESEND_API_KEY}`,
@@ -124,7 +125,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }).catch((error) => {
       // Log but don't fail if confirmation email doesn't send
       console.warn("Failed to send confirmation email:", error);
+      return null;
     });
+
+    if (!confirmationResponse?.ok) {
+      console.warn("Confirmation email failed to send");
+    }
 
     res.status(200).json({
       success: true,
