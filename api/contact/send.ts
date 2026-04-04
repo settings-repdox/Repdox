@@ -82,11 +82,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const FROM_EMAIL = "onboarding@resend.dev"; // Default Resend test domain
 
     if (!RESEND_API_KEY) {
-      console.error("Resend API key not configured");
+      console.error("Resend API key not configured", {
+        hasKey: !!process.env.RESEND_API_KEY,
+        envKeys: Object.keys(process.env).filter((k) => k.includes("RESEND")),
+      });
       return res.status(500).json({
         error: "Email service not configured",
       });
     }
+
+    console.log("Sending contact form email", {
+      from: FROM_EMAIL,
+      to: SUPPORT_EMAIL,
+      replyTo: trimmedEmail,
+      messageLength: trimmedMessage.length,
+    });
 
     // Send email to support address via Resend
     const supportEmailPayload = {
@@ -112,10 +122,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify(supportEmailPayload),
     });
 
-    const supportResponseData = await supportResponse.json();
+    let supportResponseData: any = {};
+    try {
+      const responseText = await supportResponse.text();
+      if (responseText) {
+        supportResponseData = JSON.parse(responseText);
+      }
+    } catch (parseError) {
+      console.error("Failed to parse Resend response:", parseError);
+      supportResponseData = { error: "Invalid response from email service" };
+    }
 
     if (!supportResponse.ok) {
-      console.error("Resend error:", supportResponseData);
+      console.error("Resend error:", {
+        status: supportResponse.status,
+        statusText: supportResponse.statusText,
+        data: supportResponseData,
+      });
       return res.status(500).json({
         error: "Failed to send email",
       });
@@ -159,7 +182,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: "Message sent successfully. We'll be in touch soon!",
     });
   } catch (error) {
-    console.error("Contact form error:", error);
+    console.error("Contact form error:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     res.status(500).json({
       error: "An error occurred while processing your request",
     });
