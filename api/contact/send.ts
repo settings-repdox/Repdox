@@ -34,8 +34,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { name, email, message } = req.body;
 
-    // Validate required fields
-    if (!name || !email || !message) {
+    // Trim and validate required fields
+    const trimmedName = typeof name === "string" ? name.trim() : "";
+    const trimmedEmail = typeof email === "string" ? email.trim() : "";
+    const trimmedMessage = typeof message === "string" ? message.trim() : "";
+
+    if (!trimmedName || !trimmedEmail || !trimmedMessage) {
+      console.warn("Contact form: Missing required fields", {
+        hasName: !!trimmedName,
+        hasEmail: !!trimmedEmail,
+        hasMessage: !!trimmedMessage,
+      });
       return res.status(400).json({
         error: "Missing required fields: name, email, and message",
       });
@@ -43,14 +52,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(trimmedEmail)) {
+      console.warn("Contact form: Invalid email", { email: trimmedEmail });
       return res.status(400).json({ error: "Invalid email address" });
     }
 
     // Validate message length (prevent spam)
-    if (message.length < 10 || message.length > 5000) {
+    if (trimmedMessage.length < 10) {
+      console.warn("Contact form: Message too short", {
+        length: trimmedMessage.length,
+      });
       return res.status(400).json({
-        error: "Message must be between 10 and 5000 characters",
+        error: "Message must be at least 10 characters",
+      });
+    }
+
+    if (trimmedMessage.length > 5000) {
+      console.warn("Contact form: Message too long", {
+        length: trimmedMessage.length,
+      });
+      return res.status(400).json({
+        error: "Message must be less than 5000 characters",
       });
     }
 
@@ -70,14 +92,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supportEmailPayload = {
       from: FROM_EMAIL,
       to: SUPPORT_EMAIL,
-      replyTo: email,
-      subject: `New Contact Form Submission from ${name}`,
+      replyTo: trimmedEmail,
+      subject: `New Contact Form Submission from ${trimmedName}`,
       html: `
         <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Name:</strong> ${escapeHtml(trimmedName)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(trimmedEmail)}</p>
         <p><strong>Message:</strong></p>
-        <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
+        <p>${escapeHtml(trimmedMessage).replace(/\n/g, "<br>")}</p>
       `,
     };
 
@@ -102,14 +124,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Send confirmation email to the user
     const confirmationPayload = {
       from: FROM_EMAIL,
-      to: email,
+      to: trimmedEmail,
       subject: "We received your message",
       html: `
         <h2>Thank you for contacting us!</h2>
-        <p>Hi ${escapeHtml(name)},</p>
+        <p>Hi ${escapeHtml(trimmedName)},</p>
         <p>We've received your message and our team will get back to you as soon as possible.</p>
         <p><strong>Your message:</strong></p>
-        <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
+        <p>${escapeHtml(trimmedMessage).replace(/\n/g, "<br>")}</p>
         <hr>
         <p>Best regards,<br><strong>The Repdox Team</strong></p>
       `,

@@ -20,6 +20,33 @@ export default function Contact() {
     setSubmitStatus("idle");
     setErrorMessage("");
 
+    // Trim and validate inputs
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const message = form.message.trim();
+
+    // Client-side validation
+    if (!name || !email || !message) {
+      setSubmitStatus("error");
+      setErrorMessage("Please fill in all fields.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (message.length < 10) {
+      setSubmitStatus("error");
+      setErrorMessage("Message must be at least 10 characters.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (message.length > 5000) {
+      setSubmitStatus("error");
+      setErrorMessage("Message must be less than 5000 characters.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/contact/send", {
         method: "POST",
@@ -27,9 +54,9 @@ export default function Contact() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          message: form.message,
+          name,
+          email,
+          message,
         }),
       });
 

@@ -72,9 +72,9 @@ async function verifyAuth(token: string): Promise<string | null> {
     if (!payload || !payload.sub) return null;
 
     // Verify user exists using admin API with service role
-    const { data: user, error } = await supabase.auth.admin.getUserById(
-      payload.sub,
-    );
+    const { data: user, error } = await (
+      supabase.auth as any
+    ).admin.getUserById(payload.sub);
 
     if (error || !user) return null;
     return user.id;
@@ -256,7 +256,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (type === "email") {
       // Update email in auth.users (requires service role)
       try {
-        await supabase.auth.admin.updateUserById(userId, {
+        await (supabase.auth as any).admin.updateUserById(userId, {
           email: contact,
           email_confirm: true, // Mark email as confirmed
         });
