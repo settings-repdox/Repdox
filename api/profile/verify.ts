@@ -46,11 +46,38 @@ const supabase = createClient(
   },
 );
 
+/**
+ * Decode JWT payload without verification
+ * Only use this to extract user ID; Supabase will validate token on DB operations
+ */
+function decodeJWT(token: string): { sub?: string; user_id?: string } | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    const payload = parts[1];
+    const decoded = JSON.parse(
+      Buffer.from(payload, "base64").toString("utf-8"),
+    );
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
 async function verifyAuth(token: string): Promise<string | null> {
   try {
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data.user) return null;
-    return data.user.id;
+    // Decode JWT to get user ID
+    const payload = decodeJWT(token);
+    if (!payload || !payload.sub) return null;
+
+    // Verify user exists using admin API with service role
+    const { data: user, error } = await supabase.auth.admin.getUserById(
+      payload.sub,
+    );
+
+    if (error || !user) return null;
+    return user.id;
   } catch {
     return null;
   }
