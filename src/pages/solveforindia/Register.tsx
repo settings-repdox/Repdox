@@ -346,27 +346,3 @@ export default function SolveForIndiaRegister() {
     </div>
   );
 }
-
-        {/* Footer info */}
-        <p className="text-center mt-8 text-gray-500 text-sm">
-          Having trouble? Contact us at <a href="mailto:support@repdox.com" className="text-purple-400 hover:underline">support@repdox.com</a>
-        </p>
-      </div>
-
-      <style>{`
-        @keyframes float {
-          0% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-20px) scale(1.05); }
-          100% { transform: translateY(0) scale(1); }
-        }
-        @keyframes float-delayed {
-          0% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(20px) scale(1.05); }
-          100% { transform: translateY(0) scale(1); }
-        }
-        .animate-float { animation: float 10s infinite ease-in-out; }
-        .animate-float-delayed { animation: float-delayed 12s infinite ease-in-out; }
-      `}</style>
-    </div>
-  );
-}
