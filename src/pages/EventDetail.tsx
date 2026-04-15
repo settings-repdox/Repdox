@@ -338,14 +338,24 @@ export default function EventDetail() {
     enabled: !!event?.id && activeTab === "teams",
   });
 
-  const teams = Array.from(
-    new Map(
-      rawTeams.map((t) => [
-        `${t.name}-${t.description}-${t.contact_email}`,
-        t,
-      ]),
-    ).values(),
-  );
+  const { data: registrations = [] } = useQuery({
+    queryKey: ["event_registrations_teams", event?.id],
+    queryFn: async () => {
+      if (!event?.id) return [];
+      const { data, error } = await supabase
+        .from("event_registrations")
+        .select("id, name, team_id")
+        .eq("event_id", event.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!event?.id && activeTab === "teams",
+  });
+
+  const teams = rawTeams.map(team => ({
+    ...team,
+    members: registrations.filter(r => r.team_id === team.id)
+  }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -691,23 +701,48 @@ export default function EventDetail() {
                         No teams listed for this event.
                       </p>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {teams.map(
                           (t: {
                             id: string;
                             name: string;
                             description?: string;
                             contact_email?: string;
+                            members?: any[];
                           }) => (
-                            <div key={t.id} className="border rounded p-3">
-                              <div className="font-medium">{t.name}</div>
+                            <div key={t.id} className="border border-border/50 bg-accent/5 rounded-xl p-6 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="font-bold text-lg text-accent">{t.name}</div>
+                                <Badge variant="outline" className="text-xs">
+                                  {t.members?.length || 0} members
+                                </Badge>
+                              </div>
+                              
                               {t.description && (
-                                <div className="text-sm text-muted-foreground">
-                                  {t.description}
+                                <div className="text-sm text-muted-foreground italic">
+                                  "{t.description}"
                                 </div>
                               )}
+
+                              <div className="space-y-2">
+                                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                  <Users className="w-3 h-3" /> Team Members
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {t.members && t.members.length > 0 ? (
+                                    t.members.map((m) => (
+                                      <Badge key={m.id} variant="secondary" className="bg-background/50">
+                                        {m.name}
+                                      </Badge>
+                                    ))
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground italic">No members found</span>
+                                  )}
+                                </div>
+                              </div>
+                              
                               {t.contact_email && (
-                                <div className="text-sm text-muted-foreground">
+                                <div className="pt-2 text-xs text-muted-foreground border-t border-border/30">
                                   Contact: {t.contact_email}
                                 </div>
                               )}
