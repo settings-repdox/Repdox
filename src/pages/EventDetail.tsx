@@ -339,12 +339,12 @@ export default function EventDetail() {
   });
 
   const { data: registrations = [] } = useQuery({
-    queryKey: ["event_registrations_teams", event?.id],
+    queryKey: ["event_registrations_all", event?.id],
     queryFn: async () => {
       if (!event?.id) return [];
       const { data, error } = await supabase
         .from("event_registrations")
-        .select("id, name, team_id")
+        .select("id, name, message")
         .eq("event_id", event.id);
       if (error) throw error;
       return data || [];
@@ -352,10 +352,18 @@ export default function EventDetail() {
     enabled: !!event?.id && activeTab === "teams",
   });
 
-  const teams = rawTeams.map(team => ({
-    ...team,
-    members: registrations.filter(r => r.team_id === team.id)
-  }));
+  const teams = rawTeams.map(team => {
+    const members = registrations.filter(r => {
+      try {
+        const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
+        const teamName = msg.participation?.teamName || msg.teamName;
+        return teamName && teamName.toLowerCase() === team.name.toLowerCase();
+      } catch (e) {
+        return false;
+      }
+    });
+    return { ...team, members };
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
