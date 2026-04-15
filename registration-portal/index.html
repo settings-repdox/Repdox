@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solve For India | Innovation Race Registration</title>
+    <meta name="description" content="Register for India's biggest impact-driven hackathon. Think, Build, Transform.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <!-- Premium Animated Background -->
+    <div class="bg-canvas">
+        <div class="glow-edge-top"></div>
+        <div class="glow-edge-bottom"></div>
+    </div>
+    <div class="bg-grid"></div>
+
+    <!-- Community Sidebar -->
+    <aside class="sidebar-community">
+        <a href="https://discord.gg/dNjHbpQEBT" target="_blank" class="sidebar-btn" title="Join Discord">
+            <img src="https://cdn-icons-png.flaticon.com/512/3670/3670157.png" alt="Discord">
+        </a>
+        <a href="https://chat.whatsapp.com/B7Y5AB3jcVTHOKmXUtpYeE" target="_blank" class="sidebar-btn" title="Message WhatsApp">
+            <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" alt="WhatsApp">
+        </a>
+        <a href="https://repdox.com" target="_blank" class="sidebar-btn" title="Visit repdox.com">
+            <img src="https://repdox.com/favicon.ico" alt="Repdox" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1006/1006771.png'">
+        </a>
+    </aside>
+
+    <main class="wrapper">
+        <header class="header">
+            <div class="badge">
+                <div class="badge-dot pulse"></div>
+                Registrations Open — 2026
+            </div>
+            <h1>Solve For India <br><span>Registration</span></h1>
+            <p>Join the movement to build solutions for real-world problems. Let's transform India together.</p>
+        </header>
+
+        <section class="test-container" id="reg-app">
+            <!-- Single-page Registration Form -->
+            <form id="registration-form" class="form-card">
+                
+                <!-- Section 1: Personal Details -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <div class="section-icon">👤</div>
+                        <div>
+                            <h2>Personal Details</h2>
+                            <p>Tell us who you are</p>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name">Full Name <span class="required">*</span></label>
+                            <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" placeholder="email@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">WhatsApp Number <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" placeholder="+91 ..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="school">School / University <span class="required">*</span></label>
+                            <input type="text" id="school" name="school" placeholder="Your Institution" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stream">Stream / Major <span class="required">*</span></label>
+                            <input type="text" id="stream" name="stream" placeholder="e.g. PCM, CSE, Humanities" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="grade">Current Grade / Year <span class="required">*</span></label>
+                            <select id="grade" name="grade" required>
+                                <option value="" disabled selected>Select your year...</option>
+                                <optgroup label="School">
+                                    <option value="9th Grade">9th Grade</option>
+                                    <option value="10th Grade">10th Grade</option>
+                                    <option value="11th Grade">11th Grade</option>
+                                    <option value="12th Grade">12th Grade</option>
+                                </optgroup>
+                                <optgroup label="College / University">
+                                    <option value="1st Year">1st Year</option>
+                                    <option value="2nd Year">2nd Year</option>
+                                    <option value="3rd Year">3rd Year</option>
+                                    <option value="4th Year">4th Year</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Team Info -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <div class="section-icon">👥</div>
+                        <div>
+                            <h2>Team Composition</h2>
+                            <p>Are you playing solo or in a duo?</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Participation Mode <span class="required">*</span></label>
+                        <div class="options-grid">
+                            <label class="option">
+                                <input type="radio" name="teamSize" value="Solo" checked required>
+                                <span class="option-card">
+                                    <span class="option-label">1</span>
+                                    <span class="option-content">Solo Participation</span>
+                                </span>
+                            </label>
+                            <label class="option">
+                                <input type="radio" name="teamSize" value="Duo">
+                                <span class="option-card">
+                                    <span class="option-label">2</span>
+                                    <span class="option-content">Duo Team</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group hidden" id="team-name-group">
+                        <label for="teamName">Team Name</label>
+                        <input type="text" id="teamName" name="teamName" placeholder="Enter team name">
+                    </div>
+                </div>
+
+                <!-- Section 3: Final Details -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <div class="section-icon">🚀</div>
+                        <div>
+                            <h2>Final Pulse</h2>
+                            <p>Almost there!</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="motivation">Why do you want to participate in Solve For India? <span class="required">*</span></label>
+                        <textarea id="motivation" name="motivation" placeholder="Tell us about your drive..." required></textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="github">GitHub Profile (Optional)</label>
+                            <input type="url" id="github" name="github" placeholder="https://github.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label for="linkedin">LinkedIn Profile (Optional)</label>
+                            <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn btn-submit" id="submit-btn">
+                        <span class="btn-text">Register Now</span>
+                        <div class="spinner"></div>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Success State -->
+            <div id="success-screen" class="success-card hidden">
+                <div class="success-icon pulsate">🚀</div>
+                <h2>Registration Successful!</h2>
+                <p>Welcome to the movement. We've received your application and will contact you on WhatsApp soon.</p>
+                <div class="redirect-notice" style="margin-top: 20px; font-size: 0.9rem; opacity: 0.8;">
+                    Redirecting to Repdox.com in <span id="countdown">5</span> seconds...
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./main.js"></script>
+</body>
+</html>
