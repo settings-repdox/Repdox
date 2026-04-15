@@ -1,6 +1,6 @@
 /**
  * API Route: POST /api/contact/send
- * Sends a contact form submission email to support@repdox.com via Resend
+ * Sends a contact form submission email to supportrepdox@gmail.com via Resend
  *
  * Security:
  * - Validates email format
@@ -78,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Get Resend API key from environment
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "support@repdox.com";
+    const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "supportrepdox@gmail.com";
     const FROM_EMAIL = "noreply@repdox.com";
 
     if (!RESEND_API_KEY) {

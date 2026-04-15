@@ -374,7 +374,7 @@ Response:
 }
 ```
 
-All contact emails go to: **support@repdox.com**
+All contact emails go to: **supportrepdox@gmail.com**
 
 ---
 
@@ -450,7 +450,7 @@ Run in order via Supabase SQL Editor:
 
 For issues or feature requests:
 
-- Email: support@repdox.com
+- Email: supportrepdox@gmail.com
 - Use the contact form on the application
 - GitHub Issues: (if public repo)
 

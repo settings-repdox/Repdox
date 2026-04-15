@@ -33,6 +33,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const SolveForIndiaRegister = lazy(() => import("./pages/solveforindia/Register"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -204,6 +205,7 @@ const App = () => {
                       {/* NEW: Email Verification Routes (Public - No Auth Required) */}
                       <Route path="/verify-email" element={<VerifyEmail />} />
                       <Route path="/auth/callback" element={<AuthCallback />} />
+                      <Route path="/solve-for-india/register" element={<SolveForIndiaRegister />} />
 
                       {/* Profile Routes - Public Access (own profile requires auth internally) */}
                       <Route path="/profile" element={<Profile />} />

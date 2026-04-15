@@ -32,6 +32,7 @@ import {
   Trash2,
   Edit,
   Instagram,
+  ChevronRight,
 } from "lucide-react";
 import {
   formatDate,
@@ -833,6 +834,26 @@ export default function EventDetail() {
                             <p className="text-sm text-muted-foreground">
                               Registration for this event has closed.
                             </p>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    if (event.slug === "solve-for-india") {
+                      return (
+                        <Card id="register" className="border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10">
+                          <CardHeader>
+                            <CardTitle className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Premium Registration</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            <p className="text-muted-foreground">
+                              Solve For India registrations are now being processed through our new premium innovation portal.
+                            </p>
+                            <Link to="/solve-for-india/register">
+                              <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-6 rounded-xl">
+                                Open Innovation Portal <ChevronRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </Link>
                           </CardContent>
                         </Card>
                       );
