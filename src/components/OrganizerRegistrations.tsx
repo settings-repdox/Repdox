@@ -14,6 +14,8 @@ export default function OrganizerRegistrations({
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
 
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'team', direction: 'asc' });
+
   const load = async () => {
     setLoading(true);
     try {
@@ -30,6 +32,44 @@ export default function OrganizerRegistrations({
       setLoading(false);
     }
   };
+
+  const getTeamName = (r: RegistrationRow) => {
+    try {
+      if (!r.message) return "-";
+      const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
+      return msg?.participation?.teamName || msg?.teamName || "-";
+    } catch (e) {
+      return "-";
+    }
+  };
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedRegistrations = [...registrations].sort((a, b) => {
+    if (!sortConfig) return 0;
+    
+    let aVal: any, bVal: any;
+    if (sortConfig.key === 'team') {
+      aVal = getTeamName(a).toLowerCase();
+      bVal = getTeamName(b).toLowerCase();
+    } else if (sortConfig.key === 'created_at') {
+      aVal = new Date(a.created_at).getTime();
+      bVal = new Date(b.created_at).getTime();
+    } else {
+      aVal = String((a as any)[sortConfig.key] || "").toLowerCase();
+      bVal = String((b as any)[sortConfig.key] || "").toLowerCase();
+    }
+
+    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   useEffect(() => {
     if (eventId) load();
@@ -181,28 +221,57 @@ export default function OrganizerRegistrations({
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full table-auto">
+          <table className="w-full table-auto border-separate border-spacing-0">
             <thead>
-              <tr>
-                <th className="text-left">Time</th>
-                <th className="text-left">Name</th>
-                <th className="text-left">Email</th>
-                <th className="text-left">Phone</th>
-                <th className="text-left">Role</th>
-                <th className="text-left">Status</th>
+              <tr className="text-muted-foreground text-xs uppercase tracking-wider">
+                <th 
+                  className="text-left pb-3 cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => handleSort('created_at')}
+                >
+                  Time {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  className="text-left pb-3 cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => handleSort('name')}
+                >
+                  Name {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  className="text-left pb-3 cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => handleSort('team')}
+                >
+                  Team {sortConfig?.key === 'team' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="text-left pb-3">Email</th>
+                <th className="text-left pb-3">Phone</th>
+                <th className="text-left pb-3">Role</th>
+                <th className="text-left pb-3">Status</th>
               </tr>
             </thead>
             <tbody>
-              {registrations.map((r) => (
-                <tr key={r.id} className="border-t">
-                  <td className="py-2 text-sm">
+              {sortedRegistrations.map((r) => (
+                <tr key={r.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors">
+                  <td className="py-3 text-xs text-muted-foreground">
                     {formatDateTime(r.created_at)}
                   </td>
-                  <td className="py-2">{r.name}</td>
-                  <td className="py-2 text-sm">{r.email}</td>
-                  <td className="py-2 text-sm">{r.phone}</td>
-                  <td className="py-2 text-sm">{r.role || "-"}</td>
-                  <td className="py-2 text-sm">{r.status || "-"}</td>
+                  <td className="py-3 font-medium">{r.name}</td>
+                  <td className="py-3">
+                    <span className="px-2 py-1 bg-accent/10 text-accent rounded-md text-xs font-semibold">
+                      {getTeamName(r)}
+                    </span>
+                  </td>
+                  <td className="py-3 text-sm text-muted-foreground">{r.email}</td>
+                  <td className="py-3 text-sm text-muted-foreground">{r.phone}</td>
+                  <td className="py-3 text-sm">
+                    <span className="capitalize">{r.role || "-"}</span>
+                  </td>
+                  <td className="py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      r.status === 'registered' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
+                    }`}>
+                      {r.status || "-"}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
