@@ -845,8 +845,8 @@ export default function EventDetail() {
                           <CardHeader>
                             <CardTitle className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Register Now</CardTitle>
                           </CardHeader>
-                          <CardContent className="space-y-6">
-                            <p className="text-muted-foreground">
+                          <CardContent className="space-y-8">
+                            <p className="text-muted-foreground leading-relaxed">
                               Solve For India registrations are now open through our official innovation portal.
                             </p>
                             <Link to="/solve-for-india/register">
