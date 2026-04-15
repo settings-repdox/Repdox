@@ -185,7 +185,7 @@ export default function SolveForIndiaRegister() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 mb-6"
           >
             <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-xs font-bold uppercase tracking-widest text-purple-400">Solve For India 2024</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-purple-400">Solve For India 2026</span>
           </motion.div>
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
