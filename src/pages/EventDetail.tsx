@@ -62,12 +62,6 @@ export default function EventDetail() {
   const navigate = useNavigate();
   const { slug } = useParams();
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (slug?.toLowerCase() === 'solveforindia' || slug?.toLowerCase() === 'solve-for-india') {
-      window.location.href = '/solve-for-india/register';
-    }
-  }, [slug]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
