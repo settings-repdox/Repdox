@@ -298,7 +298,7 @@ export default function EventDetail() {
   };
 
   // Fetch schedules and teams when needed
-  const { data: schedules = [] } = useQuery({
+  const { data: rawSchedules = [] } = useQuery({
     queryKey: ["event_schedules", event?.id],
     queryFn: async () => {
       if (!event?.id) return [];
@@ -313,7 +313,16 @@ export default function EventDetail() {
     enabled: !!event?.id && activeTab === "schedule",
   });
 
-  const { data: teams = [] } = useQuery({
+  const schedules = Array.from(
+    new Map(
+      rawSchedules.map((s) => [
+        `${s.start_at}-${s.title}-${s.description}`,
+        s,
+      ]),
+    ).values(),
+  );
+
+  const { data: rawTeams = [] } = useQuery({
     queryKey: ["event_teams", event?.id],
     queryFn: async () => {
       if (!event?.id) return [];
@@ -327,6 +336,15 @@ export default function EventDetail() {
     },
     enabled: !!event?.id && activeTab === "teams",
   });
+
+  const teams = Array.from(
+    new Map(
+      rawTeams.map((t) => [
+        `${t.name}-${t.description}-${t.contact_email}`,
+        t,
+      ]),
+    ).values(),
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

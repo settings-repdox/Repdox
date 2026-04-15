@@ -313,12 +313,20 @@ export default function AddEvent() {
           .order("start_at", { ascending: true });
 
         if (schedules && schedules.length > 0) {
-          const scheduleLines = schedules.map((s) => {
+          const seen = new Set<string>();
+          const scheduleLines: string[] = [];
+          
+          schedules.forEach((s) => {
             const start = s.start_at
               ? new Date(s.start_at).toISOString().slice(0, 19) + "Z"
               : "";
-            return `${start} | ${s.title} | ${s.description || ""}`;
+            const line = `${start} | ${s.title} | ${s.description || ""}`;
+            if (!seen.has(line)) {
+              seen.add(line);
+              scheduleLines.push(line);
+            }
           });
+          
           setScheduleText(scheduleLines.join("\n"));
           setSectionOrder((s) => (s.includes("Agenda") ? s : [...s, "Agenda"]));
         }
@@ -330,10 +338,17 @@ export default function AddEvent() {
           .eq("event_id", event.id);
 
         if (teams && teams.length > 0) {
-          const teamLines = teams.map(
-            (t) =>
-              `${t.name} | ${t.description || ""} | ${t.contact_email || ""}`,
-          );
+          const seen = new Set<string>();
+          const teamLines: string[] = [];
+          
+          teams.forEach((t) => {
+            const line = `${t.name} | ${t.description || ""} | ${t.contact_email || ""}`;
+            if (!seen.has(line)) {
+              seen.add(line);
+              teamLines.push(line);
+            }
+          });
+          
           setTeamsText(teamLines.join("\n"));
         }
       } catch (err: unknown) {
@@ -539,7 +554,11 @@ export default function AddEvent() {
       }
     });
 
-    if (sched) setScheduleText(sched);
+    if (sched) {
+      // Dedup restored schedule lines
+      const uniqueSched = Array.from(new Set(sched.split(/\r?\n/).map(l => l.trim()).filter(Boolean))).join("\n");
+      setScheduleText(uniqueSched);
+    }
     if (fqs && fqs.length) {
       setFaqs(fqs);
       setShowFaqs(true);

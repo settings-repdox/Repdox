@@ -43,6 +43,8 @@ export type Database = {
           title: string;
           type: Json;
           updated_at: string | null;
+          roles: Json | null;
+          registration_start: string | null;
         };
         Insert: {
           created_at?: string | null;
@@ -72,6 +74,8 @@ export type Database = {
           title: string;
           type: Json;
           updated_at?: string | null;
+          roles?: Json | null;
+          registration_start?: string | null;
         };
         Update: {
           created_at?: string | null;
@@ -101,6 +105,8 @@ export type Database = {
           title?: string;
           type?: Json;
           updated_at?: string | null;
+          roles?: Json | null;
+          registration_start?: string | null;
         };
         Relationships: [];
       };

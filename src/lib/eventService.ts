@@ -263,9 +263,18 @@ export async function createEvent(payload: CreateEventPayload) {
       .filter((item) => item.title); // Only include items with a valid title
 
     if (scheduleInserts.length > 0) {
+      // Deduplicate in memory before insert just in case
+      const seen = new Set<string>();
+      const uniqueScheduleInserts = scheduleInserts.filter(item => {
+        const key = `${item.start_at ?? ""}-${item.title ?? ""}-${item.description ?? ""}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
       const { error: schedulesError } = await supabase
         .from("event_schedules")
-        .insert(scheduleInserts);
+        .insert(uniqueScheduleInserts);
 
       if (schedulesError) {
         console.warn("Failed to insert schedules", schedulesError);
@@ -350,7 +359,7 @@ export async function updateEvent(
         )
       : new Date(startAt.getTime() - 24 * 60 * 60 * 1000);
 
-  const updateData: Record<string, unknown> = {
+  const updateData: Database["public"]["Tables"]["events"]["Update"] = {
     title: form.title,
     // normalize empty arrays to null to avoid DB type errors
     type: Array.isArray(form.type)
@@ -441,7 +450,8 @@ export async function updateEvent(
     .eq("event_id", eventId);
 
   if (deleteScheduleError) {
-    console.warn("Failed to delete old schedules", deleteScheduleError);
+    console.error("Failed to delete old schedules:", deleteScheduleError);
+    // Continue for now, but this is likely why duplicates happen
   }
 
   // Only insert if there's actual content
@@ -469,7 +479,7 @@ export async function updateEvent(
           }
         }
 
-        const key = `${isoStart ?? ""}-${title}`;
+        const key = `${isoStart ?? ""}-${title}-${parts[2] || ""}`;
         if (seen.has(key)) return null; // ← skip true duplicates
         seen.add(key);
 
