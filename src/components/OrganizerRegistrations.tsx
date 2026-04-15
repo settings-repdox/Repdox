@@ -256,7 +256,7 @@ export default function OrganizerRegistrations({
                   </td>
                   <td className="py-3 font-medium">{r.name}</td>
                   <td className="py-3">
-                    <span className="px-2 py-1 bg-accent/10 text-accent rounded-md text-xs font-semibold">
+                    <span className="inline-block px-3 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-sm font-bold border border-purple-500/20 whitespace-nowrap uppercase tracking-tight">
                       {getTeamName(r)}
                     </span>
                   </td>
