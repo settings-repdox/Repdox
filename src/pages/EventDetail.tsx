@@ -62,6 +62,12 @@ export default function EventDetail() {
   const navigate = useNavigate();
   const { slug } = useParams();
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (slug?.toLowerCase() === 'solveforindia' || slug?.toLowerCase() === 'solve-for-india') {
+      window.location.href = '/solve-for-india/register';
+    }
+  }, [slug]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -839,7 +845,7 @@ export default function EventDetail() {
                       );
                     }
 
-                    if (event.slug === "solve-for-india") {
+                    if (event.slug?.toLowerCase() === "solveforindia" || event.slug?.toLowerCase() === "solve-for-india") {
                       return (
                         <Card id="register" className="border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10">
                           <CardHeader>
