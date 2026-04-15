@@ -33,7 +33,9 @@ export default function SolveForIndiaRegister() {
     stream: "",
     track: "general",
     teamSize: "Solo",
+    isJoiningExisting: false,
     teamName: "",
+    memberCount: "2",
     motivation: "",
     github: "",
     linkedin: ""
@@ -50,7 +52,6 @@ export default function SolveForIndiaRegister() {
       if (data) {
         setEventId(data.id);
       } else {
-        // Fallback to fetch any active event if specifically SolveForIndia isn't labeled yet
         const { data: latest } = await supabase.from("events").select("id").limit(1).single();
         if (latest) setEventId(latest.id);
       }
@@ -59,8 +60,9 @@ export default function SolveForIndiaRegister() {
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target as any;
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    setFormData(prev => ({ ...prev, [name]: val }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,8 +81,12 @@ export default function SolveForIndiaRegister() {
           school: formData.school,
           year: formData.year,
           stream: formData.stream,
-          teamSize: formData.teamSize,
-          teamName: formData.teamName,
+          participation: {
+            mode: formData.teamSize,
+            isJoiningExisting: formData.isJoiningExisting,
+            teamName: formData.teamName,
+            expectedMembers: formData.teamSize === "Team" && !formData.isJoiningExisting ? formData.memberCount : null
+          },
           motivation: formData.motivation,
           links: {
             github: formData.github,
@@ -252,32 +258,61 @@ export default function SolveForIndiaRegister() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Team Composition</h2>
-                <p className="text-gray-500 text-sm">Solo or with a partner?</p>
+                <p className="text-gray-500 text-sm">Solo or with a team?</p>
               </div>
             </div>
 
             <div className="space-y-8">
               <div className="flex gap-4">
-                {["Solo", "Duo"].map((size) => (
+                {["Solo", "Team"].map((mode) => (
                   <button
-                    key={size}
+                    key={mode}
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, teamSize: size }))}
+                    onClick={() => setFormData(prev => ({ ...prev, teamSize: mode }))}
                     className={`flex-1 py-4 rounded-xl border transition-all font-bold ${
-                      formData.teamSize === size 
+                      formData.teamSize === mode 
                       ? "bg-purple-600/20 border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]" 
                       : "bg-black/40 border-white/10 text-gray-500 hover:border-white/20"
                     }`}
                   >
-                    {size}
+                    {mode}
                   </button>
                 ))}
               </div>
 
-              {formData.teamSize === "Duo" && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
-                  <Label className="text-gray-400">Team Name</Label>
-                  <Input name="teamName" required value={formData.teamName} onChange={handleInputChange} className="bg-black/40 border-white/10 h-14 rounded-xl" />
+              {formData.teamSize === "Team" && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-6">
+                  
+                  <div className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                    <input 
+                      type="checkbox" 
+                      id="isJoining" 
+                      name="isJoiningExisting" 
+                      checked={formData.isJoiningExisting} 
+                      onChange={handleInputChange} 
+                      className="w-5 h-5 rounded border-white/20 bg-black/40 text-purple-600 focus:ring-purple-500/50"
+                    />
+                    <Label htmlFor="isJoining" className="text-gray-300 cursor-pointer">Joining an existing team?</Label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                       <Label className="text-gray-400">{formData.isJoiningExisting ? "Exact Team Name" : "New Team Name"}</Label>
+                       <Input name="teamName" required value={formData.teamName} onChange={handleInputChange} placeholder={formData.isJoiningExisting ? "Enter the team name to join" : "Enter a unique name for your team"} className="bg-black/40 border-white/10 h-14 rounded-xl" />
+                    </div>
+
+                    {!formData.isJoiningExisting && (
+                      <div className="space-y-2">
+                        <Label className="text-gray-400">Initial Team Size (Max 4)</Label>
+                        <select name="memberCount" value={formData.memberCount} onChange={handleInputChange} className="w-full bg-black/40 border border-white/10 h-14 rounded-xl px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50">
+                          <option value="2">2 Members</option>
+                          <option value="3">3 Members</option>
+                          <option value="4">4 Members (Full Team)</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
                 </motion.div>
               )}
             </div>
