@@ -72,8 +72,39 @@ export default function SolveForIndiaRegister() {
     try {
       if (!eventId) throw new Error("Event ID not found. Please try again.");
 
+      // 1. Handle Team Creation/Selection
+      let teamId = null;
+      if (formData.teamSize === "Team") {
+        if (!formData.isJoiningExisting) {
+          // Create new team
+          const { data: newTeam, error: teamError } = await supabase
+            .from("event_teams")
+            .insert([{
+              event_id: eventId,
+              name: formData.teamName,
+              max_members: parseInt(formData.memberCount)
+            }])
+            .select()
+            .single();
+          
+          if (teamError) console.error("Could not create team record:", teamError);
+          if (newTeam) teamId = newTeam.id;
+        } else {
+          // Find existing team
+          const { data: existingTeam } = await supabase
+            .from("event_teams")
+            .select("id")
+            .eq("event_id", eventId)
+            .ilike("name", formData.teamName)
+            .maybeSingle();
+          
+          if (existingTeam) teamId = existingTeam.id;
+        }
+      }
+
       const registrationData = {
         event_id: eventId,
+        team_id: teamId,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
