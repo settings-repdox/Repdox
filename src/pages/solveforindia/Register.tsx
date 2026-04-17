@@ -375,6 +375,24 @@ export default function SolveForIndiaRegister() {
             viewport={{ once: true }}
             className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[32px] p-8 md:p-12"
           >
+            {!existingReg && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-start gap-4 p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 mb-10"
+              >
+                <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/20 flex-shrink-0">
+                  <Clock className="w-5 h-5 text-amber-500" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-amber-500 text-sm uppercase tracking-wider mb-1">Registration Policy</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Please ensure all information is accurate. To maintain data integrity, you will only be allowed to <span className="text-amber-500/80 font-semibold italic">edit your details once</span> after completing this registration.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
             <div className="flex items-center gap-4 mb-10">
               <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center border border-purple-500/30">
                 <User className="text-purple-400 w-6 h-6" />
