@@ -930,6 +930,7 @@ export default function EventDetail() {
                       );
                     }
 
+                    const lowerSlug = event.slug?.toLowerCase() || "";
                     if (lowerSlug.includes("solveforindia") || lowerSlug.includes("solve-for-india")) {
                       return (
                         <motion.div 
