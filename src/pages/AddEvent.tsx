@@ -26,6 +26,7 @@ import {
   Rocket,
   AlertCircle,
   CheckCircle2,
+  User as UserIcon,
 } from "lucide-react";
 import eventService from "@/lib/eventService";
 import FileUpload from "@/components/ui/File_upload";
@@ -82,7 +83,9 @@ export default function AddEvent() {
   const isEditMode = !!slug;
 
   const [loading, setLoading] = useState(false);
-  const [loadingEvent, setLoadingEvent] = useState(isEditMode);
+  const [loadingEvent, setLoadingEvent] = useState(true);
+  const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
   const [eventId, setEventId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -207,6 +210,58 @@ export default function AddEvent() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  useEffect(() => {
+    const checkProfileAndLoad = async () => {
+      setLoadingEvent(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate("/signin");
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!profile) {
+          setProfileComplete(false);
+          setMissingFields(["Full profile record"]);
+        } else {
+          const fields = [
+            { key: "full_name", label: "Full Name", value: profile.full_name },
+            { key: "date_of_birth", label: "Date of Birth", value: profile.date_of_birth },
+            { key: "bio", label: "Bio", value: profile.bio },
+            { key: "avatar_url", label: "Profile Picture", value: profile.avatar_url },
+            { key: "phone", label: "Phone Number", value: profile.phone },
+            { key: "website", label: "Website", value: profile.website },
+            { key: "company", label: "Company", value: profile.company },
+            { key: "job_title", label: "Job Title", value: profile.job_title },
+          ];
+
+          const missing = fields.filter(
+            (field) => !field.value || field.value.toString().trim() === ""
+          );
+
+          if (missing.length > 0) {
+            setProfileComplete(false);
+            setMissingFields(missing.map(f => f.label));
+          } else {
+            setProfileComplete(true);
+          }
+        }
+      } catch (err) {
+        console.error("Profile check error:", err);
+      } finally {
+        if (!isEditMode) setLoadingEvent(false);
+      }
+    };
+
+    checkProfileAndLoad();
+  }, [navigate, isEditMode]);
 
   // Load event data if in edit mode
   useEffect(() => {
@@ -666,6 +721,15 @@ export default function AddEvent() {
   };
 
   const handleSubmit = async () => {
+    if (profileComplete === false) {
+      toast({
+        title: "Profile Incomplete",
+        description: "Please complete your profile 100% to host events.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Run validation
     const nextErrors: Record<string, string> = {};
     if (!form.title || !form.title.trim())
@@ -846,6 +910,46 @@ export default function AddEvent() {
           <div className="h-8 bg-muted rounded w-1/3" />
           <div className="h-64 bg-muted rounded" />
         </div>
+      </div>
+    );
+  }
+
+  if (profileComplete === false) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex items-center justify-center p-6">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="max-w-md w-full bg-card border border-border rounded-3xl p-8 shadow-2xl text-center space-y-6"
+        >
+          <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto">
+            <UserIcon className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Complete Your Profile</h2>
+            <p className="text-muted-foreground text-sm">
+              To host events on Repdox, you must have a 100% complete profile. 
+              This helps build trust in our community.
+            </p>
+          </div>
+          <div className="bg-muted/50 rounded-xl p-4 text-left space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Missing Fields:</p>
+            <ul className="text-sm space-y-1">
+              {missingFields.map(field => (
+                <li key={field} className="flex items-center gap-2 text-foreground/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  {field}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Button 
+            onClick={() => navigate("/profile")}
+            className="w-full bg-purple-600 hover:bg-purple-700 h-12 rounded-xl"
+          >
+            Go to Profile
+          </Button>
+        </motion.div>
       </div>
     );
   }
