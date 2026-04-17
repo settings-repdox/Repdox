@@ -324,7 +324,7 @@ export default function Profile() {
       if (!userIdToQuery) return;
       const { data, error } = await supabase
         .from("event_registrations")
-        .select("*, events!fk_event(*)")
+        .select("*, events!event_id(*)")
         .eq("user_id", userIdToQuery)
         .order("created_at", { ascending: false });
 
