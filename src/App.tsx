@@ -23,6 +23,7 @@ const AddEvent = lazy(() => import("./pages/AddEvent"));
 const MyEvents = lazy(() => import("./pages/MyEvents"));
 const Contact = lazy(() => import("./pages/Contact"));
 const SignIn = lazy(() => import("./pages/SignIn"));
+const SignUp = lazy(() => import("./pages/SignUp"));
 const About = lazy(() => import("./pages/About"));
 const PrivacyPolicy = lazy(() => import("./pages/Privacy_policy"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -201,6 +202,7 @@ const App = () => {
                       <Route path="/about" element={<About />} />
                       <Route path="/privacy" element={<PrivacyPolicy />} />
                       <Route path="/signin" element={<SignIn />} />
+                      <Route path="/signup" element={<SignUp />} />
 
                       {/* NEW: Email Verification Routes (Public - No Auth Required) */}
                       <Route path="/verify-email" element={<VerifyEmail />} />

@@ -6,8 +6,8 @@ import { Mail, Lock, Github, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-export default function AuthForm() {
-  const [isLogin, setIsLogin] = useState(true);
+export default function AuthForm({ initialMode = "login" }: { initialMode?: "login" | "signup" }) {
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
