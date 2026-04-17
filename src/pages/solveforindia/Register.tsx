@@ -157,27 +157,20 @@ export default function SolveForIndiaRegister() {
       const registrationData = {
         event_id: eventId,
         team_id: teamId,
+        user_id: userId,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        user_id: userId,
         role: "participant",
-        message: JSON.stringify({
-          school: formData.school,
-          year: formData.year,
-          stream: formData.stream,
-          participation: {
-            mode: formData.teamSize,
-            isJoiningExisting: formData.isJoiningExisting,
-            teamName: formData.teamName,
-            expectedMembers: formData.teamSize === "Team" && !formData.isJoiningExisting ? formData.memberCount : null
-          },
-          motivation: formData.motivation,
-          links: {
-            github: formData.github,
-            linkedin: formData.linkedin
-          }
-        })
+        school: formData.school,
+        year: formData.year,
+        stream: formData.stream,
+        motivation: formData.motivation,
+        github: formData.github,
+        linkedin: formData.linkedin,
+        participation_mode: formData.teamSize,
+        expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
+        message: formData.motivation // Fallback for visibility
       };
 
       const { error } = await supabase
