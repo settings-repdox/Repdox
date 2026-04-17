@@ -44,7 +44,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 const queryClient = new QueryClient();
 
 // Simple fallback loader if PageLoader doesn't exist yet
-const LoadingFallback = () => <PageLoader />;
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  </div>
+);
 
 function AppContent() {
   const location = useLocation();
@@ -261,7 +265,6 @@ const App = () => {
             <BrowserRouter>
               <CommandPalette />
               {showIntro && <IntroLoader onComplete={handleIntroComplete} />}
-              {isPageLoading && <PageLoader />}
               <AppContent />
             </BrowserRouter>
           </TooltipProvider>
