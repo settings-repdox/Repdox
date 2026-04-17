@@ -44,7 +44,7 @@ export default function IntroLoader({ onComplete }: { onComplete: () => void }) 
             margin: 0,
             fontFamily: "'Syncopate', sans-serif",
             letterSpacing: '0.2em',
-            background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',
+            background: 'linear-gradient(to left, #ffffff, #a855f7, #ec4899)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             // Improved: Gentler Y movement with slight scale for natural motion
@@ -83,7 +83,7 @@ export default function IntroLoader({ onComplete }: { onComplete: () => void }) 
                 borderRadius: '2px',
                 // Improved: Use clip-path for smoother reveal instead of scaleX
                 clipPath: stage === 'enter' || stage === 'exit' 
-                  ? 'inset(0 100% 0 0)' 
+                  ? 'inset(0 0 0 100%)' 
                   : 'inset(0 0 0 0)',
                 // Improved: Staggered timing refined for better rhythm
                 transition: `clip-path 600ms cubic-bezier(0.4, 0.0, 0.2, 1) ${400 + i * 120}ms`,

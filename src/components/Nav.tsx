@@ -368,9 +368,12 @@ export default function Nav() {
             <Link to="/" className="flex-shrink-0 group relative py-2">
               <div className="flex items-center">
                 <span 
-                  className="text-2xl font-black tracking-[0.35em] text-white transition-all duration-300 group-hover:text-purple-400"
+                  className="text-2xl font-black tracking-[0.35em] transition-all duration-300"
                   style={{ 
-                    fontFamily: "'Space Grotesk', sans-serif"
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    background: 'linear-gradient(to left, #ffffff, #a855f7, #ec4899)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                   }}
                 >
                   REPDOX

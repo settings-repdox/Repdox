@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import IntroLoader from "@/components/IntroLoader";
+import PageLoader from "@/components/PageLoader";
 import Nav from "@/components/Nav";
 import CommandPalette from "@/components/CommandPalette";
 import { BackgroundProvider } from "@/components/BackgroundSystem/BackgroundContext";
@@ -43,11 +44,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 const queryClient = new QueryClient();
 
 // Simple fallback loader if PageLoader doesn't exist yet
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-  </div>
-);
+const LoadingFallback = () => <PageLoader />;
 
 function AppContent() {
   const location = useLocation();
@@ -264,6 +261,7 @@ const App = () => {
             <BrowserRouter>
               <CommandPalette />
               {showIntro && <IntroLoader onComplete={handleIntroComplete} />}
+              {isPageLoading && <PageLoader />}
               <AppContent />
             </BrowserRouter>
           </TooltipProvider>
