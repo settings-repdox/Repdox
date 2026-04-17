@@ -169,6 +169,28 @@ export default function Profile() {
   const [cardMode, setCardMode] = useState<"personal" | "event">("personal");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [userEvents, setUserEvents] = useState<any[]>([]);
+  const [urlStatus, setUrlStatus] = useState<Record<string, 'valid' | 'invalid' | 'none'>>({});
+
+  const normalizeUrl = (value: string, key: string) => {
+    if (!value) {
+      setUrlStatus(prev => ({ ...prev, [key]: 'none' }));
+      return value;
+    }
+    
+    let normalized = value.trim();
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized;
+    }
+
+    try {
+      new URL(normalized);
+      setUrlStatus(prev => ({ ...prev, [key]: 'valid' }));
+    } catch {
+      setUrlStatus(prev => ({ ...prev, [key]: 'invalid' }));
+    }
+    
+    return normalized;
+  };
   const [selectedEventReg, setSelectedEventReg] = useState<any>(null);
 
   const isOwnProfile =
@@ -837,9 +859,13 @@ export default function Profile() {
                           type="url"
                           value={website}
                           onChange={(e) => setWebsite(e.target.value)}
+                          onBlur={(e) => setWebsite(normalizeUrl(e.target.value, 'website'))}
                           placeholder="https://yourwebsite.com"
                           disabled={!isOwnProfile}
-                          className="w-full pl-11 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                          className={`w-full pl-11 pr-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition ${
+                            urlStatus.website === 'valid' ? 'border-green-500/50 bg-green-500/5' : 
+                            urlStatus.website === 'invalid' ? 'border-red-500/50 bg-red-500/5' : 'border-border'
+                          }`}
                         />
                       </div>
                     </div>
@@ -864,9 +890,13 @@ export default function Profile() {
                               type="url"
                               value={linkedinUrl}
                               onChange={(e) => setLinkedinUrl(e.target.value)}
+                              onBlur={(e) => setLinkedinUrl(normalizeUrl(e.target.value, 'linkedin'))}
                               disabled={!isOwnProfile}
                               placeholder="https://linkedin.com/in/yourprofile"
-                              className="w-full pl-11 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                              className={`w-full pl-11 pr-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition ${
+                                urlStatus.linkedin === 'valid' ? 'border-green-500/50 bg-green-500/5' : 
+                                urlStatus.linkedin === 'invalid' ? 'border-red-500/50 bg-red-500/5' : 'border-border'
+                              }`}
                             />
                           </div>
                         </div>
@@ -882,9 +912,13 @@ export default function Profile() {
                               type="url"
                               value={githubUrl}
                               onChange={(e) => setGithubUrl(e.target.value)}
+                              onBlur={(e) => setGithubUrl(normalizeUrl(e.target.value, 'github'))}
                               placeholder="https://github.com/yourusername"
                               disabled={!isOwnProfile}
-                              className="w-full pl-11 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                              className={`w-full pl-11 pr-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition ${
+                                urlStatus.github === 'valid' ? 'border-green-500/50 bg-green-500/5' : 
+                                urlStatus.github === 'invalid' ? 'border-red-500/50 bg-red-500/5' : 'border-border'
+                              }`}
                             />
                           </div>
                         </div>
@@ -900,9 +934,13 @@ export default function Profile() {
                               type="url"
                               value={twitterUrl}
                               onChange={(e) => setTwitterUrl(e.target.value)}
+                              onBlur={(e) => setTwitterUrl(normalizeUrl(e.target.value, 'twitter'))}
                               placeholder="https://twitter.com/yourusername"
                               disabled={!isOwnProfile}
-                              className="w-full pl-11 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                              className={`w-full pl-11 pr-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition ${
+                                urlStatus.twitter === 'valid' ? 'border-green-500/50 bg-green-500/5' : 
+                                urlStatus.twitter === 'invalid' ? 'border-red-500/50 bg-red-500/5' : 'border-border'
+                              }`}
                             />
                           </div>
                         </div>
@@ -918,9 +956,13 @@ export default function Profile() {
                               type="url"
                               value={instagramUrl}
                               onChange={(e) => setInstagramUrl(e.target.value)}
+                              onBlur={(e) => setInstagramUrl(normalizeUrl(e.target.value, 'instagram'))}
                               placeholder="https://instagram.com/yourusername"
                               disabled={!isOwnProfile}
-                              className="w-full pl-11 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                              className={`w-full pl-11 pr-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition ${
+                                urlStatus.instagram === 'valid' ? 'border-green-500/50 bg-green-500/5' : 
+                                urlStatus.instagram === 'invalid' ? 'border-red-500/50 bg-red-500/5' : 'border-border'
+                              }`}
                             />
                           </div>
                         </div>
