@@ -25,21 +25,41 @@ export default function SolveForIndiaRegister() {
   const [eventId, setEventId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    school: "",
-    year: "",
-    stream: "",
-    track: "general",
-    teamSize: "Solo",
-    isJoiningExisting: false,
-    teamName: "",
-    memberCount: "2",
-    motivation: "",
-    github: "",
     linkedin: ""
   });
+
+  const [hasDraft, setHasDraft] = useState(false);
+
+  // Auto-save draft to local storage
+  useEffect(() => {
+    const savedDraft = localStorage.getItem("sfi_registration_draft");
+    if (savedDraft) {
+      setHasDraft(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isSuccess && !isSubmitting) {
+      localStorage.setItem("sfi_registration_draft", JSON.stringify(formData));
+    }
+  }, [formData, isSuccess, isSubmitting]);
+
+  const restoreDraft = () => {
+    const savedDraft = localStorage.getItem("sfi_registration_draft");
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        setFormData(prev => ({ ...prev, ...parsed }));
+        setHasDraft(false);
+        toast({
+          title: "Progress Restored",
+          description: "We've loaded your information from your previous visit.",
+        });
+      } catch (err) {
+        console.error("Failed to restore draft:", err);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -142,6 +162,7 @@ export default function SolveForIndiaRegister() {
       });
 
       setTimeout(() => {
+        localStorage.removeItem("sfi_registration_draft");
         window.location.href = "https://repdox.com";
       }, 5000);
 
@@ -211,9 +232,41 @@ export default function SolveForIndiaRegister() {
           >
             Join the <br /><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Innovation Race</span>
           </motion.h1>
-          <motion.p className="text-gray-400 text-lg max-w-xl mx-auto">
+          <motion.p className="text-gray-400 text-lg max-w-xl mx-auto mb-8">
             Fill out the form below to secure your spot in India's biggest impact-driven hackathon.
           </motion.p>
+
+          <AnimatePresence>
+            {hasDraft && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-purple-500/10 border border-purple-500/20 max-w-md mx-auto"
+              >
+                <p className="text-sm text-purple-300 font-medium italic">
+                  We found some information from your last visit!
+                </p>
+                <div className="flex gap-3">
+                  <Button 
+                    type="button"
+                    variant="ghost" 
+                    onClick={() => setHasDraft(false)}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    Dismiss
+                  </Button>
+                  <Button 
+                    type="button"
+                    onClick={restoreDraft}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8 rounded-xl"
+                  >
+                    Restore Progress
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-12">
