@@ -154,28 +154,16 @@ export default function CurrentEventsStrip() {
             ))}
           </motion.div>
 
-          {/* Progress indicators - dots */}
+          {/* Progress indicators - static dots */}
           <div className="flex justify-center gap-3 mt-10">
             {events.map((_, index) => (
-              <motion.button
+              <motion.div
                 key={index}
-                onClick={() => {
-                  setCurrentIndex(index);
-                  if (scrollContainerRef.current) {
-                    const cardWidth = 380 + 24;
-                    scrollContainerRef.current.scrollTo({
-                      left: index * cardWidth,
-                      behavior: 'smooth'
-                    });
-                  }
-                }}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-2 w-2 rounded-full transition-all duration-500 ${
                   index === currentIndex 
-                    ? 'w-8 bg-gradient-to-r from-purple-500 to-pink-500' 
-                    : 'w-2 bg-muted hover:bg-muted-foreground/40'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 scale-125' 
+                    : 'bg-muted'
                 }`}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
               />
             ))}
           </div>
