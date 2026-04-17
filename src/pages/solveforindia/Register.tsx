@@ -73,9 +73,9 @@ export default function SolveForIndiaRegister() {
         setIsAuthenticated(false);
         toast({
           title: "Authentication Required",
-          description: "Please sign in to register for Solve For India.",
+          description: "Please sign up to register for Solve For India.",
         });
-        navigate("/login?redirect=/solve-for-india/register");
+        navigate("/signup?redirect=/solve-for-india/register");
       }
     };
     checkAuth();
