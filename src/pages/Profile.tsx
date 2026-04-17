@@ -322,14 +322,34 @@ export default function Profile() {
     try {
       const userIdToQuery = user?.id;
       if (!userIdToQuery) return;
-      const { data, error } = await supabase
+      
+      const { data: registrations, error: regError } = await supabase
         .from("event_registrations")
-        .select("*, events!event_id(*)")
+        .select("*")
         .eq("user_id", userIdToQuery)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setUserEvents(data || []);
+      if (regError) throw regError;
+      
+      if (!registrations || registrations.length === 0) {
+        setUserEvents([]);
+        return;
+      }
+
+      const eventIds = Array.from(new Set(registrations.map(r => r.event_id)));
+      const { data: events, error: eventError } = await supabase
+        .from("events")
+        .select("*")
+        .in("id", eventIds);
+
+      if (eventError) throw eventError;
+
+      const merged = registrations.map(reg => ({
+        ...reg,
+        events: events.find(e => e.id === reg.event_id) || null
+      }));
+
+      setUserEvents(merged);
     } catch (err) {
       console.error("Error loading events:", err);
     }
