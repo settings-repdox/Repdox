@@ -188,6 +188,7 @@ export type Database = {
           message: string | null;
           status: string | null;
           role: string | null;
+          team_id: string | null;
           registration_id: string | null;
           qr_code_data: string | null;
           check_in_status: string | null;
@@ -209,6 +210,7 @@ export type Database = {
           message?: string | null;
           status?: string | null;
           role?: string | null;
+          team_id?: string | null;
           registration_id?: string | null;
           qr_code_data?: string | null;
           check_in_status?: string | null;
@@ -289,6 +291,7 @@ export type Database = {
           created_at: string | null;
           event_id: string;
           name: string;
+          max_members: number | null;
           description: string | null;
           contact_email: string | null;
         };
@@ -297,6 +300,7 @@ export type Database = {
           created_at?: string | null;
           event_id: string;
           name: string;
+          max_members?: number | null;
           description?: string | null;
           contact_email?: string | null;
         };
