@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 // List of admin emails. 
 // USER: Add the 3 admin emails here.
 export const ADMIN_EMAILS = [
-  "shlokrams@gmail.com", // Placeholder: Replace with your actual admin emails
+  "shlokram5mar@gmail.com",
+  "amishgandhi316@gmail.com",
+  "anshikayadav.1908080@gmail.com",
 ];
 
 /**
