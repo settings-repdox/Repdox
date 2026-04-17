@@ -11,9 +11,10 @@ import CardNav from "@/components/ui/CardNav";
 import logo from "@/assets/logo.svg";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, ShieldCheck } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { isUserAdmin } from "@/lib/adminService";
 
 type UserProfile = {
   id: string;
@@ -32,6 +33,7 @@ export default function Nav() {
   const [avatarError, setAvatarError] = useState(false);
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
   const navigate = useNavigate();
@@ -49,6 +51,9 @@ export default function Nav() {
       const { data } = await supabase.auth.getUser();
       if (!mounted) return;
       setUser(data?.user ?? null);
+      if (data?.user) {
+        isUserAdmin().then(setIsAdmin);
+      }
 
       // If there's a logged-in user, check whether they already have a profile.
       // If not, redirect them to the Profile page to complete onboarding.
@@ -76,6 +81,11 @@ export default function Nav() {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
+        if (session?.user) {
+          isUserAdmin().then(setIsAdmin);
+        } else {
+          setIsAdmin(false);
+        }
         // When auth state changes (e.g. sign in), check onboarding
         (async () => {
           const u = session?.user;
@@ -309,6 +319,7 @@ export default function Nav() {
           ? [
               { label: "Profile", href: "/profile", ariaLabel: "My Profile" },
               { label: "My Events", href: "/my-events", ariaLabel: "My Events" },
+              ...(isAdmin ? [{ label: "Admin Portal", href: "/admin/events", ariaLabel: "Admin Portal" }] : []),
             ]
           : [
               { label: "Sign In", href: "/signin", ariaLabel: "Sign In" },
@@ -462,6 +473,18 @@ export default function Nav() {
                     >
                       My Events
                     </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          navigate("/admin/events");
+                        }}
+                        className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        Admin Portal
+                      </button>
+                    )}
                   </motion.div>
                 )}
               </div>

@@ -36,6 +36,7 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const SolveForIndiaRegister = lazy(() => import("./pages/solveforindia/Register"));
+const AdminEvents = lazy(() => import("./pages/AdminEvents"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -106,6 +107,14 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/events"
+              element={
+                <ProtectedRoute>
+                  <AdminEvents />
                 </ProtectedRoute>
               }
             />

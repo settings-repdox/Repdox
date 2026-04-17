@@ -231,8 +231,10 @@ export default function MyEvents() {
                           <CardTitle className="text-xl line-clamp-1">
                             {event.title}
                           </CardTitle>
-                          {!event.is_active && (
-                            <Badge variant="destructive">Inactive</Badge>
+                          {!event.is_active && !isExpired && (
+                            <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                              Pending Approval
+                            </Badge>
                           )}
                         </div>
                         <div className="space-y-2 text-sm text-muted-foreground">

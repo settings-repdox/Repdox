@@ -123,6 +123,7 @@ export async function createEvent(payload: CreateEventPayload) {
     tags: tags && tags.length ? tags : null,
     image_url: null,
     created_by: user.id,
+    is_active: false, // ALL new events require admin approval
   };
 
   if (uploadedFiles && uploadedFiles.length > 0) {
