@@ -590,17 +590,24 @@ export default function EventDetail() {
               {event.title}
             </motion.h1>
 
-            <div className="flex items-center gap-4 text-accent font-mono text-lg">
-              <Clock className="h-5 w-5" />
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center gap-4 text-white bg-black/40 backdrop-blur-md w-fit px-6 py-3 rounded-2xl border border-white/10 font-mono text-lg shadow-xl"
+            >
+              <Clock className="h-5 w-5 text-purple-400 animate-pulse" />
               {countdown.isExpired ? (
-                <span>Event has started</span>
+                <span className="font-bold text-green-400">Event has started</span>
               ) : (
-                <span>
+                <span className="font-medium">
                   Starts in{" "}
-                  {`${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
+                  <span className="text-purple-400 font-bold">
+                    {`${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
+                  </span>
                 </span>
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
