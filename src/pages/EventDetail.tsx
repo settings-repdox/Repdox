@@ -930,26 +930,59 @@ export default function EventDetail() {
                       );
                     }
 
-                    const lowerSlug = event.slug?.toLowerCase() || "";
                     if (lowerSlug.includes("solveforindia") || lowerSlug.includes("solve-for-india")) {
                       return (
-                        <Card id="register" className="border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10">
-                          <CardHeader>
-                            <CardTitle className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Register Now</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-6">
-                            <p className="text-muted-foreground leading-relaxed text-lg">
-                              {isRegistered 
-                                ? "You are currently registered for Solve For India. You can review or update your details below."
-                                : "Solve For India registrations are now open through our official innovation portal."}
-                            </p>
-                            <Link to="/solve-for-india/register">
-                              <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-6 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(168,85,247,0.3)]">
-                                {isRegistered ? "View/Edit Registration" : "Enter Registration Portal"} <ChevronRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </Link>
-                          </CardContent>
-                        </Card>
+                        <motion.div 
+                          id="register"
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          className="relative group mt-8"
+                        >
+                          {/* Iridescent Glow Background */}
+                          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan opacity-25 blur group-hover:opacity-40 transition duration-1000 group-hover:duration-200 rounded-[2rem]" />
+                          
+                          <div className="relative bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 md:p-12 overflow-hidden shadow-2xl">
+                            {/* Ambient background accent */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[80px] -mr-32 -mt-32 rounded-full pointer-events-none" />
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 blur-[80px] -ml-32 -mb-32 rounded-full pointer-events-none" />
+
+                            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                              <div className="flex-1 text-center md:text-left">
+                                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">
+                                  Official Innovation Portal
+                                </span>
+                                <h2 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight">
+                                  {isRegistered ? (
+                                    <>Review Your <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">Application</span></>
+                                  ) : (
+                                    <>Ready to <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">Create Impact?</span></>
+                                  )}
+                                </h2>
+                                <p className="text-gray-400 text-lg max-w-xl mx-auto md:mx-0 leading-relaxed">
+                                  {isRegistered 
+                                    ? "Your registration is active. Access the portal to review your team and project details."
+                                    : "Join the largest student-driven innovation race in India. Build, transform, and win big."}
+                                </p>
+                              </div>
+
+                              <div className="flex-shrink-0 w-full md:w-auto">
+                                <Link to="/solve-for-india/register">
+                                  <Button className="group/btn relative w-full md:w-[280px] h-20 bg-white text-black hover:text-white rounded-[20px] font-black text-lg overflow-hidden transition-all duration-300 shadow-xl shadow-white/5">
+                                    <span className="relative z-10 flex items-center justify-center gap-2">
+                                      {isRegistered ? "Portal Access" : "Join Now"}
+                                      <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                                    </span>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                                  </Button>
+                                </Link>
+                              </div>
+                            </div>
+
+                            {/* Decorative Grid Pattern */}
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.05] pointer-events-none" />
+                          </div>
+                        </motion.div>
                       );
                     }
 
