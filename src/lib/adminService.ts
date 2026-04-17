@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 export const ADMIN_EMAILS = [
   "shlokram5mar@gmail.com",
   "amishgandhi316@gmail.com",
-  "anshikayadav.1908080@gmail.com",
 ];
 
 /**
