@@ -66,7 +66,7 @@ interface UserProfile {
   twitter_url?: string | null;
   instagram_url?: string | null;
   portfolio_url?: string | null;
-  "Date of Birth"?: string | null;
+  date_of_birth?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -98,7 +98,7 @@ export default function Profile() {
       {
         key: "date_of_birth",
         label: "Date of Birth",
-        value: profile["Date of Birth"],
+        value: profile.date_of_birth,
       },
       { key: "bio", label: "Bio", value: profile.bio },
       {
@@ -231,7 +231,7 @@ export default function Profile() {
           setCompany(profileData.company || "");
           setWebsite(profileData.website || "");
           setPhone(profileData.phone || "");
-          setDateOfBirth(profileData["Date of Birth"] || "");
+          setDateOfBirth(profileData.date_of_birth || "");
           setLinkedinUrl(profileData.linkedin_url || "");
           setGithubUrl(profileData.github_url || "");
           setTwitterUrl(profileData.twitter_url || "");
@@ -287,7 +287,7 @@ export default function Profile() {
         setCompany(profileData.company || "");
         setWebsite(profileData.website || "");
         setPhone(profileData.phone || "");
-        setDateOfBirth(profileData["Date of Birth"] || "");
+        setDateOfBirth(profileData.date_of_birth || "");
         setLinkedinUrl(profileData.linkedin_url || "");
         setGithubUrl(profileData.github_url || "");
         setTwitterUrl(profileData.twitter_url || "");
@@ -424,6 +424,7 @@ export default function Profile() {
         .from("user_profiles")
         .upsert(
           {
+            id: profile?.id, // Include id to ensure correct conflict resolution
             user_id: user.id,
             full_name: fullName || null,
             handle: handle || null,
@@ -432,7 +433,7 @@ export default function Profile() {
             company: company || null,
             website: website || null,
             phone: phone || null,
-            "Date of Birth": dateOfBirth || null,
+            date_of_birth: dateOfBirth || null,
             avatar_url: avatarPath,
             linkedin_url: linkedinUrl || null,
             github_url: githubUrl || null,
