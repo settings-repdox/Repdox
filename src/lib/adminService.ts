@@ -44,6 +44,12 @@ export async function approveEvent(eventId: string) {
     .eq("id", eventId);
 
   if (error) throw error;
+
+  // Trigger notification background task (fire and forget)
+  supabase.functions.invoke("event-notification", {
+    body: { eventId, status: "approved" },
+  }).catch(e => console.error("Notification failed", e));
+
   return true;
 }
 
@@ -53,6 +59,15 @@ export async function approveEvent(eventId: string) {
 export async function rejectEvent(eventId: string) {
   const isAdmin = await isUserAdmin();
   if (!isAdmin) throw new Error("Not authorized");
+
+  // Notify before deleting since we need the event data (creator ID)
+  try {
+    await supabase.functions.invoke("event-notification", {
+      body: { eventId, status: "rejected" },
+    });
+  } catch (e) {
+    console.error("Rejection notification failed", e);
+  }
 
   const { error } = await supabase
     .from("events")
