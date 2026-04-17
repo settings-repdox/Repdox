@@ -15,7 +15,8 @@ import {
   Code, 
   Award, 
   Rocket, 
-  Sparkles 
+  Sparkles,
+  Clock
 } from "lucide-react";
 
 export default function SolveForIndiaRegister() {
