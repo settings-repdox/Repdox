@@ -110,19 +110,31 @@ export default function EventDetail() {
   const [user, setUser] = useState<import("@supabase/supabase-js").User | null>(
     null,
   );
+  const [isRegistered, setIsRegistered] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [roleCounts, setRoleCounts] = useState<Record<string, number>>({});
 
-  // Check if current user owns this event
+  // Check if current user owns this event OR is registered
   useEffect(() => {
-    const checkUser = async () => {
+    const checkUserStatus = async () => {
       const {
-        data: { user },
+        data: { user: currentUser },
       } = await supabase.auth.getUser();
-      setUser(user);
+      setUser(currentUser);
+      
+      if (currentUser && event?.id) {
+        const { data: reg, error } = await supabase
+          .from("event_registrations")
+          .select("id")
+          .eq("event_id", event.id)
+          .eq("user_id", currentUser.id)
+          .maybeSingle();
+        
+        if (reg) setIsRegistered(true);
+      }
     };
-    checkUser();
-  }, []);
+    checkUserStatus();
+  }, [event?.id]);
 
   const isOwner = user && event?.created_by === user.id;
 
@@ -927,11 +939,13 @@ export default function EventDetail() {
                           </CardHeader>
                           <CardContent className="space-y-6">
                             <p className="text-muted-foreground leading-relaxed text-lg">
-                              Solve For India registrations are now open through our official innovation portal.
+                              {isRegistered 
+                                ? "You are currently registered for Solve For India. You can review or update your details below."
+                                : "Solve For India registrations are now open through our official innovation portal."}
                             </p>
                             <Link to="/solve-for-india/register">
                               <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-6 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(168,85,247,0.3)]">
-                                Enter Registration Portal <ChevronRight className="ml-2 h-4 w-4" />
+                                {isRegistered ? "View/Edit Registration" : "Enter Registration Portal"} <ChevronRight className="ml-2 h-4 w-4" />
                               </Button>
                             </Link>
                           </CardContent>

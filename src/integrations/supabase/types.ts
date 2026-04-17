@@ -200,6 +200,7 @@ export type Database = {
           linkedin: string | null;
           participation_mode: string | null;
           expected_members: number | null;
+          edit_count: number | null;
           checked_in_at: string | null;
           checked_in_by: string | null;
           committee: string | null;
@@ -230,6 +231,7 @@ export type Database = {
           linkedin?: string | null;
           participation_mode?: string | null;
           expected_members?: number | null;
+          edit_count?: number | null;
           checked_in_at?: string | null;
           checked_in_by?: string | null;
           committee?: string | null;

@@ -27,8 +27,21 @@ export default function SolveForIndiaRegister() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    school: "",
+    year: "",
+    stream: "",
+    teamSize: "Solo",
+    teamName: "",
+    isJoiningExisting: false,
+    memberCount: "2",
+    motivation: "",
+    github: "",
     linkedin: ""
   });
+  const [existingReg, setExistingReg] = useState<any>(null);
 
   const [hasDraft, setHasDraft] = useState(false);
 
@@ -94,22 +107,57 @@ export default function SolveForIndiaRegister() {
   }, [navigate]);
 
   useEffect(() => {
-    const fetchEvent = async () => {
-      const { data } = await supabase
+    const fetchEventAndRegistration = async () => {
+      // Fetch Event ID
+      const { data: eventData } = await supabase
         .from("events")
         .select("id")
         .eq("slug", "SolveForIndia")
         .maybeSingle();
       
-      if (data) {
-        setEventId(data.id);
+      let currentEventId = null;
+      if (eventData) {
+        currentEventId = eventData.id;
+        setEventId(eventData.id);
       } else {
         const { data: latest } = await supabase.from("events").select("id").limit(1).single();
-        if (latest) setEventId(latest.id);
+        if (latest) {
+          currentEventId = latest.id;
+          setEventId(latest.id);
+        }
+      }
+
+      // If user is authenticated and event ID is known, check for existing registration
+      if (userId && currentEventId) {
+        const { data: regData } = await supabase
+          .from("event_registrations")
+          .select("*, event_teams(name)")
+          .eq("event_id", currentEventId)
+          .eq("user_id", userId)
+          .maybeSingle();
+          
+        if (regData) {
+          setExistingReg(regData);
+          setFormData({
+            name: regData.name || "",
+            email: regData.email || "",
+            phone: regData.phone || "",
+            school: regData.school || "",
+            year: regData.year || "",
+            stream: regData.stream || "",
+            teamSize: regData.participation_mode || "Solo",
+            teamName: (regData.event_teams as any)?.name || "",
+            isJoiningExisting: true, // If they have a team, we treat it as joining for the UI
+            memberCount: regData.expected_members?.toString() || "2",
+            motivation: regData.motivation || "",
+            github: regData.github || "",
+            linkedin: regData.linkedin || ""
+          });
+        }
       }
     };
-    fetchEvent();
-  }, []);
+    fetchEventAndRegistration();
+  }, [userId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as any;
@@ -119,16 +167,27 @@ export default function SolveForIndiaRegister() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (existingReg && existingReg.edit_count >= 1) {
+      toast({
+        title: "Edit Limit Reached",
+        description: "You have already used your one-time edit for this registration.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       if (!eventId) throw new Error("Event ID not found. Please try again.");
 
-      // 1. Handle Team Creation/Selection
-      let teamId = null;
-      if (formData.teamSize === "Team") {
+      // 1. Handle Team Creation/Selection (Only if not already in a team or changing it)
+      let teamId = existingReg?.team_id || null;
+      
+      // Basic team logic: if mode changed or name changed, we handle it
+      if (formData.teamSize === "Team" && (!existingReg || formData.teamName !== (existingReg.event_teams as any)?.name)) {
         if (!formData.isJoiningExisting) {
-          // Create new team
           const { data: newTeam, error: teamError } = await supabase
             .from("event_teams")
             .insert([{
@@ -142,7 +201,6 @@ export default function SolveForIndiaRegister() {
           if (teamError) console.error("Could not create team record:", teamError);
           if (newTeam) teamId = newTeam.id;
         } else {
-          // Find existing team
           const { data: existingTeam } = await supabase
             .from("event_teams")
             .select("id")
@@ -154,7 +212,7 @@ export default function SolveForIndiaRegister() {
         }
       }
 
-      const registrationData = {
+      const registrationData: any = {
         event_id: eventId,
         team_id: teamId,
         user_id: userId,
@@ -172,18 +230,26 @@ export default function SolveForIndiaRegister() {
         expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null
       };
 
-      const { error } = await supabase
-        .from("event_registrations")
-        .insert([registrationData]);
-
-      if (error) {
-        if (error.code === '23505') throw new Error("You have already registered with this email address!");
-        throw error;
+      if (existingReg) {
+        registrationData.edit_count = (existingReg.edit_count || 0) + 1;
+        const { error } = await supabase
+          .from("event_registrations")
+          .update(registrationData)
+          .eq("id", existingReg.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("event_registrations")
+          .insert([registrationData]);
+        if (error) {
+          if (error.code === '23505') throw new Error("You have already registered for this event!");
+          throw error;
+        }
       }
 
       setIsSuccess(true);
       toast({
-        title: "Registration Successful!",
+        title: existingReg ? "Registration Updated!" : "Registration Successful!",
         description: "Redirecting in 5 seconds...",
       });
 
@@ -194,7 +260,7 @@ export default function SolveForIndiaRegister() {
 
     } catch (err: any) {
       toast({
-        title: "Registration Failed",
+        title: "Submission Failed",
         description: err.message,
         variant: "destructive"
       });
@@ -256,10 +322,16 @@ export default function SolveForIndiaRegister() {
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl md:text-7xl font-bold mb-6"
           >
-            Join the <br /><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Innovation Race</span>
+            {existingReg ? (
+              <>Modify Your <br /><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Registration</span></>
+            ) : (
+              <>Join the <br /><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Innovation Race</span></>
+            )}
           </motion.h1>
           <motion.p className="text-gray-400 text-lg max-w-xl mx-auto mb-8">
-            Fill out the form below to secure your spot in India's biggest impact-driven hackathon.
+            {existingReg 
+              ? "You can update your details once before the event starts. Please ensure all information is correct."
+              : "Fill out the form below to secure your spot in India's biggest impact-driven hackathon."}
           </motion.p>
 
           <AnimatePresence>
@@ -467,14 +539,28 @@ export default function SolveForIndiaRegister() {
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="pt-8">
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-8 rounded-[24px] bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-xl shadow-[0_20px_40px_rgba(147,51,234,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              disabled={isSubmitting || (existingReg && existingReg.edit_count >= 1)}
+              className={`w-full py-8 rounded-[24px] font-bold text-xl shadow-[0_20px_40px_rgba(147,51,234,0.3)] transition-all ${
+                existingReg && existingReg.edit_count >= 1 
+                ? "bg-gray-800 text-gray-400 cursor-not-allowed border border-white/5" 
+                : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white hover:scale-[1.02] active:scale-[0.98]"
+              }`}
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-3">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Processing...
                 </span>
+              ) : existingReg ? (
+                existingReg.edit_count >= 1 ? (
+                  <span className="flex items-center gap-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-500" /> Changes Locked
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-3">
+                    <Rocket className="w-6 h-6" /> Update Registration (Final Edit)
+                  </span>
+                )
               ) : (
                 <span className="flex items-center gap-3">
                   <Rocket className="w-6 h-6" /> Complete Registration
