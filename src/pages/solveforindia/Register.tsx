@@ -169,8 +169,7 @@ export default function SolveForIndiaRegister() {
         github: formData.github,
         linkedin: formData.linkedin,
         participation_mode: formData.teamSize,
-        expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
-        message: formData.motivation // Fallback for visibility
+        expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null
       };
 
       const { error } = await supabase
