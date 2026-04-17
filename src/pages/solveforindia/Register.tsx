@@ -23,6 +23,8 @@ export default function SolveForIndiaRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [eventId, setEventId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const [formData, setFormData] = useState({
     linkedin: ""
@@ -60,6 +62,36 @@ export default function SolveForIndiaRegister() {
       }
     }
   };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to register for Solve For India.",
+        });
+        navigate("/login?redirect=/solve-for-india/register");
+      }
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setUserId(session.user.id);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        setUserId(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -128,6 +160,7 @@ export default function SolveForIndiaRegister() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        user_id: userId,
         role: "participant",
         message: JSON.stringify({
           school: formData.school,
