@@ -882,19 +882,49 @@ export default function EventDetail() {
                       );
                     }
 
-                    if (event.slug?.toLowerCase() === "solveforindia" || event.slug?.toLowerCase() === "solve-for-india") {
+                    if (event.registration_link) {
+                      const isExternal = /^https?:\/\//i.test(event.registration_link);
+                      return (
+                        <Card id="register" className="border-accent/50 bg-accent/5 shadow-lg shadow-accent/10">
+                          <CardHeader>
+                            <CardTitle>Register Now</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            <p className="text-muted-foreground leading-relaxed">
+                              Registration for this event is managed through an official portal. Click the button below to secure your spot.
+                            </p>
+                            {isExternal ? (
+                              <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-6 rounded-xl">
+                                <a href={event.registration_link} target="_blank" rel="noopener noreferrer">
+                                  Go to Registration Portal <ChevronRight className="ml-2 h-4 w-4" />
+                                </a>
+                              </Button>
+                            ) : (
+                              <Link to={event.registration_link}>
+                                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-6 rounded-xl">
+                                  Go to Registration Portal <ChevronRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </Link>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    const lowerSlug = event.slug?.toLowerCase() || "";
+                    if (lowerSlug.includes("solveforindia") || lowerSlug.includes("solve-for-india")) {
                       return (
                         <Card id="register" className="border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10">
                           <CardHeader>
                             <CardTitle className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Register Now</CardTitle>
                           </CardHeader>
-                          <CardContent className="space-y-12">
+                          <CardContent className="space-y-6">
                             <p className="text-muted-foreground leading-relaxed text-lg">
                               Solve For India registrations are now open through our official innovation portal.
                             </p>
                             <Link to="/solve-for-india/register">
-                              <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-6 rounded-xl">
-                                Register Now <ChevronRight className="ml-2 h-4 w-4" />
+                              <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-6 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+                                Enter Registration Portal <ChevronRight className="ml-2 h-4 w-4" />
                               </Button>
                             </Link>
                           </CardContent>
