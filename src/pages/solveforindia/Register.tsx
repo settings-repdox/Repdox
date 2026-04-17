@@ -321,7 +321,7 @@ export default function SolveForIndiaRegister() {
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-7xl font-bold mb-6"
+            className="text-4xl md:text-7xl font-bold mb-6"
           >
             {existingReg ? (
               <>Modify Your <br /><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Registration</span></>

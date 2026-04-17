@@ -548,9 +548,9 @@ export default function Profile() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] bg-background overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-72 bg-card border-r border-border flex flex-col">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] bg-background overflow-hidden">
+        {/* Sidebar - Desktop */}
+        <aside className="hidden md:flex w-72 bg-card border-r border-border flex-col">
           <div className="p-6 border-b border-border">
             <div className="flex flex-col items-center">
               <div className="h-24 w-24 rounded-full overflow-hidden ring-4 ring-accent/20 flex items-center justify-center bg-accent/10 mb-4">
@@ -651,9 +651,37 @@ export default function Profile() {
           </div>
         </aside>
 
+        {/* Mobile Navigation Bar */}
+        <div className="md:hidden border-b border-border bg-card overflow-x-auto whitespace-nowrap scrollbar-hide">
+          <div className="flex p-2 gap-1">
+            {sections
+              .filter((s) => {
+                if (!isOwnProfile && (s.id === "dashboard" || s.id === "security" || s.id === "preferences")) return false;
+                return true;
+              })
+              .map((section) => {
+                const Icon = section.icon;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
+                      activeSection === section.id
+                        ? "bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-medium"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="text-sm">{section.label}</span>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-8xl mx-auto p-8">
+        <div className="flex-1 overflow-y-auto w-full">
+          <div className="max-w-8xl mx-auto p-4 md:p-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

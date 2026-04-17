@@ -60,6 +60,7 @@
 .pc-card {
   height: 80svh;
   max-height: 540px;
+  width: min(100%, 388px);
   display: grid;
   aspect-ratio: 0.718;
   border-radius: var(--card-radius);
@@ -73,6 +74,7 @@
   background: rgba(0, 0, 0, 0.9);
   backface-visibility: hidden;
   overflow: hidden;
+  margin: 0 auto;
 }
 
 .pc-card:hover,
@@ -319,7 +321,11 @@
 @media (max-width: 768px) {
   .pc-card {
     height: 70svh;
-    max-height: 450px;
+    max-height: 480px;
+  }
+
+  .reflective-content {
+    padding: 24px;
   }
 
   .pc-details {
@@ -364,8 +370,12 @@
 
 @media (max-width: 480px) {
   .pc-card {
-    height: 60svh;
-    max-height: 380px;
+    height: 65svh;
+    max-height: 420px;
+  }
+
+  .reflective-content {
+    padding: 20px;
   }
 
   .pc-details {
