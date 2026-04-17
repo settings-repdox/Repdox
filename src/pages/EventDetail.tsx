@@ -192,7 +192,7 @@ export default function EventDetail() {
     }
   };
   const rawTab = searchParams.get("tab") || "details";
-  const activeTab = rawTab === "registrations" && !isOwner ? "details" : rawTab;
+  const activeTab = (rawTab === "registrations" || rawTab === "teams") && !isOwner ? "details" : rawTab;
 
   const setTab = (tab: string) => {
     const p = new URLSearchParams(searchParams);
@@ -650,16 +650,18 @@ export default function EventDetail() {
               >
                 Event Schedule
               </button>
-              <button
-                onClick={() => setTab("teams")}
-                className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                  activeTab === "teams"
-                    ? "border-accent text-accent"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Teams
-              </button>
+              {isOwner && (
+                <button
+                  onClick={() => setTab("teams")}
+                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+                    activeTab === "teams"
+                      ? "border-accent text-accent"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Teams
+                </button>
+              )}
 
               {isOwner && (
                 <button
@@ -717,7 +719,7 @@ export default function EventDetail() {
                 </Card>
               )}
 
-              {activeTab === "teams" && (
+              {isOwner && activeTab === "teams" && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Teams</CardTitle>
