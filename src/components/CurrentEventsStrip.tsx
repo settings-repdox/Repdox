@@ -99,14 +99,7 @@ export default function CurrentEventsStrip() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <motion.span
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={inView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.6 }}
-            className="inline-block mb-4 text-sm font-semibold px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 text-purple-400"
-          >
-            Featured Events
-          </motion.span>
+
           <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/60">
             Upcoming Events
           </h2>
@@ -116,22 +109,25 @@ export default function CurrentEventsStrip() {
         </motion.div>
 
         <div className="relative">
-          {/* Navigation Buttons with magnetic effect */}
-          <MagneticButton
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20"
-            onClick={() => scroll('left')}
-            disabled={currentIndex === 0}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </MagneticButton>
+          {events.length > 1 && (
+            <>
+              <MagneticButton
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20"
+                onClick={() => scroll('left')}
+                disabled={currentIndex === 0}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </MagneticButton>
 
-          <MagneticButton
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20"
-            onClick={() => scroll('right')}
-            disabled={currentIndex === events.length - 1}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </MagneticButton>
+              <MagneticButton
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20"
+                onClick={() => scroll('right')}
+                disabled={currentIndex === events.length - 1}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </MagneticButton>
+            </>
+          )}
 
           {/* Scrollable Container */}
           <motion.div
@@ -139,7 +135,7 @@ export default function CurrentEventsStrip() {
             animate={inView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
             ref={scrollContainerRef}
-            className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing px-16 py-4"
+            className={`flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing ${events.length <= 1 ? 'justify-center px-6' : 'px-16'} py-4`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -158,8 +154,8 @@ export default function CurrentEventsStrip() {
             ))}
           </motion.div>
 
-          {/* Progress indicators */}
-          <div className="flex justify-center gap-2 mt-8">
+          {/* Progress indicators - dots */}
+          <div className="flex justify-center gap-3 mt-10">
             {events.map((_, index) => (
               <motion.button
                 key={index}
