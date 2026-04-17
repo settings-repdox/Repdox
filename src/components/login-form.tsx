@@ -55,12 +55,12 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
         if (data.user) {
           const { data: profile } = await supabase
             .from("user_profiles")
-            .select("id, full_name, Date of Birth")
+            .select("id, full_name, date_of_birth")
             .eq("user_id", data.user.id)
             .maybeSingle();
 
           // Check if profile is incomplete
-          if (!profile || !profile.full_name || !profile["Date of Birth"]) {
+          if (!profile || !profile.full_name || !profile.date_of_birth) {
             navigate("/profile?onboard=true");
           } else {
             navigate("/");

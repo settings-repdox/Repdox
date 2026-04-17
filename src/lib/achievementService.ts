@@ -56,7 +56,7 @@ export async function getUserAchievements(userId: string): Promise<Achievement[]
   // Calculate progress
   const profileFields = [
     profile?.full_name,
-    profile?.['Date of Birth'],
+    profile?.date_of_birth,
     profile?.bio,
     profile?.avatar_url,
     profile?.phone,
