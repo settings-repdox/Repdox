@@ -39,10 +39,14 @@ export default function IntroLoader({ onComplete }: { onComplete: () => void }) 
       <div style={{ textAlign: 'center' }}>
         <h1
           style={{
-            fontSize: '4rem',
-            fontWeight: '600',
-            color: '#ffffff',
+            fontSize: '4.5rem',
+            fontWeight: 'bold',
             margin: 0,
+            fontFamily: "'Syncopate', sans-serif",
+            letterSpacing: '0.2em',
+            background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
             // Improved: Gentler Y movement with slight scale for natural motion
             transform: stage === 'enter' 
               ? 'translateY(40px) scale(0.95)' 
@@ -53,10 +57,9 @@ export default function IntroLoader({ onComplete }: { onComplete: () => void }) 
             opacity: stage === 'enter' ? 0 : stage === 'exit' ? 0 : 1,
             // Improved: Longer duration with refined easing for premium feel
             transition: 'opacity 1000ms cubic-bezier(0.4, 0.0, 0.2, 1), transform 1000ms cubic-bezier(0.4, 0.0, 0.2, 1)',
-            letterSpacing: '-0.02em', // Tighter tracking for premium look
           }}
         >
-          Repdox
+          REPDOX
         </h1>
         
         {/* Improved: Bars now reveal sequentially with mask effect instead of scale */}

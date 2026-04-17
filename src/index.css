@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syncopate:wght@400;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -653,8 +653,18 @@ kbd {
   }
 
   /* Disabled state styling */
-  button:disabled,
-  input:disabled {
-    @apply opacity-60 cursor-not-allowed;
+  /* Gradient animation for text */
+  @keyframes gradient-x {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient-x {
+    background-size: 200% auto;
+    animation: gradient-x 3s linear infinite;
   }
 }

@@ -40,7 +40,57 @@ const adjust = (v, fMin, fMax, tMin, tMax) => round(tMin + ((tMax - tMin) * (v -
 
 
 
-const ProfileCardComponent = ({
+export interface UserData {
+  user_id: string | null;
+  full_name: string | null;
+  handle?: string | null;
+  bio?: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  email: string | null;
+  job_title: string | null;
+  company: string | null;
+  location?: string | null;
+  socials: {
+    linkedin_url: string | null;
+    github_url: string | null;
+    twitter_url: string | null;
+    instagram_url: string | null;
+    portfolio_url: string | null;
+  };
+}
+
+interface ProfileCardProps {
+  avatarUrl?: string;
+  iconUrl?: string;
+  grainUrl?: string;
+  behindGlowEnabled?: boolean;
+  className?: string;
+  enableTilt?: boolean;
+  enableMobileTilt?: boolean;
+  mobileTiltSensitivity?: number;
+  miniAvatarUrl?: string;
+  name?: string;
+  title?: string;
+  handle?: string;
+  status?: string;
+  contactText?: string;
+  showUserInfo?: boolean;
+  onContactClick?: () => void;
+  metalness?: number;
+  roughness?: number;
+  overlayColor?: string;
+  innerGradient?: string;
+  behindGlowColor?: string;
+  behindGlowSize?: string;
+  showIdCard?: boolean;
+  mode?: 'personal' | 'event';
+  userData?: UserData;
+  eventRegistration?: any;
+  eventData?: any;
+}
+
+const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   avatarUrl = '<Placeholder for avatar URL>',
   iconUrl = '<Placeholder for icon URL>',
   grainUrl = '<Placeholder for grain URL>',
@@ -57,7 +107,6 @@ const ProfileCardComponent = ({
   contactText = 'Contact',
   showUserInfo = true,
   onContactClick,
-  // Reflective card props
   metalness = 1,
   roughness = 0.4,
   overlayColor = 'rgba(255, 255, 255, 0.1)',
@@ -68,6 +117,9 @@ const ProfileCardComponent = ({
   mode = 'personal',
   userData = {
     user_id: null,
+    full_name: null,
+    handle: null,
+    bio: null,
     avatar_url: null,
     phone: null,
     email: null,
@@ -315,12 +367,12 @@ const qrData = useMemo(() => {
     shell.addEventListener('pointerleave', pointerLeaveHandler);
 
     const handleClick = () => {
-      if (!enableMobileTilt || location.protocol !== 'https:') return;
-      const anyMotion = window.DeviceMotionEvent;
-      if (anyMotion && typeof anyMotion.requestPermission === 'function') {
-        anyMotion
-          .requestPermission()
-          .then(state => {
+      if (!enableMobileTilt || typeof window === 'undefined' || window.location.protocol !== 'https:') return;
+      
+      const DeviceMotionEvent = (window as any).DeviceMotionEvent;
+      if (DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+          .then((state: string) => {
             if (state === 'granted') {
               window.addEventListener('deviceorientation', deviceOrientationHandler);
             }

@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Zap, Target, Heart, Lightbulb } from "lucide-react";
 import { useRef } from "react";
 import { useInView } from "react-intersection-observer";
+import TeamSection from "@/components/TeamSection";
 
 const features = [
   {
@@ -112,43 +113,51 @@ export default function About() {
           })}
         </div>
 
+        <TeamSection />
+
         {/* Extra Content: Organizer Benefits, Guidelines, Contact */}
-        <div className="max-w-4xl mx-auto mt-16 space-y-10">
-          <section className="bg-muted rounded-lg p-6 border border-muted/40">
-            <h3 className="text-2xl font-semibold mb-3">For Organizers</h3>
-            <p className="text-muted-foreground">
-              Repdox supports organizers with tools to create events, manage registrations,
-              accept role-based signups, and export participant lists. We provide
-              templates and best practices for running safe, accessible, and impactful events.
-            </p>
-          </section>
+        <div className="max-w-4xl mx-auto mt-24 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-emerald-500/30 transition-all">
+              <h3 className="text-2xl font-bold mb-4 text-emerald-500">For Organizers</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Repdox supports organizers with professional tools to create events, manage registrations,
+                accept role-based signups, and export participant lists. We provide
+                templates and best practices for running safe, accessible, and impactful events.
+              </p>
+            </section>
 
-          <section className="bg-muted rounded-lg p-6 border border-muted/40">
-            <h3 className="text-2xl font-semibold mb-3">Community Guidelines</h3>
-            <p className="text-muted-foreground">
-              We strive to build welcoming spaces. Treat others with respect, follow local
-              laws and venue rules, and report any behavior that makes you uncomfortable.
-              Organizers are expected to provide clear codes of conduct and accessibility information.
-            </p>
-          </section>
+            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-cyan-500/30 transition-all">
+              <h3 className="text-2xl font-bold mb-4 text-cyan-500">Community Guidelines</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                We strive to build welcoming spaces. Treat others with respect, follow local
+                laws, and report behavior that makes you uncomfortable.
+                Organizers are expected to provide clear codes of conduct.
+              </p>
+            </section>
+          </div>
 
-          <section className="bg-muted rounded-lg p-6 border border-muted/40">
-            <h3 className="text-2xl font-semibold mb-3">Get Involved</h3>
-            <p className="text-muted-foreground">
-              Interested in contributing content, organizing events, or sponsoring? Reach out
-              to <a className="underline" href="/contact">our team</a> with your ideas — we’re always happy to collaborate.
-            </p>
-          </section>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-purple-500/30 transition-all">
+              <h3 className="text-2xl font-bold mb-4 text-purple-500">Verification & Safety</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                We offer account verification via email or phone to help organisers and attendees trust interactions. You can request a verification token in your profile settings — this ensures secure and verified community engagement.
+              </p>
+            </section>
 
-          <section className="bg-muted rounded-lg p-6 border border-muted/40">
-            <h3 className="text-2xl font-semibold mb-3">Verification & Safety</h3>
-            <p className="text-muted-foreground">
-              We offer account verification via email or phone to help organisers and attendees trust interactions on the platform. You can request a verification token in your profile settings — this token is sent via email or SMS (or shown during testing).
-            </p>
-            <p className="text-muted-foreground mt-2">
-              Organisers should provide clear codes of conduct and keep registration deadlines and capacities up to date. Use the export tools in the organiser dashboard to manage participant lists securely.
-            </p>
-          </section>
+            <section className="bg-emerald-500/10 backdrop-blur-md rounded-3xl p-8 border border-emerald-500/20 text-center flex flex-col items-center justify-center">
+              <h3 className="text-2xl font-bold mb-4 text-foreground">Get Involved</h3>
+              <p className="text-muted-foreground mb-6">
+                Interested in contributing, organizing, or sponsoring?
+              </p>
+              <a 
+                href="/contact" 
+                className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/20"
+              >
+                Contact Our Team
+              </a>
+            </section>
+          </div>
         </div>
       </div>
     </section>

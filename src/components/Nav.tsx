@@ -355,27 +355,71 @@ export default function Nav() {
           {/* Left side */}
           <div className="flex items-center gap-8">
             <Link to="/" className="flex-shrink-0">
-              <motion.img 
-                src={logo} 
-                alt="Repdox" 
-                className="h-8 w-auto"
+              <motion.div 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-              />
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300 hover:bg-white/5"
+              >
+                <motion.div 
+                  className="flex"
+                  animate={{
+                    filter: [
+                      "drop-shadow(0 0 8px rgba(168, 85, 247, 0.2))",
+                      "drop-shadow(0 0 15px rgba(168, 85, 247, 0.4))",
+                      "drop-shadow(0 0 8px rgba(168, 85, 247, 0.2))"
+                    ]
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  {"REPDOX".split("").map((char, i) => (
+                    <motion.span
+                      key={i}
+                      className="text-2xl font-black tracking-[0.1em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 animate-gradient-x inline-block"
+                      style={{ 
+                        fontFamily: "'Syncopate', sans-serif"
+                      }}
+                      whileHover={{ 
+                        y: -8,
+                        scale: 1.2,
+                        color: "#fff",
+                        filter: "drop-shadow(0 0 15px rgba(168, 85, 247, 0.8))",
+                        zIndex: 10
+                      }}
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 400, 
+                        damping: 10 
+                      }}
+                    >
+                      {char}
+                    </motion.span>
+                  ))}
+                </motion.div>
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileHover={{ width: '100%' }}
+                  className="absolute bottom-0 left-0 h-[3px] bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                />
+              </motion.div>
             </Link>
             
             <NavigationMenu>
-              <NavigationMenuList className="gap-1">
+              <NavigationMenuList className="gap-2">
                 {navigationLinks.map((link, index) => (
                   <NavigationMenuItem key={index}>
                     <NavigationMenuLink
                       href={link.href}
-                      className="relative px-4 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors group whitespace-nowrap"
+                      className="relative px-5 py-2.5 text-sm font-bold text-foreground/60 hover:text-foreground transition-all duration-300 group whitespace-nowrap tracking-widest uppercase"
+                      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                     >
                       {link.label}
                       <motion.span
-                        className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan w-0 group-hover:w-full transition-all origin-center"
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                        className="absolute bottom-1 left-5 right-5 h-0.5 bg-gradient-to-r from-purple-500 to-cyan w-0 group-hover:w-[calc(100%-40px)] transition-all origin-left"
+                        transition={{ duration: 0.3, ease: "easeOut" }}
                       />
                     </NavigationMenuLink>
                   </NavigationMenuItem>

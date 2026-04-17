@@ -160,7 +160,7 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
                   <div className="text-white font-bold text-5xl">R</div>
                 </div>
                 <h2 className="text-4xl font-bold mb-4 text-center">
-                  {isLogin ? "Welcome back" : "Join Repdox"}
+                  {isLogin ? "Welcome back" : <span>Join <span style={{ fontFamily: "'Syncopate', sans-serif", letterSpacing: '0.1em' }}>REPDOX</span></span>}
                 </h2>
                 <p className="text-center text-white/90 text-sm leading-relaxed">
                   {isLogin
