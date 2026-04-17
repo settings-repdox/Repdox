@@ -2,7 +2,6 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Zap, Target, Heart, Lightbulb } from "lucide-react";
 import { useRef } from "react";
 import { useInView } from "react-intersection-observer";
-import TeamSection from "@/components/TeamSection";
 
 const features = [
   {
@@ -113,7 +112,6 @@ export default function About() {
           })}
         </div>
 
-        <TeamSection />
 
         {/* Extra Content: Organizer Benefits, Guidelines, Contact */}
         <div className="max-w-4xl mx-auto mt-24 space-y-8">

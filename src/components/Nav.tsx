@@ -360,51 +360,18 @@ export default function Nav() {
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300 hover:bg-white/5"
               >
-                <motion.div 
-                  className="flex"
-                  animate={{
-                    filter: [
-                      "drop-shadow(0 0 8px rgba(168, 85, 247, 0.2))",
-                      "drop-shadow(0 0 15px rgba(168, 85, 247, 0.4))",
-                      "drop-shadow(0 0 8px rgba(168, 85, 247, 0.2))"
-                    ]
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut"
+            <Link to="/" className="flex-shrink-0 group relative py-2">
+              <div className="flex items-center">
+                <span 
+                  className="text-2xl font-black tracking-[0.35em] text-white transition-all duration-300 group-hover:text-purple-400"
+                  style={{ 
+                    fontFamily: "'Outfit', sans-serif"
                   }}
                 >
-                  {"REPDOX".split("").map((char, i) => (
-                    <motion.span
-                      key={i}
-                      className="text-2xl font-black tracking-[0.1em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 animate-gradient-x inline-block"
-                      style={{ 
-                        fontFamily: "'Syncopate', sans-serif"
-                      }}
-                      whileHover={{ 
-                        y: -8,
-                        scale: 1.2,
-                        color: "#fff",
-                        filter: "drop-shadow(0 0 15px rgba(168, 85, 247, 0.8))",
-                        zIndex: 10
-                      }}
-                      transition={{ 
-                        type: "spring", 
-                        stiffness: 400, 
-                        damping: 10 
-                      }}
-                    >
-                      {char}
-                    </motion.span>
-                  ))}
-                </motion.div>
-                <motion.div 
-                  initial={{ width: 0 }}
-                  whileHover={{ width: '100%' }}
-                  className="absolute bottom-0 left-0 h-[3px] bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
-                />
-              </motion.div>
+                  REPDOX
+                </span>
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 ml-1.5" />
+              </div>
             </Link>
             
             <NavigationMenu>
