@@ -17,7 +17,7 @@ const footerLinks = {
   resources: [
     { label: "Event Guidelines", href: "#" },
     { label: "FAQs", href: "#" },
-    { label: "Support", href: "#" },
+    { label: "Support", href: "/contact" },
   ],
 };
 

@@ -571,7 +571,7 @@ export default function SolveForIndiaRegister() {
         </form>
 
         <footer className="text-center mt-20 text-gray-600 text-sm">
-          Having trouble? <a href="mailto:support@repdox.com" className="text-purple-500 hover:underline">Contact Support</a>
+          Having trouble? <Link to="/contact" className="text-purple-500 hover:underline">Contact Support</Link>
         </footer>
       </div>
     </div>
