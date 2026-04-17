@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Share2 } from "lucide-react";
-import { useSpring, animated } from "@react-spring/web";
+import { useSpring, animated, to } from "@react-spring/web";
 import CountUp from "@/components/ui/CountUp";
 
 export default function Hero() {
@@ -51,11 +51,8 @@ export default function Hero() {
           onMouseMove={handleMouseMove}
           onMouseLeave={() => api.start({ rotateX: 0, rotateY: 0 })}
           style={{
-            transform: springs.rotateX.to((rx) =>
-              springs.rotateY.to(
-                (ry) =>
+            transform: to([springs.rotateX, springs.rotateY], (rx, ry) =>
                   `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg)`,
-              ),
             ),
           }}
         >

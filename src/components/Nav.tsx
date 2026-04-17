@@ -354,24 +354,24 @@ export default function Nav() {
         <div className="flex h-full items-center justify-between gap-4">
           {/* Left side */}
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex-shrink-0">
+            <Link to="/" className="flex-shrink-0 group relative py-2">
               <motion.div 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300 hover:bg-white/5"
               >
-            <Link to="/" className="flex-shrink-0 group relative py-2">
-              <div className="flex items-center">
-                <span 
-                  className="text-2xl font-black tracking-[0.35em] text-white transition-all duration-300 group-hover:text-purple-400"
-                  style={{ 
-                    fontFamily: "'Outfit', sans-serif"
-                  }}
-                >
-                  REPDOX
-                </span>
-                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 ml-1.5" />
-              </div>
+                <div className="flex items-center">
+                  <span 
+                    className="text-2xl font-black tracking-[0.35em] text-white transition-all duration-300 group-hover:text-purple-400"
+                    style={{ 
+                      fontFamily: "'Syncopate', sans-serif"
+                    }}
+                  >
+                    REPDOX
+                  </span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-500 ml-1.5" />
+                </div>
+              </motion.div>
             </Link>
             
             <NavigationMenu>
