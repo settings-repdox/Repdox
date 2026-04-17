@@ -364,7 +364,6 @@ export default function Nav() {
                 >
                   REPDOX
                 </span>
-                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 ml-1.5" />
               </div>
             </Link>
             
