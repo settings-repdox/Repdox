@@ -359,7 +359,7 @@ export default function Nav() {
                 <span 
                   className="text-2xl font-black tracking-[0.35em] text-white transition-all duration-300 group-hover:text-purple-400"
                   style={{ 
-                    fontFamily: "'Outfit', sans-serif"
+                    fontFamily: "'Space Grotesk', sans-serif"
                   }}
                 >
                   REPDOX
