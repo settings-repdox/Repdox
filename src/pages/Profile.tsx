@@ -469,13 +469,18 @@ export default function Profile() {
 
       if (upsertError) throw upsertError;
 
+      toast({
+        title: "Profile Updated",
+        description: "Your changes have been saved successfully.",
+      });
+
       setSuccess("Profile updated successfully!");
       setAvatarFile(null);
       setAvatarPreview(null);
 
       await loadUserProfile();
 
-      setTimeout(() => setSuccess(null), 3000);
+      setTimeout(() => setSuccess(null), 5000);
     } catch (err: unknown) {
       console.error("Error saving profile:", err);
       const message =
