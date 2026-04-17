@@ -314,51 +314,60 @@ export async function createVerification(
   contact: string,
   ttlSeconds = 60 * 60
 ) {
-  const token = type === "phone" ? String(Math.floor(100000 + Math.random() * 900000)) : generateRandomString(32);
-  const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-
-  const { data, error } = await supabase
-    .from("profile_verifications")
-    .insert([
-      {
-        user_id: userId,
-        type,
-        contact,
-        token,
-        expires_at: expiresAt,
-        verified: false,
-      },
-    ]);
-
-  if (error) throw error;
-
-  // Attempt to send token via Edge Function if available (optional)
-  let sent = false;
+  // 1. First attempt to let the Server (Edge Function) handle generation and delivery
+  // This is the preferred method to avoid double-insertion and ensure server-side control
   try {
-    // This function is optional; if not present the invocation will fail and be caught
     const fnRes = await supabase.functions.invoke("send-verification", {
       body: JSON.stringify({ userId, type, contact, ttlSeconds }),
     });
 
-    if (fnRes?.error) {
-      console.warn("send-verification invocation error:", fnRes.error);
-    } else {
-      // Function may return JSON like { ok: true, sent: true }
-      try {
-        const parsed = typeof fnRes.data === 'string' ? JSON.parse(fnRes.data) : fnRes.data;
-        sent = !!parsed?.sent;
-      } catch (e) {
-        // older client responses may not be stringified JSON, fall back to truthy check
-        sent = !!fnRes.data;
+    if (!fnRes.error && fnRes.data) {
+      const parsed = typeof fnRes.data === 'string' ? JSON.parse(fnRes.data) : fnRes.data;
+      if (parsed?.token) {
+        return { 
+          token: parsed.token, 
+          sent: !!parsed.sent,
+          fromServer: true 
+        };
       }
     }
   } catch (e) {
-    console.warn("send-verification function not available or failed:", e);
+    console.warn("send-verification function not available, falling back to local generation:", e);
   }
 
-  // For local/dev testing we log the token so devs can see it without an email/SMS backend
+  // 2. Fallback: Local Generation (for development/local testing without Edge Functions)
+  // Use crypto for better randomness
+  let token: string;
+  if (type === "phone") {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    token = String(Math.floor(100000 + (array[0] / 4294967296) * 900000));
+  } else {
+    token = generateRandomString(32);
+  }
 
-  return { token, id: (data as any)?.[0]?.id, sent };
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("profile_verifications")
+    .upsert(
+      [
+        {
+          user_id: userId,
+          type,
+          contact,
+          token,
+          expires_at: expiresAt,
+          verified: false,
+        },
+      ],
+      { onConflict: "user_id, type" }
+    )
+    .select();
+
+  if (error) throw error;
+
+  return { token, id: (data as any)?.[0]?.id, sent: false, fromServer: false };
 }
 
 export async function verifyToken(

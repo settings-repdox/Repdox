@@ -217,6 +217,7 @@ export default function Profile() {
   const [emailToken, setEmailToken] = useState("");
   const [phoneVerificationSent, setPhoneVerificationSent] = useState(false);
   const [phoneToken, setPhoneToken] = useState("");
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
 
   const loadUserProfile = useCallback(async () => {
     try {
@@ -315,6 +316,21 @@ export default function Profile() {
         setTwitterUrl(profileData.twitter_url || "");
         setInstagramUrl(profileData.instagram_url || "");
         setPortfolioUrl(profileData.portfolio_url || "");
+        
+        // Fetch phone verification status
+        if (profileData.phone) {
+          const { data: verifications } = await supabase
+            .from("profile_verifications")
+            .select("verified")
+            .eq("user_id", currentUser.id)
+            .eq("type", "phone")
+            .eq("contact", profileData.phone)
+            .eq("verified", true)
+            .limit(1);
+          setIsPhoneVerified(!!verifications?.length);
+        } else {
+          setIsPhoneVerified(false);
+        }
       }
 
       try {
@@ -1146,8 +1162,8 @@ export default function Profile() {
                                     user.email,
                                   );
                                   const desc =
-                                    res?.token && import.meta.env.DEV
-                                      ? `Token: ${res.token} (dev only)`
+                                    res?.token && (import.meta.env.DEV || !res.sent)
+                                      ? `Token: ${res.token} (Provider Simulation)`
                                       : `Verification email sent to ${user.email}`;
                                   toast({
                                     title: "Verification sent",
@@ -1160,9 +1176,9 @@ export default function Profile() {
                                     err,
                                   );
                                   const message =
-                                    err instanceof Error
-                                      ? err.message
-                                      : String(err);
+                                    err && typeof err === 'object' && 'message' in err 
+                                      ? (err as any).message 
+                                      : err instanceof Error ? err.message : String(err);
                                   toast({
                                     title: "Failed",
                                     description: message,
@@ -1254,8 +1270,11 @@ export default function Profile() {
                         <input
                           type="tel"
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="+1 (555) 123-4567"
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "");
+                            if (val.length <= 10) setPhone(val);
+                          }}
+                          placeholder="Enter 10-digit phone number"
                           disabled={!isOwnProfile}
                           className={`w-full pl-11 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition ${
                             !isOwnProfile
@@ -1263,10 +1282,18 @@ export default function Profile() {
                               : ""
                           }`}
                         />
+                        {isPhoneVerified && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            <span className="text-xs font-medium text-green-700 dark:text-green-300">
+                              Verified
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Phone Verification (Only for own profile) */}
-                      {isOwnProfile && phone && (
+                      {isOwnProfile && phone && !isPhoneVerified && (
                         <div className="mt-3 space-y-2">
                           <div className="flex items-center gap-2">
                             <button
@@ -1287,8 +1314,8 @@ export default function Profile() {
                                     phone,
                                   );
                                   const descPhone =
-                                    res?.token && import.meta.env.DEV
-                                      ? `Code: ${res.token} (dev only)`
+                                    res?.token && (import.meta.env.DEV || !res.sent)
+                                      ? `Code: ${res.token} (Provider Simulation)`
                                       : `OTP sent to ${phone}`;
                                   toast({
                                     title: "OTP sent",
@@ -1296,12 +1323,13 @@ export default function Profile() {
                                   });
                                   setPhoneVerificationSent(true);
                                 } catch (err: unknown) {
+                                  const message = 
+                                    err && typeof err === 'object' && 'message' in err 
+                                      ? (err as any).message 
+                                      : err instanceof Error ? err.message : String(err);
                                   toast({
                                     title: "Failed to send OTP",
-                                    description:
-                                      err instanceof Error
-                                        ? err.message
-                                        : String(err),
+                                    description: message,
                                     variant: "destructive",
                                   });
                                 }
@@ -1350,12 +1378,13 @@ export default function Profile() {
                                         });
                                       }
                                     } catch (err: unknown) {
+                                      const message = 
+                                        err && typeof err === 'object' && 'message' in err 
+                                          ? (err as any).message 
+                                          : err instanceof Error ? err.message : String(err);
                                       toast({
                                         title: "Verification failed",
-                                        description:
-                                          err instanceof Error
-                                            ? err.message
-                                            : String(err),
+                                        description: message,
                                         variant: "destructive",
                                       });
                                     }

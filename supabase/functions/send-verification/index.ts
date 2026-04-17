@@ -60,9 +60,12 @@ serve(async (req: Request) => {
     const token = type === "phone" ? phoneOTP() : randomToken(32);
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
 
-    const { data, error } = await supabase.from("profile_verifications").insert([
-      { user_id: userId, type, contact, token, expires_at: expiresAt, verified: false },
-    ]);
+    const { data, error } = await supabase.from("profile_verifications").upsert(
+      [
+        { user_id: userId, type, contact, token, expires_at: expiresAt, verified: false },
+      ],
+      { onConflict: "user_id, type" }
+    );
 
     if (error) {
       console.error("Insert verification failed", error);
@@ -111,7 +114,7 @@ serve(async (req: Request) => {
     }
 
     // If neither provider set, we still return success so that dev/testing can rely on DB entry / token dumps
-    return new Response(JSON.stringify({ ok: true, sent }), { status: 200 });
+    return new Response(JSON.stringify({ ok: true, sent, token }), { status: 200 });
   } catch (err) {
     console.error("send-verification error", err);
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 });

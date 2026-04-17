@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
