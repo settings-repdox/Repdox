@@ -782,7 +782,7 @@ export default function Profile() {
                     </h2>
 
                     <div>
-                      <Dashboard embeddedUser={user} />
+                      <Dashboard embeddedUser={user} userEvents={userEvents} />
                     </div>
                   </div>
                 )}
