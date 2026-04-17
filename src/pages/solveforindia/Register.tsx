@@ -128,6 +128,7 @@ export default function SolveForIndiaRegister() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        role: "participant",
         message: JSON.stringify({
           school: formData.school,
           year: formData.year,
