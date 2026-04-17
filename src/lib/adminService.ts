@@ -24,7 +24,7 @@ export async function getPendingEvents() {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("is_active", false)
+    .or("is_active.eq.false,is_active.is.null")
     .order("created_at", { ascending: false });
 
   if (error) throw error;

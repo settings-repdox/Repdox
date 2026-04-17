@@ -26,7 +26,7 @@ export default function AdminEvents() {
     isUserAdmin().then(setIsAdmin);
   }, []);
 
-  const { data: pendingEvents = [], isLoading } = useQuery({
+  const { data: pendingEvents = [], isLoading, isError, error } = useQuery({
     queryKey: ["pending-events"],
     enabled: isAdmin === true,
     queryFn: getPendingEvents,
@@ -88,6 +88,19 @@ export default function AdminEvents() {
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
           <p className="text-muted-foreground italic">Verifying credentials...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="text-center space-y-4 bg-red-500/10 p-12 rounded-3xl border border-red-500/20 max-w-lg">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto" />
+          <h1 className="text-3xl font-bold">Error Fetching Events</h1>
+          <p className="text-muted-foreground">{(error as any)?.message || "An unknown error occurred while fetching pending events."}</p>
+          <Button onClick={() => navigate("/")}>Go Home</Button>
         </div>
       </div>
     );
