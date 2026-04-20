@@ -135,7 +135,7 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center overflow-hidden z-0">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center overflow-y-auto overflow-x-hidden z-0 py-8">
       {/* Subtle animated background */}
       <div className="absolute inset-0 overflow-hidden opacity-40">
         <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
@@ -150,7 +150,7 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
       </div>
 
       {/* Form container */}
-      <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8 z-10">
+      <div className="relative w-full flex items-center justify-center p-4 md:p-8 z-10">
         <div className="w-full max-w-md md:max-w-3xl lg:max-w-5xl">
           <div className="bg-card rounded-2xl shadow-2xl overflow-hidden border border-border/50">
             <div className="grid md:grid-cols-2 gap-0">

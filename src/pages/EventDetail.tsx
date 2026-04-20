@@ -597,7 +597,7 @@ export default function EventDetail() {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-4xl md:text-6xl font-bold text-foreground mb-4"
+              className="text-3xl sm:text-4xl md:text-6xl font-bold text-foreground mb-4 px-2 sm:px-0"
             >
               {event.title}
             </motion.h1>
@@ -628,8 +628,8 @@ export default function EventDetail() {
       <section className="py-12 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Tabs */}
-          <div className="mb-6 px-6">
-            <div className="flex items-center gap-3 border-b border-border">
+          <div className="mb-6 px-4 md:px-6">
+            <div className="flex items-center gap-3 border-b border-border overflow-x-auto scrollbar-hide whitespace-nowrap">
               <button
                 onClick={() => setTab("details")}
                 className={`px-4 py-2 font-medium transition-colors border-b-2 ${

@@ -21,7 +21,7 @@ export default function Hero() {
         </div>
 
         <h1
-          className="text-5xl md:text-8xl font-display font-bold mb-6 leading-tight"
+          className="text-4xl sm:text-5xl md:text-8xl font-display font-bold mb-6 leading-tight"
           style={{
             backgroundClip: "text",
             WebkitBackgroundClip: "text",
@@ -45,7 +45,7 @@ export default function Hero() {
           </span>
         </h1>
 
-        <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed px-4 md:px-0">
           Join hackathons, MUNs and workshops that spark change. Build.
           Compete. Connect.
         </p>

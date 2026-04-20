@@ -115,7 +115,7 @@ export default function AdminEvents() {
               <ShieldCheck className="w-4 h-4" />
               Admin Portal
             </div>
-            <h1 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
+            <h1 className="text-3xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
               Pending Approval
             </h1>
             <p className="text-muted-foreground max-w-xl">

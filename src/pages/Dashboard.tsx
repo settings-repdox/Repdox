@@ -122,9 +122,9 @@ export default function Dashboard({ embeddedUser, userEvents = [] }: DashboardPr
     <div className="bg-background py-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground mt-2">Your personal control center</p>
+          <div className="px-4 md:px-0">
+            <h1 className="text-3xl md:text-5xl font-bold">Dashboard</h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-2">Your personal control center</p>
           </div>
           <Button onClick={() => navigate('/events')}>
             <Plus className="w-4 h-4 mr-2" />

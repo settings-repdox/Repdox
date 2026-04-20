@@ -64,9 +64,9 @@ export default function Footer() {
             >
               {/* Logo with glow effect */}
               <motion.h3
-                className="text-2xl md:text-3xl font-bold tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 animate-gradient-x transition-all duration-300 hover:drop-shadow-lg"
+                className="text-2xl md:text-4xl font-bold tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 animate-gradient-x transition-all duration-300 hover:drop-shadow-lg"
                 style={{ 
-                  fontFamily: "'Syncopate', sans-serif",
+                  fontFamily: "'Outfit', sans-serif",
                   textShadow: "0 0 15px rgba(168, 85, 247, 0.3)"
                 }}
                 whileHover={{
@@ -91,7 +91,7 @@ export default function Footer() {
                 className="space-y-3"
               >
                 <p className="text-sm font-semibold text-foreground/80">Subscribe to our newsletter</p>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <motion.input
                     type="email"
                     placeholder="Your email"
@@ -106,9 +106,9 @@ export default function Footer() {
                     disabled={isSubscribed || isLoading}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:shadow-[0_0_15px_rgba(168, 85, 247, 0.3)] transition-all disabled:opacity-50 whitespace-nowrap"
                   >
-                    {isSubscribed ? "✓" : isLoading ? "..." : "Subscribe"}
+                    {isSubscribed ? "✓ Subscribed" : isLoading ? "..." : "Subscribe"}
                   </motion.button>
                 </div>
                 {isSubscribed && (

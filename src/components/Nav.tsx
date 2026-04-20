@@ -329,7 +329,19 @@ export default function Nav() {
 
     return (
       <CardNav
-        logo={logo}
+        logo={
+          <span 
+            className="text-lg font-black tracking-[0.2em] uppercase"
+            style={{ 
+              fontFamily: "'Outfit', sans-serif",
+              background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            REPDOX
+          </span>
+        }
         items={mobileItems}
         baseColor={theme === 'dark' ? "#0D0716" : "#fff"}
         menuColor={theme === 'dark' ? "#fff" : "#000"}
@@ -370,8 +382,8 @@ export default function Nav() {
                 <span 
                   className="text-2xl font-black tracking-[0.35em] transition-all duration-300"
                   style={{ 
-                    fontFamily: "'Space Grotesk', sans-serif",
-                    background: 'linear-gradient(to left, #ffffff, #a855f7, #ec4899)',
+                    fontFamily: "'Outfit', sans-serif",
+                    background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}

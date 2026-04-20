@@ -17,7 +17,7 @@ export type CardNavItem = {
 };
 
 export interface CardNavProps {
-  logo: string;
+  logo: string | React.ReactNode;
   logoAlt?: string;
   items: CardNavItem[];
   className?: string;
@@ -172,7 +172,11 @@ const CardNav: React.FC<CardNavProps> = ({
           </div>
 
           <div className="logo-container">
-            <img src={logo} alt={logoAlt} className="logo" />
+            {typeof logo === 'string' ? (
+              <img src={logo} alt={logoAlt} className="logo" />
+            ) : (
+              logo
+            )}
           </div>
         </div>
 
