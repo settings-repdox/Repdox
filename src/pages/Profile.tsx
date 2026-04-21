@@ -67,9 +67,6 @@ interface UserProfile {
   instagram_url?: string | null;
   portfolio_url?: string | null;
   date_of_birth?: string | null;
-  discord_id?: string | null;
-  discord_username?: string | null;
-  discord_link_code?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -77,7 +74,6 @@ interface UserProfile {
 const sections = [
   { id: "preferences", label: "Preferences", icon: Settings },
   { id: "personal", label: "Personal Info", icon: UserIcon },
-  { id: "integrations", label: "Integrations", icon: Globe },
   { id: "dashboard", label: "Dashboard", icon: Users },
   { id: "achievements", label: "Achievements", icon: Award },
   { id: "professional", label: "Professional", icon: Briefcase },
@@ -168,9 +164,6 @@ export default function Profile() {
   const [twitterUrl, setTwitterUrl] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
-  const [discordId, setDiscordId] = useState("");
-  const [discordUsername, setDiscordUsername] = useState("");
-  const [discordLinkCode, setDiscordLinkCode] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [cardMode, setCardMode] = useState<"personal" | "event">("personal");
@@ -267,9 +260,6 @@ export default function Profile() {
           setTwitterUrl(profileData.twitter_url || "");
           setInstagramUrl(profileData.instagram_url || "");
           setPortfolioUrl(profileData.portfolio_url || "");
-          setDiscordId(profileData.discord_id || "");
-          setDiscordUsername(profileData.discord_username || "");
-          setDiscordLinkCode(profileData.discord_link_code || "");
         } else {
           setError("Profile not found");
         }
@@ -508,9 +498,6 @@ export default function Profile() {
             twitter_url: twitterUrl || null,
             instagram_url: instagramUrl || null,
             portfolio_url: portfolioUrl || null,
-            discord_id: discordId || null,
-            discord_username: discordUsername || null,
-            discord_link_code: discordLinkCode || null,
             updated_at: new Date().toISOString(),
           },
           {
@@ -539,31 +526,6 @@ export default function Profile() {
       setError(message);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleGenerateDiscordCode = async () => {
-    if (!user) return;
-    const code = `REPDOX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    try {
-      const { error: upsertError } = await supabase
-        .from("user_profiles")
-        .update({ discord_link_code: code })
-        .eq("user_id", user.id);
-      
-      if (upsertError) throw upsertError;
-      setDiscordLinkCode(code);
-      toast({
-        title: "Code Generated",
-        description: "Use this code in our Discord server with /link command.",
-      });
-    } catch (err) {
-      console.error("Error generating Discord code:", err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to generate code.",
-      });
     }
   };
 
@@ -887,71 +849,6 @@ export default function Profile() {
 
                     <div>
                       <Dashboard embeddedUser={user} userEvents={userEvents} />
-                    </div>
-                  </div>
-                )}
-
-                {activeSection === "integrations" && (
-                  <div className="space-y-8">
-                    <h2 className="text-2xl font-bold text-foreground mb-6">
-                      Integrations
-                    </h2>
-
-                    <div className="bg-card/50 border border-border rounded-2xl p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-[#5865F2]/10 flex items-center justify-center">
-                            <Globe className="w-6 h-6 text-[#5865F2]" />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold">Discord</h3>
-                            <p className="text-sm text-muted-foreground">Link your Discord account for roles and moderation</p>
-                          </div>
-                        </div>
-                        {discordId ? (
-                          <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-500 text-xs font-bold border border-green-500/20">
-                            Connected
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-500 text-xs font-bold border border-yellow-500/20">
-                            Not Linked
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="space-y-4 pt-4 border-t border-border">
-                        {discordId ? (
-                          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                              <UserIcon className="w-5 h-5 text-muted-foreground" />
-                              <span className="font-medium text-foreground">{discordUsername}</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">ID: {discordId}</span>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            {!discordLinkCode ? (
-                              <Button 
-                                onClick={handleGenerateDiscordCode}
-                                className="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white gap-2 h-12"
-                              >
-                                Generate Linking Code
-                              </Button>
-                            ) : (
-                              <div className="space-y-4 p-6 bg-muted/30 border border-dashed border-border rounded-2xl text-center">
-                                <p className="text-sm font-medium mb-2">Your Linking Code:</p>
-                                <div className="text-3xl font-mono font-bold tracking-widest text-[#5865F2] select-all">
-                                  {discordLinkCode}
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-4">
-                                  Go to our Discord server and type: <br/>
-                                  <code className="bg-black/10 px-2 py-0.5 rounded text-foreground font-bold">/link {discordLinkCode}</code>
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </div>
                 )}
