@@ -82,7 +82,7 @@ client.on(Events.MessageCreate, async m => {
 
   const hasBannedLink = BANNED_LINKS.some(r => r.test(m.content));
   if (hasBannedLink && !m.member?.permissions.has(PermissionFlagsBits.ManageMessages)) {
-    try { await m.delete(); m.channel.send(`🚫 No invites, ${m.author}`); } catch (e) {}
+    try { await m.delete(); m.channel.send({ content: `🚫 No invites, ${m.author}` }).then(msg => setTimeout(() => msg.delete(), 5000)); } catch (e) {}
     return;
   }
 
@@ -125,12 +125,12 @@ client.on(Events.InteractionCreate, async i => {
       let added: string[] = [];
       for (const reg of (regs as any[])) {
         if (reg.events?.title?.toLowerCase().includes('solve for india')) {
-          let r = guild.roles.cache.find(ro => ro.name === 'Solve For India');
+          let r = guild.roles.cache.find((ro: any) => ro.name === 'Solve For India');
           if (!r) r = await guild.roles.create({ name: 'Solve For India', color: 'Orange' });
           if (!member.roles.cache.has(r.id)) { await member.roles.add(r); added.push('Solve For India'); }
         }
         if (reg.event_teams?.name) {
-          let r = guild.roles.cache.find(ro => ro.name === reg.event_teams.name);
+          let r = guild.roles.cache.find((ro: any) => ro.name === reg.event_teams.name);
           if (!r) r = await guild.roles.create({ name: reg.event_teams.name, color: 'Blue' });
           if (!member.roles.cache.has(r.id)) { await member.roles.add(r); added.push(reg.event_teams.name); }
         }
@@ -141,7 +141,7 @@ client.on(Events.InteractionCreate, async i => {
     await i.deferReply({ ephemeral: true });
     const guild = i.guild; if (!guild) return;
     try {
-      let coderRole = guild.roles.cache.find(r => r.name === VERIFIED_ROLE_NAME);
+      let coderRole = guild.roles.cache.find((r: any) => r.name === VERIFIED_ROLE_NAME);
       if (!coderRole) coderRole = await guild.roles.create({ name: VERIFIED_ROLE_NAME, color: 'Purple', hoist: true });
       const ev = guild.roles.everyone;
       const channels = await guild.channels.fetch();
@@ -151,11 +151,11 @@ client.on(Events.InteractionCreate, async i => {
         if (!c) continue;
         try {
           if (c.name === verifyChannelName) {
-            await c.permissionOverwrites.edit(ev, { ViewChannel: true, SendMessages: false });
-            await c.permissionOverwrites.edit(coderRole, { ViewChannel: true, SendMessages: true });
+            await (c as any).permissionOverwrites.edit(ev, { ViewChannel: true, SendMessages: false });
+            await (c as any).permissionOverwrites.edit(coderRole, { ViewChannel: true, SendMessages: true });
           } else if (c.type === ChannelType.GuildText || c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildCategory) {
-            await c.permissionOverwrites.edit(ev, { ViewChannel: false });
-            await c.permissionOverwrites.edit(coderRole, { ViewChannel: true });
+            await (c as any).permissionOverwrites.edit(ev, { ViewChannel: false });
+            await (c as any).permissionOverwrites.edit(coderRole, { ViewChannel: true });
           }
         } catch (e) { console.warn(`Skipping ${c.name}`); }
       }
