@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Globe, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { Helmet } from "react-helmet-async";
 
 export default function DiscordLink() {
   const [searchParams] = useSearchParams();
@@ -96,6 +97,10 @@ export default function DiscordLink() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+      <Helmet>
+        <title>Account Linking | Repdox</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
