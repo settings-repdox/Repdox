@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Share2 } from "lucide-react";
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showDiscordModal, setShowDiscordModal] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <section
@@ -53,7 +55,7 @@ export default function Hero() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
           {/* Primary CTA: View Events */}
           <motion.button
-            onClick={() => (window.location.href = "/events")}
+            onClick={() => navigate("/events")}
             whileHover={{
               scale: 1.05,
             }}

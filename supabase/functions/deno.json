@@ -1,0 +1,19 @@
+{
+  "importMap": "import_map.json",
+  "compilerOptions": {
+    "lib": ["deno.window", "deno.ns", "deno.unstable"],
+    "module": "esnext",
+    "target": "esnext",
+    "allowJs": true,
+    "strict": true
+  },
+  "lint": {
+    "include": ["."],
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "include": ["."]
+  }
+}

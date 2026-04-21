@@ -36,8 +36,10 @@ export default function EventsList() {
   const filteredEvents = events.filter((event) => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          event.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesType = selectedType === 'all' || event.type === selectedType;
-    const matchesFormat = selectedFormat === 'all' || event.format === selectedFormat;
+    const matchesType = selectedType === 'all' || 
+      (Array.isArray(event.type) ? event.type.includes(selectedType) : event.type === selectedType);
+    const matchesFormat = selectedFormat === 'all' || 
+      (Array.isArray(event.format) ? event.format.includes(selectedFormat) : event.format === selectedFormat);
     
     return matchesSearch && matchesType && matchesFormat;
   });

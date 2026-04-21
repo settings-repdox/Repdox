@@ -20,13 +20,13 @@ interface EventCardProps {
     id: string;
     title: string;
     slug: string;
-    type: string;
+    type: any;
     start_at: string;
-    location: string;
-    format: string;
-    short_blurb: string;
-    image_url: string;
-    tags: string[];
+    location: string | null;
+    format: any;
+    short_blurb: string | null;
+    image_url: string | null;
+    tags: any[] | null;
   };
   compact?: boolean;
 }
@@ -112,7 +112,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
               <Calendar className="h-3 w-3" />
               <span>{formatDate(event.start_at)}</span>
             </div>
-            {event.location && event.location.trim() && (
+            {event.location && typeof event.location === 'string' && event.location.trim() && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <MapPin className="h-3 w-3" />
                 <span className="line-clamp-1">{event.location}</span>
@@ -192,7 +192,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
               {formatDateWithOptions(event.start_at, { weekday: true })}
             </span>
           </div>
-          {event.location && event.location.trim() && (
+          {event.location && typeof event.location === 'string' && event.location.trim() && (
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               <span>{event.location}</span>

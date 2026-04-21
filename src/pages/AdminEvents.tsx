@@ -41,7 +41,7 @@ export default function AdminEvents() {
         description: "The event is now live on the platform.",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Approval Failed",
         description: error.message,
@@ -60,7 +60,7 @@ export default function AdminEvents() {
         variant: "destructive",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Rejection Failed",
         description: error.message,
@@ -99,7 +99,7 @@ export default function AdminEvents() {
         <div className="text-center space-y-4 bg-red-500/10 p-12 rounded-3xl border border-red-500/20 max-w-lg">
           <XCircle className="w-16 h-16 text-red-500 mx-auto" />
           <h1 className="text-3xl font-bold">Error Fetching Events</h1>
-          <p className="text-muted-foreground">{(error as any)?.message || "An unknown error occurred while fetching pending events."}</p>
+          <p className="text-muted-foreground">{(error as Error)?.message || "An unknown error occurred while fetching pending events."}</p>
           <Button onClick={() => navigate("/")}>Go Home</Button>
         </div>
       </div>

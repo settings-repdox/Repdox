@@ -269,6 +269,7 @@ const App = () => {
             <BrowserRouter>
               <CommandPalette />
               {showIntro && <IntroLoader onComplete={handleIntroComplete} />}
+              {isPageLoading && !showIntro && <PageLoader />}
               <AppContent />
             </BrowserRouter>
           </TooltipProvider>

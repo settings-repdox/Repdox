@@ -147,7 +147,12 @@ export default function Nav() {
             const { data } = await supabase.storage
               .from("avatars")
               .createSignedUrl(objectPath, 60 * 60);
-            setAvatarSrc(data.signedUrl);
+            
+            if (data?.signedUrl) {
+              setAvatarSrc(data.signedUrl);
+            } else {
+              setAvatarSrc(null);
+            }
           } catch (e) {
             console.error("Failed to create signed URL for avatar in Nav", e);
             setAvatarSrc(null);

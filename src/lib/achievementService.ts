@@ -60,7 +60,6 @@ export async function getUserAchievements(userId: string): Promise<Achievement[]
     profile?.bio,
     profile?.avatar_url,
     profile?.phone,
-    profile?.location,
     profile?.website,
     profile?.company,
     profile?.job_title,

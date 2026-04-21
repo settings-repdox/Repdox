@@ -10,6 +10,7 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
   const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState("");
@@ -70,6 +71,12 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
         }
       } else {
         // SIGNUP FLOW
+        if (password !== confirmPassword) {
+          setErrorMessage("Passwords do not match");
+          setIsLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -286,6 +293,30 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
                       </button>
                     </div>
                   </div>
+
+                  {/* Confirm Password Input (Only for Signup) */}
+                  {!isLogin && (
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-200 ${focusedField === "confirmPassword" ? "text-purple-600" : "text-muted-foreground"}`}>
+                          <Lock size={18} />
+                        </div>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          onFocus={() => setFocusedField("confirmPassword")}
+                          onBlur={() => setFocusedField("")}
+                          placeholder="Repeat your password"
+                          required
+                          className="w-full pl-10 pr-10 py-2.5 bg-background border border-input text-foreground rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all duration-200"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Forgot Password */}
                   {isLogin && (
