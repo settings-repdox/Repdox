@@ -39,6 +39,7 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const SolveForIndiaRegister = lazy(() => import("./pages/solveforindia/Register"));
 const AdminEvents = lazy(() => import("./pages/AdminEvents"));
 const Volunteer = lazy(() => import("./pages/Volunteer"));
+const DiscordLink = lazy(() => import("./pages/DiscordLink"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -77,6 +78,7 @@ function AppContent() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/solve-for-india/register" element={<SolveForIndiaRegister />} />
+            <Route path="/auth/discord-link" element={<DiscordLink />} />
 
             {/* Profile Routes - Public Access (own profile requires auth internally) */}
             <Route path="/profile" element={<Profile />} />
