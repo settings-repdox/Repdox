@@ -107,7 +107,13 @@ client.on(Events.InteractionCreate, async (i: any) => {
   if (i.commandName === 'link') {
     await i.deferReply({ ephemeral: true });
     const token = uuidv4();
-    await supabase.from('discord_link_requests').insert({ token, discord_id: i.user.id, discord_username: i.user.tag });
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
+    await supabase.from('discord_link_requests').insert({ 
+      token, 
+      discord_id: i.user.id, 
+      discord_username: i.user.tag,
+      expires_at: expiresAt
+    });
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder().setLabel('Confirm Link').setURL(`${REPDOX_URL}/auth/discord-link?token=${token}`).setStyle(ButtonStyle.Link),
       new ButtonBuilder().setLabel('Create Account').setURL(`${REPDOX_URL}/signup`).setStyle(ButtonStyle.Link)
