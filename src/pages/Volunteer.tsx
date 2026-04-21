@@ -32,9 +32,7 @@ const volunteerRoles = [
 
 const benefits = [
   "Certificate of Excellence",
-  "Networking with Industry Experts",
   "Leadership Opportunities",
-  "Exclusive Repdox Merch",
   "Early Access to All Events",
 ];
 
