@@ -60,34 +60,34 @@ async function grantVerifiedRole(discordId: string) {
     try {
       const member = await guild.members.fetch(discordId).catch(() => null);
       if (!member) continue;
-      let role = guild.roles.cache.find(r => r.name === VERIFIED_ROLE_NAME);
+      let role = guild.roles.cache.find((r: any) => r.name === VERIFIED_ROLE_NAME);
       if (!role) role = await guild.roles.create({ name: VERIFIED_ROLE_NAME, color: 'Purple', hoist: true });
       if (!member.roles.cache.has(role.id)) await member.roles.add(role);
     } catch (e) { console.error(e); }
   }
 }
 
-client.once(Events.ClientReady, c => {
+client.once(Events.ClientReady, (c: any) => {
   console.log(`🚀 Ready! Logged in as ${c.user.tag}`);
   c.user.setPresence({ status: 'online', activities: [{ name: 'Repdox', type: 3 }] });
-  c.guilds.cache.forEach(guild => registerCommands(guild.id));
+  c.guilds.cache.forEach((guild: any) => registerCommands(guild.id));
   
-  supabase.channel('linked-users').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_profiles' }, async (p) => {
+  supabase.channel('linked-users').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_profiles' }, async (p: any) => {
     if (p.new.discord_id) await grantVerifiedRole(p.new.discord_id);
   }).subscribe();
 });
 
-client.on(Events.MessageCreate, async m => {
+client.on(Events.MessageCreate, async (m: any) => {
   if (m.author.bot || !m.guild) return;
 
-  const hasBannedLink = BANNED_LINKS.some(r => r.test(m.content));
+  const hasBannedLink = BANNED_LINKS.some((r: any) => r.test(m.content));
   if (hasBannedLink && !m.member?.permissions.has(PermissionFlagsBits.ManageMessages)) {
-    try { await m.delete(); m.channel.send({ content: `🚫 No invites, ${m.author}` }).then(msg => setTimeout(() => msg.delete(), 5000)); } catch (e) {}
+    try { await m.delete(); m.channel.send({ content: `🚫 No invites, ${m.author}` }).then((msg: any) => setTimeout(() => msg.delete(), 5000)); } catch (e) {}
     return;
   }
 
   const now = Date.now();
-  const userMessages = (messageCache.get(m.author.id) || []).filter(ts => now - ts < SPAM_INTERVAL);
+  const userMessages = (messageCache.get(m.author.id) || []).filter((ts: number) => now - ts < SPAM_INTERVAL);
   userMessages.push(now);
   messageCache.set(m.author.id, userMessages);
 
@@ -102,7 +102,7 @@ client.on(Events.MessageCreate, async m => {
   }
 });
 
-client.on(Events.InteractionCreate, async i => {
+client.on(Events.InteractionCreate, async (i: any) => {
   if (!i.isChatInputCommand()) return;
   if (i.commandName === 'link') {
     await i.deferReply({ ephemeral: true });
@@ -160,7 +160,7 @@ client.on(Events.InteractionCreate, async i => {
         } catch (e) { console.warn(`Skipping ${c.name}`); }
       }
 
-      let info = guild.channels.cache.find(c => c.name === verifyChannelName);
+      let info = guild.channels.cache.find((c: any) => c.name === verifyChannelName);
       if (!info) {
         info = await guild.channels.create({ name: verifyChannelName, type: ChannelType.GuildText, permissionOverwrites: [{ id: ev.id, allow: [PermissionFlagsBits.ViewChannel], deny: [PermissionFlagsBits.SendMessages] }] });
         await (info as any).send({ embeds: [{ title: '🔐 Access the Server', description: 'Welcome to Repdox! Type `/link` to verify.', color: 0x7c3aed }] });
