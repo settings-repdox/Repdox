@@ -38,6 +38,7 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const SolveForIndiaRegister = lazy(() => import("./pages/solveforindia/Register"));
 const AdminEvents = lazy(() => import("./pages/AdminEvents"));
+const Volunteer = lazy(() => import("./pages/Volunteer"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -70,6 +71,7 @@ function AppContent() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/volunteer" element={<Volunteer />} />
 
             {/* NEW: Email Verification Routes (Public - No Auth Required) */}
             <Route path="/verify-email" element={<VerifyEmail />} />
