@@ -328,15 +328,16 @@ export default function Nav() {
     ];
 
     return (
-      <CardNav
+        <CardNav
         logo={
           <span 
-            className="text-lg font-black tracking-[0.2em] uppercase"
+            className="text-base font-black tracking-[0.02em] uppercase whitespace-nowrap flex-shrink-0"
             style={{ 
               fontFamily: "'Outfit', sans-serif",
               background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              display: 'inline-block'
             }}
           >
             REPDOX
@@ -380,7 +381,7 @@ export default function Nav() {
             <Link to="/" className="flex-shrink-0 group relative py-2">
               <div className="flex items-center">
                 <span 
-                  className="text-2xl font-black tracking-[0.35em] transition-all duration-300"
+                  className="text-2xl font-black tracking-[0.15em] transition-all duration-300"
                   style={{ 
                     fontFamily: "'Outfit', sans-serif",
                     background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',
