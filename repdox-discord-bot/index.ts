@@ -40,13 +40,14 @@ const supabase = createClient(
 );
 
 const REPDOX_URL = 'https://repdox.com';
-const VERIFIED_ROLE_NAME = 'Coder';
+const VERIFIED_ROLE = 'Verified';
+const SFI_ROLE = 'Solve For India';
 
 const commands = [
-  new SlashCommandBuilder().setName('link').setDescription('Link your Repdox account'),
-  new SlashCommandBuilder().setName('sync').setDescription('Sync team roles'),
-  new SlashCommandBuilder().setName('setup-server').setDescription('Secure the server').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-].map(c => c.toJSON());
+  new SlashCommandBuilder().setName('link').setDescription('Link your Repdox account & verify'),
+  new SlashCommandBuilder().setName('sync').setDescription('Sync your event roles'),
+  new SlashCommandBuilder().setName('setup-server').setDescription('Set up community server structure').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+].map((c: any) => c.toJSON());
 
 async function registerCommands(guildId: string) {
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
@@ -55,28 +56,56 @@ async function registerCommands(guildId: string) {
   } catch (error) { console.error(error); }
 }
 
-async function grantVerifiedRole(discordId: string) {
+// Ensure a role exists, create if missing
+async function ensureRole(guild: any, name: string, color: string, hoist = false) {
+  let role = guild.roles.cache.find((r: any) => r.name === name);
+  if (!role) role = await guild.roles.create({ name, color, hoist });
+  return role;
+}
+
+// Grant Verified + event roles based on DB data
+async function grantRolesOnLink(discordId: string) {
   for (const guild of client.guilds.cache.values()) {
     try {
       const member = await guild.members.fetch(discordId).catch(() => null);
       if (!member) continue;
-      let role = guild.roles.cache.find((r: any) => r.name === VERIFIED_ROLE_NAME);
-      if (!role) role = await guild.roles.create({ name: VERIFIED_ROLE_NAME, color: 'Purple', hoist: true });
-      if (!member.roles.cache.has(role.id)) await member.roles.add(role);
-    } catch (e) { console.error(e); }
+
+      // 1. Always grant Verified
+      const verifiedRole = await ensureRole(guild, VERIFIED_ROLE, 'Green', true);
+      if (!member.roles.cache.has(verifiedRole.id)) await member.roles.add(verifiedRole);
+
+      // 2. Check if registered for Solve For India
+      const { data: profile } = await supabase.from('user_profiles').select('user_id').eq('discord_id', discordId).maybeSingle();
+      if (!profile) continue;
+
+      const { data: regs } = await supabase.from('event_registrations').select('events(title), event_teams(name)').eq('user_id', profile.user_id);
+      for (const reg of ((regs ?? []) as any[])) {
+        if (reg.events?.title?.toLowerCase().includes('solve for india')) {
+          const sfiRole = await ensureRole(guild, SFI_ROLE, 'Orange', true);
+          if (!member.roles.cache.has(sfiRole.id)) await member.roles.add(sfiRole);
+        }
+        if (reg.event_teams?.name) {
+          const teamRole = await ensureRole(guild, reg.event_teams.name, 'Blue');
+          if (!member.roles.cache.has(teamRole.id)) await member.roles.add(teamRole);
+        }
+      }
+    } catch (e) { console.error('[grantRoles]', e); }
   }
 }
 
+// ── Bot Ready ──
 client.once(Events.ClientReady, (c: any) => {
   console.log(`🚀 Ready! Logged in as ${c.user.tag}`);
-  c.user.setPresence({ status: 'online', activities: [{ name: 'Repdox', type: 3 }] });
+  c.user.setPresence({ status: 'online', activities: [{ name: 'Repdox Community', type: 3 }] });
   c.guilds.cache.forEach((guild: any) => registerCommands(guild.id));
   
+  // Real-time: auto-grant roles when someone links on the website
   supabase.channel('linked-users').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_profiles' }, async (p: any) => {
-    if (p.new.discord_id) await grantVerifiedRole(p.new.discord_id);
+    if (p.new.discord_id) await grantRolesOnLink(p.new.discord_id);
   }).subscribe();
 });
 
+// ── Anti-Spam & Auto-Mod ──
 client.on(Events.MessageCreate, async (m: any) => {
   if (m.author.bot || !m.guild) return;
 
@@ -102,79 +131,97 @@ client.on(Events.MessageCreate, async (m: any) => {
   }
 });
 
+// ── Slash Commands ──
 client.on(Events.InteractionCreate, async (i: any) => {
   if (!i.isChatInputCommand()) return;
+
+  // ── /link ──
   if (i.commandName === 'link') {
     await i.deferReply({ ephemeral: true });
     const token = uuidv4();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
-    await supabase.from('discord_link_requests').insert({ 
-      token, 
-      discord_id: i.user.id, 
-      discord_username: i.user.tag,
-      expires_at: expiresAt
-    });
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await supabase.from('discord_link_requests').insert({ token, discord_id: i.user.id, discord_username: i.user.tag, expires_at: expiresAt });
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setLabel('Confirm Link').setURL(`${REPDOX_URL}/auth/discord-link?token=${token}`).setStyle(ButtonStyle.Link),
-      new ButtonBuilder().setLabel('Create Account').setURL(`${REPDOX_URL}/signup`).setStyle(ButtonStyle.Link)
+      new ButtonBuilder().setLabel('✅ Verify & Link').setURL(`${REPDOX_URL}/auth/discord-link?token=${token}`).setStyle(ButtonStyle.Link),
+      new ButtonBuilder().setLabel('📝 Create Account').setURL(`${REPDOX_URL}/signup`).setStyle(ButtonStyle.Link)
     );
-    await i.editReply({ content: '🔗 Click below to link your account to get the **Coder** role.\n*Don\'t have an account? Click the register button first!*', components: [row] });
+    await i.editReply({ content: '🔐 **Verify your identity** to access the server.\n\n> Already have a Repdox account? Click **Verify & Link**.\n> New here? Click **Create Account** first, then come back and run `/link` again.', components: [row] });
+
+  // ── /sync ──
   } else if (i.commandName === 'sync') {
     await i.deferReply({ ephemeral: true });
     const guild = i.guild; if (!guild) return;
     try {
       const { data: p, error: profileError } = await supabase.from('user_profiles').select('user_id').eq('discord_id', i.user.id).maybeSingle();
       if (profileError) throw profileError;
-      if (!p) return i.editReply('❌ Your Discord is not linked yet. Use `/link` first, then click "Confirm Link" on the Repdox website.');
-      await grantVerifiedRole(i.user.id);
-      const { data: regs, error: regsError } = await supabase.from('event_registrations').select('events(title), event_teams(name)').eq('user_id', p.user_id);
-      if (regsError) throw regsError;
-      const member = i.member as GuildMember;
-      let added: string[] = [];
-      for (const reg of ((regs ?? []) as any[])) {
-        if (reg.events?.title?.toLowerCase().includes('solve for india')) {
-          let r = guild.roles.cache.find((ro: any) => ro.name === 'Solve For India');
-          if (!r) r = await guild.roles.create({ name: 'Solve For India', color: 'Orange' });
-          if (!member.roles.cache.has(r.id)) { await member.roles.add(r); added.push('Solve For India'); }
-        }
-        if (reg.event_teams?.name) {
-          let r = guild.roles.cache.find((ro: any) => ro.name === reg.event_teams.name);
-          if (!r) r = await guild.roles.create({ name: reg.event_teams.name, color: 'Blue' });
-          if (!member.roles.cache.has(r.id)) { await member.roles.add(r); added.push(reg.event_teams.name); }
-        }
-      }
-      await i.editReply(added.length ? `✅ Synced roles: ${added.join(', ')}` : 'ℹ️ Account verified! No new roles to sync yet.');
-    } catch (e) { console.error('[sync]', e); await i.editReply('❌ Sync failed. Please try again later.'); }
+      if (!p) return i.editReply('❌ Your Discord is not linked yet. Use `/link` first.');
+
+      await grantRolesOnLink(i.user.id);
+      await i.editReply('✅ Roles synced! Check your profile — any event roles have been added.');
+    } catch (e) { console.error('[sync]', e); await i.editReply('❌ Sync failed.'); }
+
+  // ── /setup-server ──
   } else if (i.commandName === 'setup-server') {
     await i.deferReply({ ephemeral: true });
     const guild = i.guild; if (!guild) return;
     try {
-      let coderRole = guild.roles.cache.find((r: any) => r.name === VERIFIED_ROLE_NAME);
-      if (!coderRole) coderRole = await guild.roles.create({ name: VERIFIED_ROLE_NAME, color: 'Purple', hoist: true });
       const ev = guild.roles.everyone;
+      const verifiedRole = await ensureRole(guild, VERIFIED_ROLE, 'Green', true);
+      const sfiRole = await ensureRole(guild, SFI_ROLE, 'Orange', true);
+
+      // ── Create category: SOLVE FOR INDIA (only SFI role can see) ──
+      let sfiCategory = guild.channels.cache.find((c: any) => c.name === '── Solve For India ──' && c.type === ChannelType.GuildCategory);
+      if (!sfiCategory) {
+        sfiCategory = await guild.channels.create({
+          name: '── Solve For India ──', type: ChannelType.GuildCategory,
+          permissionOverwrites: [
+            { id: ev.id, deny: [PermissionFlagsBits.ViewChannel] },
+            { id: sfiRole.id, allow: [PermissionFlagsBits.ViewChannel] }
+          ]
+        });
+        // Create SFI-specific channels
+        for (const name of ['sfi-announcements', 'sfi-general', 'sfi-teams', 'sfi-submissions']) {
+          await guild.channels.create({ name, type: ChannelType.GuildText, parent: sfiCategory.id });
+        }
+        await guild.channels.create({ name: 'SFI Voice', type: ChannelType.GuildVoice, parent: sfiCategory.id });
+      }
+
+      // ── Lock all existing channels for @everyone, open for Verified ──
       const channels = await guild.channels.fetch();
       const verifyChannelName = 'verify-here';
 
       for (const c of channels.values()) {
         if (!c) continue;
         try {
-          if (c.name === verifyChannelName) {
-            await (c as any).permissionOverwrites.edit(ev, { ViewChannel: true, SendMessages: false });
-            await (c as any).permissionOverwrites.edit(coderRole, { ViewChannel: true, SendMessages: true });
-          } else if (c.type === ChannelType.GuildText || c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildCategory) {
+          if (c.name === verifyChannelName) continue; // skip verify channel
+          if (c.name?.startsWith('sfi-') || c.name === 'SFI Voice' || c.name === '── Solve For India ──') continue; // skip SFI channels
+          if (c.type === ChannelType.GuildText || c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildCategory) {
             await (c as any).permissionOverwrites.edit(ev, { ViewChannel: false });
-            await (c as any).permissionOverwrites.edit(coderRole, { ViewChannel: true });
+            await (c as any).permissionOverwrites.edit(verifiedRole, { ViewChannel: true });
           }
         } catch (e) { console.warn(`Skipping ${c.name}`); }
       }
 
+      // ── Create #verify-here ──
       let info = guild.channels.cache.find((c: any) => c.name === verifyChannelName);
       if (!info) {
-        info = await guild.channels.create({ name: verifyChannelName, type: ChannelType.GuildText, permissionOverwrites: [{ id: ev.id, allow: [PermissionFlagsBits.ViewChannel], deny: [PermissionFlagsBits.SendMessages] }] });
-        await (info as any).send({ embeds: [{ title: '🔐 Access the Server', description: 'Welcome to Repdox! Type `/link` to verify.', color: 0x7c3aed }] });
+        info = await guild.channels.create({
+          name: verifyChannelName, type: ChannelType.GuildText,
+          permissionOverwrites: [
+            { id: ev.id, allow: [PermissionFlagsBits.ViewChannel], deny: [PermissionFlagsBits.SendMessages] },
+            { id: verifiedRole.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
+          ]
+        });
       }
-      await i.editReply('✅ Server Lockdown & Verification Gate active.');
-    } catch (e) { await i.editReply('❌ Setup failed.'); }
+      await (info as any).send({ embeds: [{
+        title: '🔐 Welcome to the Repdox Community',
+        description: '**This server requires verification.**\n\nTo unlock all channels:\n1. Type `/link`\n2. Click **Verify & Link** and sign in to your Repdox account\n3. You will automatically receive the **Verified** role ✅\n\n🏆 **Registered for Solve For India?**\nYour hackathon channels will unlock automatically after verification!',
+        color: 0x7c3aed,
+        footer: { text: 'Repdox — Think. Build. Transform.' }
+      }] });
+
+      await i.editReply('✅ Community server setup complete!\n• **Verified** role created (unlocks general channels)\n• **Solve For India** category + channels created (unlocks for registered participants)\n• **#verify-here** gate active');
+    } catch (e) { console.error('[setup]', e); await i.editReply('❌ Setup failed.'); }
   }
 });
 
