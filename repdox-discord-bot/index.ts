@@ -117,13 +117,15 @@ client.on(Events.InteractionCreate, async (i: any) => {
     await i.deferReply({ ephemeral: true });
     const guild = i.guild; if (!guild) return;
     try {
-      const { data: p } = await supabase.from('user_profiles').select('user_id').eq('discord_id', i.user.id).single();
-      if (!p) return i.editReply('❌ Not linked. Use `/link`.');
+      const { data: p, error: profileError } = await supabase.from('user_profiles').select('user_id').eq('discord_id', i.user.id).maybeSingle();
+      if (profileError) throw profileError;
+      if (!p) return i.editReply('❌ Your Discord is not linked yet. Use `/link` first, then click "Confirm Link" on the Repdox website.');
       await grantVerifiedRole(i.user.id);
-      const { data: regs } = await supabase.from('event_registrations').select('events(title), event_teams(name)').eq('user_id', p.user_id);
+      const { data: regs, error: regsError } = await supabase.from('event_registrations').select('events(title), event_teams(name)').eq('user_id', p.user_id);
+      if (regsError) throw regsError;
       const member = i.member as GuildMember;
       let added: string[] = [];
-      for (const reg of (regs as any[])) {
+      for (const reg of ((regs ?? []) as any[])) {
         if (reg.events?.title?.toLowerCase().includes('solve for india')) {
           let r = guild.roles.cache.find((ro: any) => ro.name === 'Solve For India');
           if (!r) r = await guild.roles.create({ name: 'Solve For India', color: 'Orange' });
@@ -135,8 +137,8 @@ client.on(Events.InteractionCreate, async (i: any) => {
           if (!member.roles.cache.has(r.id)) { await member.roles.add(r); added.push(reg.event_teams.name); }
         }
       }
-      await i.editReply(added.length ? `✅ Synced: ${added.join(', ')}` : 'ℹ️ Already up to date.');
-    } catch (e) { await i.editReply('❌ Sync failed.'); }
+      await i.editReply(added.length ? `✅ Synced roles: ${added.join(', ')}` : 'ℹ️ Account verified! No new roles to sync yet.');
+    } catch (e) { console.error('[sync]', e); await i.editReply('❌ Sync failed. Please try again later.'); }
   } else if (i.commandName === 'setup-server') {
     await i.deferReply({ ephemeral: true });
     const guild = i.guild; if (!guild) return;
