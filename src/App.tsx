@@ -16,6 +16,7 @@ import LightPillarBackground from "@/components/BackgroundSystem/LightPillarBack
 import Footer from "@/components/Footer";
 import { useLocation } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 // Implement code splitting
 
 // Lazy load pages
@@ -185,6 +186,7 @@ const App = () => {
   return (
     <ThemeProvider>
       <Analytics />
+      <SpeedInsights />
       <BackgroundProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
