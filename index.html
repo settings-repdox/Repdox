@@ -27,7 +27,19 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- SEO Pre-render: Bots will see this before React loads -->
+      <header style="display:none;">
+        <h1>Repdox - Think. Build. Transform.</h1>
+        <p>Join hackathons, MUNs, gaming tournaments and workshops that spark change.</p>
+        <nav>
+          <a href="/events">Events</a>
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
+          <a href="/volunteer">Volunteer</a>
+        </nav>
+      </header>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
