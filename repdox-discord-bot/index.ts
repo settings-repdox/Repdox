@@ -78,7 +78,8 @@ async function grantRolesOnLink(discordId: string) {
       const { data: profile } = await supabase.from('user_profiles').select('user_id').eq('discord_id', discordId).maybeSingle();
       if (!profile) continue;
 
-      const { data: regs } = await supabase.from('event_registrations').select('events(title), event_teams(name)').eq('user_id', profile.user_id);
+      const { data: regs, error: regsError } = await supabase.from('event_registrations').select('events!event_registrations_event_id_fkey(title), event_teams(name)').eq('user_id', profile.user_id);
+      if (regsError) console.error('[grantRoles] regsError:', regsError);
       for (const reg of ((regs ?? []) as any[])) {
         if (reg.events?.title?.toLowerCase().includes('solve for india')) {
           const sfiRole = await ensureRole(guild, SFI_ROLE, 'Orange', true);
