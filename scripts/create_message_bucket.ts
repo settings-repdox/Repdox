@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { createClient } from '@supabase/supabase-js';
 
 // Usage: set SUPABASE_URL and SUPABASE_SERVICE_KEY env vars then run `ts-node scripts/create_message_bucket.ts`

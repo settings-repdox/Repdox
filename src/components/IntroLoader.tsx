@@ -43,18 +43,40 @@ export default function IntroLoader({ onComplete }: { onComplete: () => void }) 
       animate={{ opacity: isExiting ? 0 : 1 }}
       transition={{ duration: 0.8, ease: "easeInOut" }}
     >
-      {/* Dynamic Background Glow */}
-      <motion.div
-        className="absolute inset-0 opacity-30"
-        animate={{
-          background: [
-            "radial-gradient(circle at 50% 50%, rgba(168,85,247,0.2) 0%, rgba(0,0,0,0) 50%)",
-            "radial-gradient(circle at 50% 50%, rgba(236,72,153,0.2) 0%, rgba(0,0,0,0) 50%)",
-            "radial-gradient(circle at 50% 50%, rgba(168,85,247,0.2) 0%, rgba(0,0,0,0) 50%)"
-          ]
-        }}
-        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-      />
+      {/* Light Pillar Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+        {/* Center pillar */}
+        <motion.div
+          className="absolute w-[20vw] h-[150vh] bg-gradient-to-b from-transparent via-purple-500/30 to-transparent blur-[60px]"
+          style={{ willChange: "transform, opacity" }}
+          animate={{
+            rotate: [0, 5, -5, 0],
+            scale: [1, 1.1, 0.9, 1],
+            opacity: [0.4, 0.7, 0.4]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {/* Left pillar */}
+        <motion.div
+          className="absolute w-[15vw] h-[150vh] bg-gradient-to-b from-transparent via-pink-500/20 to-transparent blur-[80px]"
+          style={{ willChange: "transform, opacity" }}
+          animate={{
+            rotate: [-15, -10, -20, -15],
+            scale: [0.8, 1, 0.8],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {/* Right pillar */}
+        <motion.div
+          className="absolute w-[10vw] h-[150vh] bg-gradient-to-b from-transparent via-blue-500/20 to-transparent blur-[50px]"
+          style={{ willChange: "transform, opacity" }}
+          animate={{
+            rotate: [15, 20, 10, 15],
+            scale: [1, 0.8, 1],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
       
       <div className="relative w-[320px] h-[180px]">
         {loadingStages.map((stage, i) => {

@@ -303,8 +303,8 @@ export default function AddEvent() {
         setForm({
           title: event.title || "",
           slug: event.slug || "",
-          type: event.type || "Hackathon",
-          format: event.format || "Offline",
+          type: String(event.type || "Hackathon"),
+          format: String(event.format || "Offline"),
           start_date: startDate.toISOString().split("T")[0],
           start_time: startDate.toTimeString().slice(0, 5),
           end_date: endDate.toISOString().split("T")[0],
@@ -1498,7 +1498,7 @@ export default function AddEvent() {
             prizeText={prizeText}
             setPrizeText={setPrizeText}
             faqs={faqs}
-            setFaqs={setFaqs}
+            setFaqs={(v) => setFaqs(v.map((f, i) => ({ id: faqs[i]?.id ?? Date.now().toString() + i, ...f })))}
             speakers={speakers}
             setSpeakers={setSpeakers}
             resources={resources}

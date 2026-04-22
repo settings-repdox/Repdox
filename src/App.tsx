@@ -12,6 +12,7 @@ import IntroLoader from "@/components/IntroLoader";
 import Nav from "@/components/Nav";
 import CommandPalette from "@/components/CommandPalette";
 import { BackgroundProvider } from "@/components/BackgroundSystem/BackgroundContext";
+import LightPillarBackground from "@/components/BackgroundSystem/LightPillarBackground";
 import Footer from "@/components/Footer";
 import { useLocation } from "react-router-dom";
 // Implement code splitting
@@ -189,6 +190,7 @@ const App = () => {
             <Sonner />
 
             <BrowserRouter>
+              {!showIntro && <LightPillarBackground />}
               <CommandPalette />
               {showIntro && <IntroLoader onComplete={handleIntroComplete} />}
               <AppContent />
