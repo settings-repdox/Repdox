@@ -1,96 +1,100 @@
-'use client';
-
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+
+const loadingStages = [
+  "Loading About page...",
+  "Loading Volunteer's page...",
+  "Loading Events...",
+  "Loading Community...",
+  "Loaded Repdox"
+];
 
 export default function IntroLoader({ onComplete }: { onComplete: () => void }) {
-  const [stage, setStage] = useState('enter');
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    // Improved timing: slower entry, longer hold, smoother exit
-    const enterTimer = setTimeout(() => setStage('hold'), 300); // Was 100ms, now 300ms for calmer entry
-    const holdTimer = setTimeout(() => setStage('exit'), 2200); // Was 2000ms, now 2200ms for better rhythm
-    const exitTimer = setTimeout(onComplete, 3200); // Was 4000ms, now 3200ms for tighter overall duration
-
-    return () => {
-      clearTimeout(enterTimer);
-      clearTimeout(holdTimer);
-      clearTimeout(exitTimer);
-    };
-  }, [onComplete]);
+    if (currentIndex < loadingStages.length - 1) {
+      const timer = setTimeout(() => {
+        setCurrentIndex((prev) => prev + 1);
+      }, 1000); // 1 second per card
+      return () => clearTimeout(timer);
+    } else {
+      // Hold on the last card briefly before completing the loader
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, onComplete]);
 
   return (
-    <div
-      className={`intro-loader ${stage}`}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#000000',
-        // Improved: Smoother fade with longer duration and refined easing
-        transition: 'opacity 800ms cubic-bezier(0.4, 0.0, 0.2, 1)',
-        opacity: stage === 'exit' ? 0 : 1,
-        // Subtle scale on exit for depth perception
-        transform: stage === 'exit' ? 'scale(1.02)' : 'scale(1)',
-      }}
-    >
-      <div style={{ textAlign: 'center' }}>
-        <h1
-          style={{
-            fontSize: '4.5rem',
-            fontWeight: 'bold',
-            margin: 0,
-            fontFamily: "'Syncopate', sans-serif",
-            letterSpacing: '0.2em',
-            background: 'linear-gradient(to left, #ffffff, #a855f7, #ec4899)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            // Improved: Gentler Y movement with slight scale for natural motion
-            transform: stage === 'enter' 
-              ? 'translateY(40px) scale(0.95)' 
-              : stage === 'exit'
-              ? 'translateY(-10px) scale(1.02)'
-              : 'translateY(0) scale(1)',
-            // Improved: Separate opacity timing for layered reveal
-            opacity: stage === 'enter' ? 0 : stage === 'exit' ? 0 : 1,
-            // Improved: Longer duration with refined easing for premium feel
-            transition: 'opacity 1000ms cubic-bezier(0.4, 0.0, 0.2, 1), transform 1000ms cubic-bezier(0.4, 0.0, 0.2, 1)',
-          }}
-        >
-          REPDOX
-        </h1>
-        
-        {/* Improved: Bars now reveal sequentially with mask effect instead of scale */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '8px', 
-          justifyContent: 'center', 
-          marginTop: '2rem',
-          // Improved: Bars fade in after text for intentional sequencing
-          opacity: stage === 'enter' ? 0 : stage === 'exit' ? 0 : 1,
-          transform: stage === 'exit' ? 'translateY(10px)' : 'translateY(0)',
-          transition: 'all 700ms cubic-bezier(0.4, 0.0, 0.2, 1) 300ms',
-        }}>
-          {[0, 1, 2].map((i) => (
-            <div
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black overflow-hidden">
+      {/* Dynamic Background Glow */}
+      <motion.div
+        className="absolute inset-0 opacity-30"
+        animate={{
+          background: [
+            "radial-gradient(circle at 50% 50%, rgba(168,85,247,0.2) 0%, rgba(0,0,0,0) 50%)",
+            "radial-gradient(circle at 50% 50%, rgba(236,72,153,0.2) 0%, rgba(0,0,0,0) 50%)",
+            "radial-gradient(circle at 50% 50%, rgba(168,85,247,0.2) 0%, rgba(0,0,0,0) 50%)"
+          ]
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+      />
+      
+      <div className="relative w-[320px] h-[180px]">
+        {loadingStages.map((stage, i) => {
+          const isSwapped = i < currentIndex;
+          const isActive = i === currentIndex;
+          const isBelow = i > currentIndex;
+          const offset = i - currentIndex;
+
+          return (
+            <motion.div
               key={i}
-              style={{
-                width: '40px',
-                height: '4px',
-                backgroundColor: '#8B5CF6',
-                borderRadius: '2px',
-                // Improved: Use clip-path for smoother reveal instead of scaleX
-                clipPath: stage === 'enter' || stage === 'exit' 
-                  ? 'inset(0 0 0 100%)' 
-                  : 'inset(0 0 0 0)',
-                // Improved: Staggered timing refined for better rhythm
-                transition: `clip-path 600ms cubic-bezier(0.4, 0.0, 0.2, 1) ${400 + i * 120}ms`,
+              className="absolute inset-0 flex items-center justify-center rounded-3xl bg-zinc-900/80 backdrop-blur-md border border-white/10"
+              initial={{
+                scale: 0.8,
+                y: 50,
+                opacity: 0,
+                boxShadow: "0px 8px 30px 0px rgba(0, 0, 0, 0.4)"
               }}
-            />
-          ))}
-        </div>
+              animate={{
+                scale: isSwapped ? 0.9 : isActive ? 1 : 1 - offset * 0.08,
+                y: isSwapped ? -200 : isActive ? 0 : offset * 20,
+                x: isSwapped ? -200 : 0,
+                rotate: isSwapped ? -15 : 0,
+                opacity: isSwapped ? 0 : isActive ? 1 : 1 - offset * 0.3,
+                zIndex: loadingStages.length - i,
+                boxShadow: isActive 
+                  ? "0px 0px 50px 10px rgba(168, 85, 247, 0.5), 0px 0px 100px 20px rgba(236, 72, 153, 0.3)"
+                  : "0px 8px 30px 0px rgba(0, 0, 0, 0.4)"
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 250,
+                damping: 25,
+                mass: 0.8
+              }}
+            >
+              <h2
+                className={`text-xl font-bold px-6 text-center ${
+                  i === loadingStages.length - 1
+                    ? "text-4xl tracking-widest font-black uppercase"
+                    : ""
+                }`}
+                style={{
+                  fontFamily: i === loadingStages.length - 1 ? "'Syncopate', sans-serif" : "inherit",
+                  background: "linear-gradient(to right, #ffffff, #a855f7, #ec4899)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                {stage}
+              </h2>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

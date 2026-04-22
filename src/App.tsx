@@ -9,7 +9,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import IntroLoader from "@/components/IntroLoader";
-import PageLoader from "@/components/PageLoader";
 import Nav from "@/components/Nav";
 import CommandPalette from "@/components/CommandPalette";
 import { BackgroundProvider } from "@/components/BackgroundSystem/BackgroundContext";
@@ -136,8 +135,6 @@ function AppContent() {
 
 const App = () => {
   const [showIntro, setShowIntro] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(false);
-  const loadingTimeoutRef = useRef<number | null>(null);
   const isFirstLoad = useRef(true);
 
   // Check if intro should be shown (only on first session)
@@ -151,82 +148,13 @@ const App = () => {
         // Coming from navigation, don't show anything
       } else if (!hasSeenIntro) {
         setShowIntro(true); // Show intro only if NOT seen before
-      } else {
-        // Reload - show top bar on initial page load
-        setIsPageLoading(true);
-        loadingTimeoutRef.current = window.setTimeout(() => {
-          setIsPageLoading(false);
-          loadingTimeoutRef.current = null;
-        }, 900);
       }
     } catch (e) {
       console.warn("[App] Error determining intro display:", e);
     }
-
-    return () => {
-      if (loadingTimeoutRef.current) {
-        window.clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-    };
   }, []);
 
-  // Show top bar loading on navigation clicks
   useEffect(() => {
-    // Skip setting up navigation listeners until intro is complete
-    if (showIntro && isFirstLoad.current) {
-      return;
-    }
-
-    const showTempLoading = () => {
-      setIsPageLoading(true);
-      if (loadingTimeoutRef.current) {
-        window.clearTimeout(loadingTimeoutRef.current);
-      }
-      loadingTimeoutRef.current = window.setTimeout(() => {
-        setIsPageLoading(false);
-        loadingTimeoutRef.current = null;
-      }, 900);
-    };
-
-    const onClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      const anchor =
-        target.closest && (target.closest("a") as HTMLAnchorElement | null);
-      if (!anchor) return;
-      const href = anchor.getAttribute("href");
-      if (
-        !href ||
-        href.startsWith("#") ||
-        href.startsWith("mailto:") ||
-        href.startsWith("tel:")
-      )
-        return;
-      try {
-        const url = new URL(href, window.location.href);
-        if (url.origin !== window.location.origin) return;
-      } catch {
-        return;
-      }
-
-      // Prevent default navigation
-      e.preventDefault();
-
-      // Start loading animation
-      setIsPageLoading(true);
-
-      try {
-        const url = new URL(href);
-        const path = url.pathname + url.search + url.hash;
-        window.history.pushState({}, "", path);
-        window.dispatchEvent(new PopStateEvent("popstate"));
-        setIsPageLoading(false);
-      } catch (err) {
-        window.location.href = href;
-      }
-    };
-
     const onPop = () => {
       try {
         sessionStorage.setItem("skipInitialLoad", "true");
@@ -235,18 +163,12 @@ const App = () => {
       }
     };
 
-    document.addEventListener("click", onClick);
     window.addEventListener("popstate", onPop);
 
     return () => {
-      document.removeEventListener("click", onClick);
       window.removeEventListener("popstate", onPop);
-      if (loadingTimeoutRef.current) {
-        window.clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
     };
-  }, [showIntro]);
+  }, []);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
@@ -269,7 +191,6 @@ const App = () => {
             <BrowserRouter>
               <CommandPalette />
               {showIntro && <IntroLoader onComplete={handleIntroComplete} />}
-              {isPageLoading && !showIntro && <PageLoader />}
               <AppContent />
             </BrowserRouter>
           </TooltipProvider>
