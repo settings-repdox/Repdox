@@ -356,7 +356,7 @@ export default function EventDetail() {
       if (!event?.id) return [];
       const { data, error } = await supabase
         .from("event_registrations")
-        .select("id, name, message")
+        .select("id, name, message, team_id")
         .eq("event_id", event.id);
       if (error) throw error;
       return data || [];
@@ -366,9 +366,13 @@ export default function EventDetail() {
 
   const teams = rawTeams.map(team => {
     const members = registrations.filter(r => {
+      // 1. Try matching by relational team_id (Newer "Solve For India" style)
+      if (r.team_id && r.team_id === team.id) return true;
+
+      // 2. Try matching by string name in message (Legacy / Generic style)
       try {
         const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
-        const teamName = msg.participation?.teamName || msg.teamName;
+        const teamName = msg?.participation?.teamName || msg?.teamName;
         return teamName && teamName.toLowerCase() === team.name.toLowerCase();
       } catch (e) {
         return false;
