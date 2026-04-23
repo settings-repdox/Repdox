@@ -13,12 +13,8 @@ export default function AdminScanner() {
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [events, setEvents] = useState<any[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string>("");
-  const [manualId, setManualId] = useState("");
-  const [showManual, setShowManual] = useState(false);
+  const [scanStatus, setScanStatus] = useState<string>("Ready to scan");
+  const [scanColor, setScanColor] = useState<string>("border-purple-500");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,42 +81,48 @@ export default function AdminScanner() {
   }, [isAdmin]);
 
   const processScan = async (qrData: string) => {
-    if (processing || qrData === lastScanned) return;
     setProcessing(true);
+    setScanStatus("Processing...");
+    setScanColor("border-yellow-500");
 
     try {
-      const parsed = JSON.parse(qrData);
-      const { user_id, event_id, registration_id } = parsed;
+      let user_id, event_id, registration_id;
 
-      if (!user_id || !event_id || !registration_id) {
-        throw new Error("Invalid QR code format.");
+      if (qrData.includes('|')) {
+        // New shortened format: userid|eventid|regid
+        const parts = qrData.split('|');
+        user_id = parts[0];
+        event_id = parts[1];
+        registration_id = parts[2];
+      } else {
+        // Fallback for old JSON format
+        const parsed = JSON.parse(qrData);
+        user_id = parsed.user_id;
+        event_id = parsed.event_id;
+        registration_id = parsed.registration_id;
       }
 
-      // 1. Get Event Details to know which table to query and check time restrictions
+      if (!registration_id) throw new Error("Invalid QR format");
+
+      // 1. Get Event Details
       const { data: eventData, error: eventErr } = await supabase
         .from("events")
-        .select("slug, id, check_in_start, check_in_end")
-        .eq("id", event_id)
+        .select("slug, id, title, check_in_start, check_in_end")
+        .eq("id", event_id || selectedEventId) // Prefer ID from QR, fallback to dropdown
         .single();
 
-      if (eventErr || !eventData) {
-        throw new Error("Event not found in database.");
-      }
+      if (eventErr || !eventData) throw new Error("Event not found");
 
       const { data: adminUser } = await supabase.auth.getUser();
-      const adminEmail = adminUser?.user?.email?.toLowerCase() || "";
-      const isMainAdmin = ADMIN_EMAILS.includes(adminEmail);
+      const isMainAdmin = ADMIN_EMAILS.includes(adminUser?.user?.email?.toLowerCase() || "");
 
-      // Check time window if not a main admin
       if (!isMainAdmin) {
-        const nowMs = Date.now();
-        if (eventData.check_in_start) {
-          const startMs = new Date(eventData.check_in_start).getTime();
-          if (nowMs < startMs) throw new Error("Check-in hasn't started yet for this event.");
+        const now = Date.now();
+        if (eventData.check_in_start && now < new Date(eventData.check_in_start).getTime()) {
+          throw new Error(`Too early. Opens at ${new Date(eventData.check_in_start).toLocaleTimeString()}`);
         }
-        if (eventData.check_in_end) {
-          const endMs = new Date(eventData.check_in_end).getTime();
-          if (nowMs > endMs) throw new Error("Check-in is closed for this event.");
+        if (eventData.check_in_end && now > new Date(eventData.check_in_end).getTime()) {
+          throw new Error("Check-in is closed.");
         }
       }
 
@@ -128,42 +130,39 @@ export default function AdminScanner() {
         ? `event_reg_${eventData.slug.toLowerCase().replace(/-/g, "_")}`
         : `event_reg_${eventData.id.replace(/-/g, "_")}`;
 
-      // 2. Update Check-in Status
-      const checkedInBy = adminEmail || "Admin";
-
       const { data: updatedReg, error: updateErr } = await supabase
         .from(tableName as any)
         .update({
           check_in_status: "checked_in",
           checked_in_at: new Date().toISOString(),
-          checked_in_by: checkedInBy
+          checked_in_by: adminUser?.user?.email || "Admin"
         })
         .eq("registration_id", registration_id)
-        .select("name, check_in_status")
+        .select("name")
         .single();
 
-      if (updateErr) {
-        if (updateErr.code === 'PGRST116') {
-           throw new Error("Registration ID not found for this event.");
-        }
-        throw new Error("Failed to update check-in status.");
-      }
+      if (updateErr) throw new Error("ID not found in registration list.");
 
-      toast.success(`Successfully checked in ${updatedReg.name}!`, {
-        icon: <CheckCircle className="text-green-500" />
-      });
-      
+      setScanStatus(`Success: ${updatedReg.name} checked in!`);
+      setScanColor("border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)]");
+      toast.success(`Checked in ${updatedReg.name}`);
       setLastScanned(qrData);
-      
-      // Reset last scanned after a few seconds so they can scan it again if needed
-      setTimeout(() => setLastScanned(null), 5000);
+      setTimeout(() => {
+        setLastScanned(null);
+        setScanStatus("Ready to scan");
+        setScanColor("border-purple-500");
+      }, 5000);
 
     } catch (err: any) {
-      toast.error(err.message || "Failed to process QR code", {
-        icon: <XCircle className="text-red-500" />
-      });
+      setScanStatus(`Error: ${err.message}`);
+      setScanColor("border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]");
+      toast.error(err.message);
       setLastScanned(qrData);
-      setTimeout(() => setLastScanned(null), 3000);
+      setTimeout(() => {
+        setLastScanned(null);
+        setScanStatus("Ready to scan");
+        setScanColor("border-purple-500");
+      }, 3000);
     } finally {
       setProcessing(false);
     }
@@ -240,15 +239,23 @@ export default function AdminScanner() {
     if (!videoRef.current || !canvasRef.current || !scanning) return;
 
     if (videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
-      canvasRef.current.height = videoRef.current.videoHeight;
-      canvasRef.current.width = videoRef.current.videoWidth;
-      const ctx = canvasRef.current.getContext("2d");
+      // Use a smaller processing canvas to speed up scanning on mobile
+      const width = videoRef.current.videoWidth;
+      const height = videoRef.current.videoHeight;
+      const scale = Math.min(1, 640 / Math.max(width, height));
+      
+      canvasRef.current.width = width * scale;
+      canvasRef.current.height = height * scale;
+      
+      const ctx = canvasRef.current.getContext("2d", { willReadFrequently: true });
       
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
         const imageData = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+        
+        // Boost sensitivity with 'attemptBoth' inversion attempt
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: "dontInvert",
+          inversionAttempts: "attemptBoth",
         });
 
         if (code) {
@@ -340,7 +347,7 @@ export default function AdminScanner() {
         </div>
 
         {/* Main Interface */}
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-white/5 bg-zinc-950">
+        <div className={`relative rounded-3xl overflow-hidden shadow-2xl border-2 bg-zinc-950 transition-all duration-300 ${scanColor}`}>
           {!showManual ? (
             <div className="relative aspect-[3/4]">
               {hasPermission === false && (
@@ -401,10 +408,26 @@ export default function AdminScanner() {
             <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50">
               <div className="flex flex-col items-center gap-4">
                 <div className="w-16 h-16 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
-                <span className="font-bold text-lg tracking-wide">Processing...</span>
+                <span className="font-bold text-lg tracking-wide">Verifying...</span>
               </div>
             </div>
           )}
+        </div>
+
+        {/* Live Status Message */}
+        <div className={`p-4 rounded-2xl border transition-all duration-300 flex items-center gap-3 ${
+          scanColor.includes('green') ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+          scanColor.includes('red') ? 'bg-red-500/10 border-red-500/20 text-red-400' :
+          scanColor.includes('yellow') ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
+          'bg-zinc-900 border-white/5 text-gray-400'
+        }`}>
+          <div className={`w-2 h-2 rounded-full animate-pulse ${
+            scanColor.includes('green') ? 'bg-green-500' :
+            scanColor.includes('red') ? 'bg-red-500' :
+            scanColor.includes('yellow') ? 'bg-yellow-500' :
+            'bg-purple-500'
+          }`} />
+          <span className="font-medium text-sm tracking-wide uppercase">{scanStatus}</span>
         </div>
 
         <div className="text-center">

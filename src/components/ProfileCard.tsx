@@ -155,12 +155,9 @@ const roleTheme = useMemo(() => {
 const qrData = useMemo(() => {
   // QR only used for event registration check-in. Do not expose profile URL via QR.
   if (mode === 'event' && eventRegistration) {
-    return JSON.stringify({
-      user_id: userData.user_id,
-      event_id: eventData?.id,
-      registration_id: eventRegistration.registration_id,
-      timestamp: new Date().toISOString()
-    });
+    // Shortened format: userid|eventid|regid
+    // This makes the QR code less dense and much easier to scan on mobile.
+    return `${userData.user_id || 'null'}|${eventData?.id || 'null'}|${eventRegistration.registration_id}`;
   }
   return null;
 }, [mode, userData, eventRegistration, eventData]);
