@@ -645,6 +645,16 @@ export type RegistrationRow = {
   message?: string | null;
   status?: string | null;
   role?: string | null;
+  team_id?: string | null;
+  school?: string | null;
+  year?: string | null;
+  stream?: string | null;
+  motivation?: string | null;
+  github?: string | null;
+  linkedin?: string | null;
+  participation_mode?: string | null;
+  expected_members?: number | null;
+  edit_count?: number | null;
 };
 
 export async function fetchEventRegistrations(eventId: string) {

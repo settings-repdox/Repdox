@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import eventService, { RegistrationRow } from "@/lib/eventService";
 import { toast } from "@/hooks/use-toast";
 import { formatDateTime } from "@/lib/timeUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function OrganizerRegistrations({
   eventId,
@@ -11,6 +12,7 @@ export default function OrganizerRegistrations({
   eventId: string;
 }) {
   const [registrations, setRegistrations] = useState<RegistrationRow[]>([]);
+  const [teamMap, setTeamMap] = useState<Record<string, string>>({});
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +24,21 @@ export default function OrganizerRegistrations({
       const regs = await eventService.fetchEventRegistrations(eventId);
       setRegistrations(regs);
       setCounts(await eventService.countRegistrationsByRole(eventId));
+
+      // Fetch team names for registrations with team_id
+      const teamIds = Array.from(new Set(regs.map(r => r.team_id).filter(Boolean))) as string[];
+      if (teamIds.length > 0) {
+        const { data: teams } = await supabase
+          .from("event_teams")
+          .select("id, name")
+          .in("id", teamIds);
+        
+        if (teams) {
+          const map: Record<string, string> = {};
+          teams.forEach(t => map[t.id] = t.name);
+          setTeamMap(map);
+        }
+      }
     } catch (err: any) {
       toast({
         title: "Failed to load registrations",
@@ -34,6 +51,8 @@ export default function OrganizerRegistrations({
   };
 
   const getTeamName = (r: RegistrationRow) => {
+    if (r.team_id && teamMap[r.team_id]) return teamMap[r.team_id];
+    
     try {
       if (!r.message) return "-";
       const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
