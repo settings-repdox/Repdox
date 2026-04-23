@@ -1149,7 +1149,7 @@ export default function AddEvent() {
               {/* Event Type */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Event Type (Select multiple)</Label>
+                  <Label>Event Type (Select one)</Label>
                   <div className="flex flex-wrap gap-2 p-2 rounded-lg bg-card/30 border border-border/50">
                     {["Hackathon", "Workshop"].map((t) => {
                       const isSelected = Array.isArray(form.type)
@@ -1161,13 +1161,7 @@ export default function AddEvent() {
                           variant={isSelected ? "default" : "outline"}
                           className={`cursor-pointer transition-all ${isSelected ? "bg-purple-600 hover:bg-purple-700" : "hover:border-purple-400"}`}
                           onClick={() => {
-                            const current = Array.isArray(form.type)
-                              ? form.type
-                              : [form.type].filter(Boolean);
-                            const next = current.includes(t)
-                              ? current.filter((x) => x !== t)
-                              : [...current, t];
-                            onChange("type", next);
+                            onChange("type", [t]);
                           }}
                         >
                           {t}
@@ -1178,7 +1172,7 @@ export default function AddEvent() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Format (Select multiple)</Label>
+                  <Label>Format (Select one)</Label>
                   <div className="flex flex-wrap gap-2 p-2 rounded-lg bg-card/30 border border-border/50">
                     {["Online", "Offline", "Hybrid"].map((f) => {
                       const isSelected = Array.isArray(form.format)
@@ -1190,13 +1184,7 @@ export default function AddEvent() {
                           variant={isSelected ? "default" : "outline"}
                           className={`cursor-pointer transition-all ${isSelected ? "bg-purple-600 hover:bg-purple-700" : "hover:border-purple-400"}`}
                           onClick={() => {
-                            const current = Array.isArray(form.format)
-                              ? form.format
-                              : [form.format].filter(Boolean);
-                            const next = current.includes(f)
-                              ? current.filter((x) => x !== f)
-                              : [...current, f];
-                            onChange("format", next);
+                            onChange("format", [f]);
                           }}
                         >
                           {f}

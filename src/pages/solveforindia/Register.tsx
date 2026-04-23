@@ -26,6 +26,7 @@ export default function SolveForIndiaRegister() {
   const [eventId, setEventId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [tableName, setTableName] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -126,36 +127,45 @@ export default function SolveForIndiaRegister() {
 
   useEffect(() => {
     const fetchEventAndRegistration = async () => {
-      // Fetch Event ID
+      // Fetch Event ID and Slug
       const { data: eventData } = await supabase
         .from("events")
-        .select("id")
+        .select("id, slug")
         .eq("slug", "SolveForIndia")
         .maybeSingle();
       
       let currentEventId = null;
+      let currentEventSlug = null;
+
       if (eventData) {
         currentEventId = eventData.id;
+        currentEventSlug = eventData.slug;
         setEventId(eventData.id);
       } else {
-        const { data: latest } = await supabase.from("events").select("id").limit(1).single();
+        const { data: latest } = await supabase.from("events").select("id, slug").limit(1).single();
         if (latest) {
           currentEventId = latest.id;
+          currentEventSlug = latest.slug;
           setEventId(latest.id);
         }
       }
 
+      const dynamicTableName = currentEventSlug ? `event_reg_${currentEventSlug.toLowerCase().replace(/-/g, '_')}` : null;
+      if (dynamicTableName) setTableName(dynamicTableName);
+
       // If user is authenticated and event ID is known, check for existing registration
-      if (userId && currentEventId) {
-        const { data: regData } = await supabase
-          .from("event_registrations")
+      if (userId && currentEventId && dynamicTableName) {
+        const { data: rawRegData } = await supabase
+          .from(dynamicTableName as any)
           .select("*")
           .eq("event_id", currentEventId)
           .eq("user_id", userId)
           .maybeSingle();
           
+        const regData = rawRegData as any;
+
         if (regData) {
-          setExistingReg(regData as unknown as SFIRegistration);
+          setExistingReg(regData as SFIRegistration);
           
           let teamName = "";
           if (regData.team_id) {
@@ -211,6 +221,7 @@ export default function SolveForIndiaRegister() {
 
     try {
       if (!eventId) throw new Error("Event ID not found. Please try again.");
+      if (!tableName) throw new Error("Event table not loaded. Please refresh.");
 
       // 1. Handle Team Creation/Selection (Only if not already in a team or changing it)
       let teamId = existingReg?.team_id || null;
@@ -264,13 +275,13 @@ export default function SolveForIndiaRegister() {
       if (existingReg) {
         registrationData.edit_count = (existingReg.edit_count || 0) + 1;
         const { error } = await supabase
-          .from("event_registrations")
+          .from(tableName as any)
           .update(registrationData as any)
           .eq("id", existingReg.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("event_registrations")
+          .from(tableName as any)
           .insert([registrationData as any]);
         if (error) {
           if (error.code === '23505') throw new Error("You have already registered for this event!");
