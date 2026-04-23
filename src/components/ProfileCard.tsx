@@ -517,15 +517,13 @@ const renderEventCard = () => (
             <span className="value">{eventData?.title}</span>
             <span className="label" style={{ marginTop: '8px' }}>REG ID</span>
             <span className="value">{eventRegistration?.registration_id}</span>
-            {/* Render QR only for event registration */}
-            {qrData && (
-              <div style={{ marginTop: 10 }}>
-                <div style={{ width: 120, height: 120, marginTop: 8, background: 'white', padding: 8, borderRadius: 8 }}>
-                  <QRCode value={qrData} size={104} />
-                </div>
-              </div>
-            )}
           </div>
+          {/* Render QR securely on the right side to prevent clipping */}
+          {qrData && (
+            <div style={{ background: 'white', padding: 6, borderRadius: 8, display: 'flex', marginLeft: 16 }}>
+              <QRCode value={qrData} size={70} />
+            </div>
+          )}
         </div>
       </>
   </div>
