@@ -279,6 +279,9 @@ export default function AdminScanner() {
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       
       if (ctx) {
+        // Boost contrast and brightness to help jsQR read through screen glare
+        ctx.filter = 'contrast(1.4) brightness(1.1)';
+        
         // SMART CROP: Focus on the center 70% of the frame to increase resolution for jsQR
         const size = Math.min(video.videoWidth, video.videoHeight) * 0.8;
         const x = (video.videoWidth - size) / 2;
@@ -421,8 +424,15 @@ export default function AdminScanner() {
                 <div className="absolute bottom-[50px] left-[50px] w-12 h-12 border-b-4 border-l-4 border-purple-500 rounded-bl-lg" />
                 <div className="absolute bottom-[50px] right-[50px] w-12 h-12 border-b-4 border-r-4 border-purple-500 rounded-br-lg" />
                 
-                {/* Scanning animation line */}
-                <div className="absolute inset-x-[60px] top-[60px] h-1 bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-bounce" />
+                {/* Moving Laser Line */}
+                <div className="absolute inset-x-[60px] top-[60px] h-0.5 bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-[scan_2s_linear_infinite]" />
+                
+                <style>{`
+                  @keyframes scan {
+                    0%, 100% { top: 60px; opacity: 0.8; }
+                    50% { top: calc(100% - 60px); opacity: 1; }
+                  }
+                `}</style>
               </div>
             </div>
           ) : (
