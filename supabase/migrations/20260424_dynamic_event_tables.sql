@@ -92,8 +92,8 @@ BEGIN
       
       EXECUTE 'ALTER TABLE public.' || table_name || ' ENABLE ROW LEVEL SECURITY';
       
-    -- 3. Create specific schema for Workshops
-    ELSIF NEW.type::text ILIKE '%Workshop%' THEN
+    -- 3. Create specific schema for Online Workshops
+    ELSIF NEW.type::text ILIKE '%Workshop%' AND NEW.format::text ILIKE '%Online%' THEN
 
       -- Generate table name based on slug
       IF NEW.slug IS NOT NULL THEN
@@ -103,7 +103,7 @@ BEGIN
       END IF;
       table_name := quote_ident(table_name);
 
-      -- Execute dynamic SQL to create the table WITH workshop columns
+      -- Execute dynamic SQL to create the table WITH online workshop columns
       EXECUTE 'CREATE TABLE IF NOT EXISTS public.' || table_name || ' (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
@@ -117,6 +117,42 @@ BEGIN
         stream TEXT,
         motivation TEXT,
         status TEXT DEFAULT ''registered'',
+        created_at TIMESTAMPTZ DEFAULT now(),
+        UNIQUE(event_id, user_id)
+      )';
+      
+      EXECUTE 'ALTER TABLE public.' || table_name || ' ENABLE ROW LEVEL SECURITY';
+      
+    -- 4. Create specific schema for Offline and Hybrid Workshops (includes check-in)
+    ELSIF NEW.type::text ILIKE '%Workshop%' AND (NEW.format::text ILIKE '%Offline%' OR NEW.format::text ILIKE '%Hybrid%') THEN
+
+      -- Generate table name based on slug
+      IF NEW.slug IS NOT NULL THEN
+        table_name := 'event_reg_' || replace(lower(NEW.slug), '-', '_');
+      ELSE
+        table_name := 'event_reg_' || replace(NEW.id::text, '-', '_');
+      END IF;
+      table_name := quote_ident(table_name);
+
+      -- Execute dynamic SQL to create the table WITH offline workshop columns
+      EXECUTE 'CREATE TABLE IF NOT EXISTS public.' || table_name || ' (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+        name TEXT,
+        email TEXT,
+        phone TEXT,
+        school TEXT,
+        class TEXT,
+        branch TEXT,
+        stream TEXT,
+        motivation TEXT,
+        status TEXT DEFAULT ''registered'',
+        registration_id TEXT,
+        qr_code_data TEXT,
+        check_in_status TEXT DEFAULT ''pending'',
+        checked_in_at TIMESTAMPTZ,
+        checked_in_by TEXT,
         created_at TIMESTAMPTZ DEFAULT now(),
         UNIQUE(event_id, user_id)
       )';
