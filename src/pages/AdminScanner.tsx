@@ -3,7 +3,7 @@ import jsQR from "jsqr";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, Camera, Loader2 } from "lucide-react";
-import { isUserAdmin } from "@/lib/adminService";
+import { isUserAdmin, ADMIN_EMAILS } from "@/lib/adminService";
 import { useNavigate } from "react-router-dom";
 
 export default function AdminScanner() {
@@ -74,10 +74,10 @@ export default function AdminScanner() {
         throw new Error("Invalid QR code format.");
       }
 
-      // 1. Get Event Details to know which table to query
+      // 1. Get Event Details to know which table to query and check time restrictions
       const { data: eventData, error: eventErr } = await supabase
         .from("events")
-        .select("slug, id")
+        .select("slug, id, check_in_start, check_in_end")
         .eq("id", event_id)
         .single();
 
@@ -85,13 +85,29 @@ export default function AdminScanner() {
         throw new Error("Event not found in database.");
       }
 
+      const { data: adminUser } = await supabase.auth.getUser();
+      const adminEmail = adminUser?.user?.email?.toLowerCase() || "";
+      const isMainAdmin = ADMIN_EMAILS.includes(adminEmail);
+
+      // Check time window if not a main admin
+      if (!isMainAdmin) {
+        const nowMs = Date.now();
+        if (eventData.check_in_start) {
+          const startMs = new Date(eventData.check_in_start).getTime();
+          if (nowMs < startMs) throw new Error("Check-in hasn't started yet for this event.");
+        }
+        if (eventData.check_in_end) {
+          const endMs = new Date(eventData.check_in_end).getTime();
+          if (nowMs > endMs) throw new Error("Check-in is closed for this event.");
+        }
+      }
+
       const tableName = eventData.slug 
         ? `event_reg_${eventData.slug.toLowerCase().replace(/-/g, "_")}`
         : `event_reg_${eventData.id.replace(/-/g, "_")}`;
 
       // 2. Update Check-in Status
-      const { data: adminUser } = await supabase.auth.getUser();
-      const checkedInBy = adminUser?.user?.email || "Admin";
+      const checkedInBy = adminEmail || "Admin";
 
       const { data: updatedReg, error: updateErr } = await supabase
         .from(tableName as any)

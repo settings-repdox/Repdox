@@ -21,6 +21,10 @@ export interface CreateEventPayload {
     registration_start_time?: string;
     registration_deadline_date?: string;
     registration_deadline_time?: string;
+    check_in_start_date?: string;
+    check_in_start_time?: string;
+    check_in_end_date?: string;
+    check_in_end_time?: string;
     location: string;
     short_blurb?: string;
     long_description?: string;
@@ -102,6 +106,14 @@ export async function createEvent(payload: CreateEventPayload) {
       ? registrationStart.toISOString()
       : null,
     registration_deadline: registrationDeadline.toISOString(),
+    check_in_start:
+      form.check_in_start_date && form.check_in_start_time
+        ? new Date(`${form.check_in_start_date}T${form.check_in_start_time}`).toISOString()
+        : null,
+    check_in_end:
+      form.check_in_end_date && form.check_in_end_time
+        ? new Date(`${form.check_in_end_date}T${form.check_in_end_time}`).toISOString()
+        : null,
     location: form.location,
     short_blurb: form.short_blurb ?? "",
     long_description: form.long_description ?? null,
@@ -379,6 +391,14 @@ export async function updateEvent(
       ? registrationStart.toISOString()
       : null,
     registration_deadline: registrationDeadline.toISOString(),
+    check_in_start:
+      form.check_in_start_date && form.check_in_start_time
+        ? new Date(`${form.check_in_start_date}T${form.check_in_start_time}`).toISOString()
+        : null,
+    check_in_end:
+      form.check_in_end_date && form.check_in_end_time
+        ? new Date(`${form.check_in_end_date}T${form.check_in_end_time}`).toISOString()
+        : null,
     location: form.location,
     short_blurb: form.short_blurb ?? "",
     long_description: form.long_description ?? null,

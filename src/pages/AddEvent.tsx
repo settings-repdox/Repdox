@@ -102,6 +102,10 @@ export default function AddEvent() {
     registration_start_time: "00:00",
     registration_deadline_date: "",
     registration_deadline_time: "23:59",
+    check_in_start_date: "",
+    check_in_start_time: "00:00",
+    check_in_end_date: "",
+    check_in_end_time: "23:59",
     location: "",
     short_blurb: "",
     long_description: "",
@@ -313,6 +317,10 @@ export default function AddEvent() {
           registration_start_time: "00:00",
           registration_deadline_date: regDeadline.toISOString().split("T")[0],
           registration_deadline_time: regDeadline.toTimeString().slice(0, 5),
+          check_in_start_date: event.check_in_start ? new Date(event.check_in_start).toISOString().split("T")[0] : "",
+          check_in_start_time: event.check_in_start ? new Date(event.check_in_start).toTimeString().slice(0, 5) : "00:00",
+          check_in_end_date: event.check_in_end ? new Date(event.check_in_end).toISOString().split("T")[0] : "",
+          check_in_end_time: event.check_in_end ? new Date(event.check_in_end).toTimeString().slice(0, 5) : "23:59",
           location: event.location || "",
           short_blurb: event.short_blurb || "",
           long_description: event.long_description || "",
@@ -507,6 +515,14 @@ export default function AddEvent() {
         form.registration_deadline_date && form.registration_deadline_time
           ? `${form.registration_deadline_date}T${form.registration_deadline_time}`
           : form.registration_deadline_date || "",
+      check_in_start:
+        form.check_in_start_date && form.check_in_start_time
+          ? `${form.check_in_start_date}T${form.check_in_start_time}`
+          : form.check_in_start_date || "",
+      check_in_end:
+        form.check_in_end_date && form.check_in_end_time
+          ? `${form.check_in_end_date}T${form.check_in_end_time}`
+          : form.check_in_end_date || "",
       tags,
       sections: secs,
     });
@@ -1363,6 +1379,76 @@ export default function AddEvent() {
                         value={form.registration_deadline_time}
                         onChange={(e) =>
                           onChange("registration_deadline_time", e.target.value)
+                        }
+                        className="pl-10 bg-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Check-in Window */}
+            <div className="pt-4 border-t border-border/50">
+              <Label className="mb-3 block font-semibold text-muted-foreground">
+                Check-in Time Window (Optional)
+              </Label>
+              <div className="grid sm:grid-cols-2 gap-6">
+                {/* Check-in Start */}
+                <div className="space-y-3 p-4 rounded-xl bg-card/30 border border-border/50">
+                  <Label className="font-medium text-xs uppercase tracking-wide text-muted-foreground">
+                    Check-in Opens
+                  </Label>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <CalendarDays className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="date"
+                        value={form.check_in_start_date}
+                        onChange={(e) =>
+                          onChange("check_in_start_date", e.target.value)
+                        }
+                        className="pl-10 bg-transparent"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="time"
+                        value={form.check_in_start_time}
+                        onChange={(e) =>
+                          onChange("check_in_start_time", e.target.value)
+                        }
+                        className="pl-10 bg-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Check-in End */}
+                <div className="space-y-3 p-4 rounded-xl bg-card/30 border border-border/50">
+                  <Label className="font-medium text-xs uppercase tracking-wide text-muted-foreground">
+                    Check-in Closes
+                  </Label>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <CalendarDays className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="date"
+                        value={form.check_in_end_date}
+                        onChange={(e) =>
+                          onChange("check_in_end_date", e.target.value)
+                        }
+                        className="pl-10 bg-transparent"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="time"
+                        value={form.check_in_end_time}
+                        onChange={(e) =>
+                          onChange("check_in_end_time", e.target.value)
                         }
                         className="pl-10 bg-transparent"
                       />
