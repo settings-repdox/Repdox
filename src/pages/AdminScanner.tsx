@@ -15,6 +15,7 @@ export default function AdminScanner() {
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [scanStatus, setScanStatus] = useState<string>("Ready to scan");
   const [scanColor, setScanColor] = useState<string>("border-purple-500");
+  const [lastCheckedName, setLastCheckedName] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,6 +28,28 @@ export default function AdminScanner() {
     const admin = await isUserAdmin();
     setIsAdmin(admin);
     setIsAuthLoading(false);
+  };
+
+  const playBeep = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    } catch (e) {
+      console.warn("Could not play beep:", e);
+    }
   };
 
   const fetchEvents = async () => {
@@ -143,6 +166,8 @@ export default function AdminScanner() {
 
       if (updateErr) throw new Error("ID not found in registration list.");
 
+      playBeep();
+      setLastCheckedName(updatedReg.name);
       setScanStatus(`Success: ${updatedReg.name} checked in!`);
       setScanColor("border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)]");
       toast.success(`Checked in ${updatedReg.name}`);
@@ -429,6 +454,17 @@ export default function AdminScanner() {
           }`} />
           <span className="font-medium text-sm tracking-wide uppercase">{scanStatus}</span>
         </div>
+
+        {/* Prominent Success Card */}
+        {lastCheckedName && (
+          <div className="bg-green-500/20 border border-green-500/50 p-6 rounded-3xl flex flex-col items-center gap-2 animate-in zoom-in-95 duration-300">
+            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/20">
+              <CheckCircle className="text-white w-7 h-7" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400 mt-2">Recently Checked In</p>
+            <h2 className="text-2xl font-bold text-white text-center">{lastCheckedName}</h2>
+          </div>
+        )}
 
         <div className="text-center">
           <p className="text-[10px] uppercase tracking-[0.2em] text-gray-600 font-bold">Secure Admin Console</p>
