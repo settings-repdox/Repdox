@@ -22,6 +22,7 @@ export default function AdminScanner() {
   const [scanStatus, setScanStatus] = useState<string>("Ready to scan");
   const [scanColor, setScanColor] = useState<string>("border-purple-500");
   const [lastCheckedName, setLastCheckedName] = useState<string | null>(null);
+  const [isDetected, setIsDetected] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -273,23 +274,31 @@ export default function AdminScanner() {
     if (!videoRef.current || !canvasRef.current || !scanning) return;
 
     if (videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
-      const width = videoRef.current.videoWidth;
-      const height = videoRef.current.videoHeight;
-      
-      canvasRef.current.width = width;
-      canvasRef.current.height = height;
-      
-      const ctx = canvasRef.current.getContext("2d", { willReadFrequently: true });
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
       
       if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0, width, height);
-        const imageData = ctx.getImageData(0, 0, width, height);
+        // SMART CROP: Focus on the center 70% of the frame to increase resolution for jsQR
+        const size = Math.min(video.videoWidth, video.videoHeight) * 0.8;
+        const x = (video.videoWidth - size) / 2;
+        const y = (video.videoHeight - size) / 2;
+        
+        canvas.width = size;
+        canvas.height = size;
+        
+        ctx.drawImage(video, x, y, size, size, 0, 0, size, size);
+        const imageData = ctx.getImageData(0, 0, size, size);
         
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: "attemptBoth",
         });
 
         if (code) {
+          // Visual feedback that SOMETHING was detected
+          setIsDetected(true);
+          setTimeout(() => setIsDetected(false), 200);
+          
           console.log("QR Code Detected:", code.data);
           processScan(code.data);
         }
@@ -385,7 +394,9 @@ export default function AdminScanner() {
         </div>
 
         {/* Main Interface */}
-        <div className={`relative rounded-3xl overflow-hidden shadow-2xl border-2 bg-zinc-950 transition-all duration-300 ${scanColor}`}>
+        <div className={`relative rounded-3xl overflow-hidden shadow-2xl border-4 bg-zinc-950 transition-all duration-300 ${
+          isDetected ? 'border-blue-500 scale-[1.02]' : scanColor
+        }`}>
           {!showManual ? (
             <div className="relative aspect-[3/4]">
               {hasPermission === false && (
