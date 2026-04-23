@@ -168,22 +168,43 @@ export default function AdminScanner() {
         }
       }
 
-      const tableName = eventData.slug 
-        ? `event_reg_${eventData.slug.toLowerCase().replace(/-/g, "_")}`
-        : `event_reg_${eventData.id.replace(/-/g, "_")}`;
+      const baseSlug = eventData.slug?.toLowerCase().replace(/-/g, "_") || "";
+      const tableName = `event_reg_${baseSlug}`;
+      
+      // Also try a simplified version if the slug has a year (e.g. solveforindia2026 -> solveforindia)
+      const simplifiedName = `event_reg_${baseSlug.replace(/\d+$/, "")}`;
 
-      const { data: updatedReg, error: updateErr } = await supabase
-        .from(tableName as any)
-        .update({
-          check_in_status: "checked_in",
-          checked_in_at: new Date().toISOString(),
-          checked_in_by: adminUser?.user?.email || "Admin"
-        })
-        .eq("registration_id", registration_id)
-        .select("name")
-        .single();
+      let updateErr;
+      let updatedReg;
 
-      if (updateErr) throw new Error("ID not found in registration list.");
+      // Try primary table first
+      const attemptUpdate = async (tName: string) => {
+        return supabase
+          .from(tName as any)
+          .update({
+            check_in_status: "checked_in",
+            checked_in_at: new Date().toISOString(),
+            checked_in_by: adminUser?.user?.email || "Admin"
+          })
+          .eq("registration_id", registration_id)
+          .select("name")
+          .single();
+      };
+
+      const result = await attemptUpdate(tableName);
+      updatedReg = result.data;
+      updateErr = result.error;
+
+      // If failed and simplified name is different, try that
+      if (updateErr && tableName !== simplifiedName) {
+        const result2 = await attemptUpdate(simplifiedName);
+        if (!result2.error) {
+          updatedReg = result2.data;
+          updateErr = null;
+        }
+      }
+
+      if (updateErr) throw new Error(`ID not found in ${tableName} or ${simplifiedName}`);
       
       const reg = updatedReg as any;
 
@@ -291,9 +312,8 @@ export default function AdminScanner() {
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       
       if (ctx) {
-        // ULTRA-AGGRESSIVE FILTER: Greyscale + High Contrast
-        // This makes the QR code stand out like black ink on white paper
-        ctx.filter = 'grayscale(1) contrast(1.8) brightness(1.2)';
+        // Boost contrast and brightness to help jsQR read through screen glare
+        ctx.filter = 'contrast(1.4) brightness(1.1)';
         
         // SMART CROP: Focus on the center 70% of the frame to increase resolution for jsQR
         const size = Math.min(video.videoWidth, video.videoHeight) * 0.8;
