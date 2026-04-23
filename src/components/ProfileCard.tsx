@@ -140,6 +140,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   const wrapRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [showQR, setShowQR] = useState(false);
+  const [showExpandedQR, setShowExpandedQR] = useState(false);
 
   const enterTimerRef = useRef<number | null>(null);
   const leaveRafRef = useRef<number | null>(null);
@@ -520,7 +521,29 @@ const renderEventCard = () => (
           </div>
           {/* Render QR securely on the right side to prevent clipping */}
           {qrData && (
-            <div style={{ background: 'white', padding: 6, borderRadius: 8, display: 'block', marginLeft: 16, flexShrink: 0, minWidth: 82, maxWidth: 82, minHeight: 82, maxHeight: 82 }}>
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowExpandedQR(true);
+              }}
+              title="Click to enlarge"
+              style={{ 
+                background: 'white', 
+                padding: 6, 
+                borderRadius: 8, 
+                display: 'block', 
+                marginLeft: 16, 
+                flexShrink: 0, 
+                minWidth: 82, 
+                maxWidth: 82, 
+                minHeight: 82, 
+                maxHeight: 82,
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease',
+                pointerEvents: 'auto'
+              }}
+              className="hover:scale-105"
+            >
               <QRCode value={qrData} size={70} style={{ width: 70, height: 70, display: 'block' }} />
             </div>
           )}
@@ -637,6 +660,41 @@ const getInitials = (name: string) => {
 </div>
         </section>
       </div>
+      {/* Expanded QR Modal */}
+      {showExpandedQR && qrData && (
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-6 animate-in fade-in duration-200"
+          onClick={() => setShowExpandedQR(false)}
+        >
+          <div 
+            className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-black text-center space-y-1">
+              <h3 className="text-xl font-bold">Event Pass</h3>
+              <p className="text-sm text-gray-500">{eventData?.title}</p>
+            </div>
+            
+            <div className="bg-white p-4 rounded-2xl shadow-inner border border-gray-100">
+              <QRCode value={qrData} size={256} />
+            </div>
+            
+            <div className="text-center space-y-4">
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Registration ID</p>
+                <p className="font-mono text-lg text-black font-bold">{eventRegistration?.registration_id}</p>
+              </div>
+              
+              <button 
+                onClick={() => setShowExpandedQR(false)}
+                className="px-8 py-3 bg-black text-white rounded-full font-bold text-sm hover:bg-gray-800 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
