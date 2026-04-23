@@ -13,6 +13,12 @@ export default function AdminScanner() {
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [events, setEvents] = useState<any[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [manualId, setManualId] = useState("");
+  const [showManual, setShowManual] = useState(false);
   const [scanStatus, setScanStatus] = useState<string>("Ready to scan");
   const [scanColor, setScanColor] = useState<string>("border-purple-500");
   const [lastCheckedName, setLastCheckedName] = useState<string | null>(null);
