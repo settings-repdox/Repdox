@@ -629,10 +629,10 @@ export default function EventDetail() {
       </section>
 
       {/* Content */}
-      <section className="py-12 px-6">
+      <section className="py-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           {/* Tabs */}
-          <div className="mb-6 px-4 md:px-6">
+          <div className="mb-6 px-0">
             <div className="flex items-center gap-3 border-b border-border overflow-x-auto scrollbar-hide whitespace-nowrap">
               <button
                 onClick={() => setTab("details")}
@@ -682,7 +682,7 @@ export default function EventDetail() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-0">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {activeTab === "schedule" && (

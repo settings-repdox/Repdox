@@ -71,6 +71,23 @@ interface UserProfile {
   updated_at: string;
 }
 
+interface RegistrationWithEvent {
+  id: string;
+  user_id: string;
+  event_id: string;
+  role?: string | null;
+  status?: string | null;
+  message?: string | null;
+  created_at: string;
+  events: {
+    id: string;
+    title: string;
+    slug: string;
+    start_at: string;
+    image_url?: string | null;
+  } | null;
+}
+
 const sections = [
   { id: "preferences", label: "Preferences", icon: Settings },
   { id: "personal", label: "Personal Info", icon: UserIcon },
@@ -168,7 +185,7 @@ export default function Profile() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [cardMode, setCardMode] = useState<"personal" | "event">("personal");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [userEvents, setUserEvents] = useState<any[]>([]);
+  const [userEvents, setUserEvents] = useState<RegistrationWithEvent[]>([]);
   const [urlStatus, setUrlStatus] = useState<Record<string, 'valid' | 'invalid' | 'none'>>({});
 
   const normalizeUrl = (value: string, key: string) => {
@@ -191,7 +208,7 @@ export default function Profile() {
     
     return normalized;
   };
-  const [selectedEventReg, setSelectedEventReg] = useState<any>(null);
+  const [selectedEventReg, setSelectedEventReg] = useState<RegistrationWithEvent | null>(null);
 
   const isOwnProfile =
     !userId || (user && profile && user.id === profile.user_id);

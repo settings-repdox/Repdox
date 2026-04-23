@@ -339,7 +339,7 @@ export default function Nav() {
         <CardNav
         logo={
           <span 
-            className="text-xs font-black tracking-[0.02em] uppercase whitespace-nowrap flex-shrink-0"
+            className="text-[14px] font-black tracking-[0.05em] uppercase whitespace-nowrap flex-shrink-0"
             style={{ 
               fontFamily: "'Outfit', sans-serif",
               background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',

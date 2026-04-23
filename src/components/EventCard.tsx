@@ -20,13 +20,13 @@ interface EventCardProps {
     id: string;
     title: string;
     slug: string;
-    type: any;
+    type: string | string[];
     start_at: string;
     location: string | null;
-    format: any;
+    format: string | string[];
     short_blurb: string | null;
     image_url: string | null;
-    tags: any[] | null;
+    tags: string[] | null;
   };
   compact?: boolean;
 }
@@ -67,7 +67,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
 
   if (compact) {
     return (
-      <div className="flex-shrink-0 w-[380px] snap-center">
+      <div className="flex-shrink-0 w-[85vw] sm:w-[350px] md:w-[380px] snap-center">
         <Card className="h-full border-primary/20 bg-card/80 backdrop-blur-sm hover:border-primary transition-all duration-300 hover:shadow-lg">
           <div className="relative h-48 overflow-hidden rounded-t-lg">
             <img
@@ -210,7 +210,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
             <Badge
               key={tag}
               variant="outline"
-              className="text-xs border-primary/30"
+              className="text-xs border-primary/30 whitespace-nowrap"
             >
               {tag}
             </Badge>

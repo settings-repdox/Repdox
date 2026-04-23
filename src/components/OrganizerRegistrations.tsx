@@ -107,11 +107,11 @@ export default function OrganizerRegistrations({
         <CardTitle>Registrations</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-muted-foreground">
-            {loading ? "Loading..." : `${registrations.length} registrations`}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="text-sm text-muted-foreground font-medium">
+            {loading ? "Loading..." : `${registrations.length} registrations found`}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 sm:justify-end">
             <Button size="sm" onClick={() => handleExport("csv")}>
               Export CSV
             </Button>

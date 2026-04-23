@@ -18,9 +18,21 @@ interface DashboardSection {
   component: React.ReactNode;
 }
 
+interface RegistrationWithEvent {
+  id: string;
+  role?: string | null;
+  events: {
+    id: string;
+    title: string;
+    slug: string;
+    start_at: string;
+    image_url?: string | null;
+  } | null;
+}
+
 interface DashboardProps {
   embeddedUser?: User | null;
-  userEvents?: any[];
+  userEvents?: RegistrationWithEvent[];
 }
 
 export default function Dashboard({ embeddedUser, userEvents = [] }: DashboardProps) {
@@ -189,7 +201,7 @@ export default function Dashboard({ embeddedUser, userEvents = [] }: DashboardPr
   );
 }
 
-function EventGrid({ events }: { events: any[] }) {
+function EventGrid({ events }: { events: RegistrationWithEvent[] }) {
   const navigate = useNavigate();
   
   if (events.length === 0) {
@@ -233,7 +245,7 @@ function EventGrid({ events }: { events: any[] }) {
   );
 }
 
-function UpcomingEvents({ events = [] }: { events?: any[] }) {
+function UpcomingEvents({ events = [] }: { events?: RegistrationWithEvent[] }) {
   const upcoming = events.filter(reg => {
     if (!reg.events?.start_at) return false;
     return new Date(reg.events.start_at) > new Date();
@@ -242,7 +254,7 @@ function UpcomingEvents({ events = [] }: { events?: any[] }) {
   return <EventGrid events={upcoming} />;
 }
 
-function JoinedEvents({ events = [] }: { events?: any[] }) {
+function JoinedEvents({ events = [] }: { events?: RegistrationWithEvent[] }) {
   return <EventGrid events={events} />;
 }
 

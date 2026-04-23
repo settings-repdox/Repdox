@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { User } from "@supabase/supabase-js";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -38,7 +39,7 @@ import { getEventImage } from "@/lib/eventImages";
 
 export default function MyEvents() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
@@ -111,10 +112,11 @@ export default function MyEvents() {
         description: "Your event has been deleted successfully",
       });
       refetch();
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as Error;
       toast({
         title: "Delete failed",
-        description: err.message || "Failed to delete event",
+        description: error.message || "Failed to delete event",
         variant: "destructive",
       });
     } finally {

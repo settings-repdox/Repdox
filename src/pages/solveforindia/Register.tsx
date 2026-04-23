@@ -42,7 +42,24 @@ export default function SolveForIndiaRegister() {
     github: "",
     linkedin: ""
   });
-  const [existingReg, setExistingReg] = useState<any>(null);
+  interface SFIRegistration {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    school?: string | null;
+    year?: string | null;
+    stream?: string | null;
+    participation_mode?: string | null;
+    expected_members?: number | null;
+    motivation?: string | null;
+    github?: string | null;
+    linkedin?: string | null;
+    edit_count: number;
+    team_id?: string | null;
+    event_teams?: { name: string } | null;
+  }
+  const [existingReg, setExistingReg] = useState<SFIRegistration | null>(null);
 
   const [hasDraft, setHasDraft] = useState(false);
 
@@ -132,13 +149,24 @@ export default function SolveForIndiaRegister() {
       if (userId && currentEventId) {
         const { data: regData } = await supabase
           .from("event_registrations")
-          .select("*, event_teams(name)")
+          .select("*")
           .eq("event_id", currentEventId)
           .eq("user_id", userId)
           .maybeSingle();
           
         if (regData) {
-          setExistingReg(regData);
+          setExistingReg(regData as unknown as SFIRegistration);
+          
+          let teamName = "";
+          if (regData.team_id) {
+            const { data: teamData } = await supabase
+              .from("event_teams")
+              .select("name")
+              .eq("id", regData.team_id)
+              .maybeSingle();
+            if (teamData) teamName = teamData.name;
+          }
+
           setFormData({
             name: regData.name || "",
             email: regData.email || "",
@@ -147,8 +175,8 @@ export default function SolveForIndiaRegister() {
             year: regData.year || "",
             stream: regData.stream || "",
             teamSize: regData.participation_mode || "Solo",
-            teamName: (regData.event_teams as any)?.name || "",
-            isJoiningExisting: true, // If they have a team, we treat it as joining for the UI
+            teamName: teamName,
+            isJoiningExisting: !!regData.team_id,
             memberCount: regData.expected_members?.toString() || "2",
             motivation: regData.motivation || "",
             github: regData.github || "",
@@ -161,7 +189,8 @@ export default function SolveForIndiaRegister() {
   }, [userId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as any;
+    const { name, value } = e.target;
+    const type = 'type' in e.target ? (e.target as any).type : undefined;
     const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
     setFormData(prev => ({ ...prev, [name]: val }));
   };
@@ -213,7 +242,7 @@ export default function SolveForIndiaRegister() {
         }
       }
 
-      const registrationData: any = {
+      const registrationData = {
         event_id: eventId,
         team_id: teamId,
         user_id: userId,
@@ -228,20 +257,21 @@ export default function SolveForIndiaRegister() {
         github: formData.github,
         linkedin: formData.linkedin,
         participation_mode: formData.teamSize,
-        expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null
+        expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
+        edit_count: existingReg ? (existingReg.edit_count || 0) + 1 : 0
       };
 
       if (existingReg) {
         registrationData.edit_count = (existingReg.edit_count || 0) + 1;
         const { error } = await supabase
           .from("event_registrations")
-          .update(registrationData)
+          .update(registrationData as any)
           .eq("id", existingReg.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("event_registrations")
-          .insert([registrationData]);
+          .insert([registrationData as any]);
         if (error) {
           if (error.code === '23505') throw new Error("You have already registered for this event!");
           throw error;
@@ -259,10 +289,11 @@ export default function SolveForIndiaRegister() {
         window.location.href = "https://repdox.com";
       }, 5000);
 
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as Error;
       toast({
         title: "Submission Failed",
-        description: err.message,
+        description: error.message,
         variant: "destructive"
       });
     } finally {
@@ -302,7 +333,7 @@ export default function SolveForIndiaRegister() {
   }
 
   return (
-    <div className="min-h-screen bg-[#030308] text-white py-12 px-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#030308] text-white py-12 px-4 sm:px-8 relative overflow-x-hidden font-sans">
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_10%,rgba(139,92,246,0.08),transparent_70%)]" />
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]" />
@@ -321,7 +352,7 @@ export default function SolveForIndiaRegister() {
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-7xl font-bold mb-6"
+            className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6"
           >
             {existingReg ? (
               <>Modify Your <br /><span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">Registration</span></>
