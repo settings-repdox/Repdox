@@ -249,7 +249,7 @@ export default function Nav() {
     { href: "/events", label: "Events" },
     { href: "/volunteer", label: "Volunteer" },
     // { href: "/community", label: "Community" },
-    { href: "/about", label: "About" },
+    { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact" },
   ];
 
@@ -315,7 +315,7 @@ export default function Nav() {
           { label: "Events", href: "/events", ariaLabel: "Browse Events" },
           { label: "Volunteer", href: "/volunteer", ariaLabel: "Volunteer with us" },
           // { label: "Community", href: "/community", ariaLabel: "Community" },
-          { label: "About", href: "/about", ariaLabel: "About Us" },
+          { label: "About Us", href: "/about", ariaLabel: "About Us" },
           { label: "Contact", href: "/contact", ariaLabel: "Contact Us" },
         ],
       },

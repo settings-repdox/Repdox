@@ -3,6 +3,7 @@ import { MessageCircle, Instagram, Mail, ArrowRight, CheckCircle } from "lucide-
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { FaDiscord, FaInstagram } from "react-icons/fa";
+import { supabase } from "@/integrations/supabase/client";
 
 const footerLinks = {
   events: [
@@ -34,10 +35,22 @@ export default function Footer() {
 
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .insert([{ email }]);
+
+      // We ignore unique constraint errors (code 23505) so if they are already subscribed, 
+      // we just act like it succeeded to prevent leaking user data or annoying them.
+      if (error && error.code !== '23505') {
+        console.error("Subscription error:", error);
+        return;
+      }
+
       setIsSubscribed(true);
       setEmail("");
       setTimeout(() => setIsSubscribed(false), 3000);
+    } catch (err) {
+      console.error("Unexpected error:", err);
     } finally {
       setIsLoading(false);
     }
