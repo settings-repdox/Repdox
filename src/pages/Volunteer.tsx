@@ -147,8 +147,7 @@ export default function Volunteer() {
             <div className="bg-card/90 backdrop-blur-2xl rounded-[22px] p-10 md:p-14 text-center space-y-8">
               <h3 className="text-3xl font-bold">Ready to make an impact?</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Applications are now open for the 2026 session. 
-                Our team will reach out to shortlisted candidates within 7 days.
+                Applications are now open for the 2026 session.
               </p>
               <motion.a
                 href="https://application.repdox.com"
