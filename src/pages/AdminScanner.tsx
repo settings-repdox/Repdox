@@ -273,26 +273,24 @@ export default function AdminScanner() {
     if (!videoRef.current || !canvasRef.current || !scanning) return;
 
     if (videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
-      // Use a smaller processing canvas to speed up scanning on mobile
       const width = videoRef.current.videoWidth;
       const height = videoRef.current.videoHeight;
-      const scale = Math.min(1, 640 / Math.max(width, height));
       
-      canvasRef.current.width = width * scale;
-      canvasRef.current.height = height * scale;
+      canvasRef.current.width = width;
+      canvasRef.current.height = height;
       
       const ctx = canvasRef.current.getContext("2d", { willReadFrequently: true });
       
       if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        const imageData = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+        ctx.drawImage(videoRef.current, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
         
-        // Boost sensitivity with 'attemptBoth' inversion attempt
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: "attemptBoth",
         });
 
         if (code) {
+          console.log("QR Code Detected:", code.data);
           processScan(code.data);
         }
       }
@@ -345,7 +343,13 @@ export default function AdminScanner() {
     <div className="min-h-screen bg-black text-white pt-24 pb-12 px-6">
       <div className="max-w-md mx-auto space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2 relative">
+          {scanning && (
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Scanner Active</span>
+            </div>
+          )}
           <h1 className="text-4xl font-bold tracking-tight">Event Scanner</h1>
           <p className="text-gray-400">Scan QR codes or enter IDs manually</p>
         </div>
