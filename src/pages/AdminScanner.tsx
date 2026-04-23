@@ -171,12 +171,14 @@ export default function AdminScanner() {
         .single();
 
       if (updateErr) throw new Error("ID not found in registration list.");
+      
+      const reg = updatedReg as any;
 
       playBeep();
-      setLastCheckedName(updatedReg.name);
-      setScanStatus(`Success: ${updatedReg.name} checked in!`);
+      setLastCheckedName(reg.name);
+      setScanStatus(`Success: ${reg.name} checked in!`);
       setScanColor("border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)]");
-      toast.success(`Checked in ${updatedReg.name}`);
+      toast.success(`Checked in ${reg.name}`);
       setLastScanned(qrData);
       setTimeout(() => {
         setLastScanned(null);
@@ -255,7 +257,8 @@ export default function AdminScanner() {
 
       if (updateErr) throw new Error("Invalid Registration ID for this event.");
 
-      toast.success(`Successfully checked in ${updatedReg.name}!`, {
+      const reg = updatedReg as any;
+      toast.success(`Successfully checked in ${reg.name}!`, {
         icon: <CheckCircle className="text-green-500" />
       });
       setManualId("");
