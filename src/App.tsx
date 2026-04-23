@@ -57,7 +57,7 @@ const LoadingFallback = () => (
 
 function AppContent() {
   const location = useLocation();
-  const hideFooterRoutes = ["/signin", "/signup"];
+  const hideFooterRoutes = ["/signin", "/signup", "/admin/scanner"];
   const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
 
   return (

@@ -291,8 +291,9 @@ export default function AdminScanner() {
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       
       if (ctx) {
-        // Boost contrast and brightness to help jsQR read through screen glare
-        ctx.filter = 'contrast(1.4) brightness(1.1)';
+        // ULTRA-AGGRESSIVE FILTER: Greyscale + High Contrast
+        // This makes the QR code stand out like black ink on white paper
+        ctx.filter = 'grayscale(1) contrast(1.8) brightness(1.2)';
         
         // SMART CROP: Focus on the center 70% of the frame to increase resolution for jsQR
         const size = Math.min(video.videoWidth, video.videoHeight) * 0.8;
