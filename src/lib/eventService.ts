@@ -104,7 +104,7 @@ export async function createEvent(payload: CreateEventPayload) {
     end_at: endAt.toISOString(),
     registration_start: registrationStart
       ? registrationStart.toISOString()
-      : null,
+      : new Date().toISOString(),
     registration_deadline: registrationDeadline.toISOString(),
     check_in_start:
       form.check_in_start_date && form.check_in_start_time
@@ -389,7 +389,7 @@ export async function updateEvent(
     end_at: endAt.toISOString(),
     registration_start: registrationStart
       ? registrationStart.toISOString()
-      : null,
+      : new Date().toISOString(),
     registration_deadline: registrationDeadline.toISOString(),
     check_in_start:
       form.check_in_start_date && form.check_in_start_time

@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getEventImage } from "@/lib/eventImages";
+import { formatDateWithOptions } from "@/lib/timeUtils";
 
 export type EventDraft = {
   id?: string;
@@ -27,6 +28,8 @@ export type EventDraft = {
   format?: string | string[];
   registration_start?: string;
   registration_end?: string;
+  check_in_start?: string;
+  check_in_end?: string;
   sections?: Array<{
     id: string;
     type: string;
