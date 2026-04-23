@@ -119,26 +119,38 @@ export default function AdminScanner() {
       let user_id, event_id, registration_id;
 
       if (qrData.includes('|')) {
-        // New shortened format: userid|eventid|regid
+        // Fallback for userid|eventid|regid format
         const parts = qrData.split('|');
         user_id = parts[0];
         event_id = parts[1];
         registration_id = parts[2];
-      } else {
+      } else if (qrData.startsWith('{')) {
         // Fallback for old JSON format
-        const parsed = JSON.parse(qrData);
-        user_id = parsed.user_id;
-        event_id = parsed.event_id;
-        registration_id = parsed.registration_id;
+        try {
+          const parsed = JSON.parse(qrData);
+          user_id = parsed.user_id;
+          event_id = parsed.event_id;
+          registration_id = parsed.registration_id;
+        } catch (e) {
+          registration_id = qrData;
+        }
+      } else {
+        // NEW format: Raw Registration ID
+        registration_id = qrData.trim();
       }
 
       if (!registration_id) throw new Error("Invalid QR format");
 
       // 1. Get Event Details
+      // Priority: 1. event_id from QR, 2. selectedEventId from dropdown
+      const targetEventId = (event_id && event_id !== 'null') ? event_id : selectedEventId;
+      
+      if (!targetEventId) throw new Error("Please select an event in the scanner first.");
+
       const { data: eventData, error: eventErr } = await supabase
         .from("events")
         .select("slug, id, title, check_in_start, check_in_end")
-        .eq("id", event_id || selectedEventId) // Prefer ID from QR, fallback to dropdown
+        .eq("id", targetEventId)
         .single();
 
       if (eventErr || !eventData) throw new Error("Event not found");
