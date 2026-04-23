@@ -40,6 +40,7 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const SolveForIndiaRegister = lazy(() => import("./pages/solveforindia/Register"));
 const AdminEvents = lazy(() => import("./pages/AdminEvents"));
+const AdminScanner = lazy(() => import("./pages/AdminScanner"));
 const Volunteer = lazy(() => import("./pages/Volunteer"));
 const DiscordLink = lazy(() => import("./pages/DiscordLink"));
 
@@ -122,6 +123,14 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <AdminEvents />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/scanner"
+              element={
+                <ProtectedRoute>
+                  <AdminScanner />
                 </ProtectedRoute>
               }
             />

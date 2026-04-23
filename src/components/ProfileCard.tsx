@@ -520,8 +520,8 @@ const renderEventCard = () => (
           </div>
           {/* Render QR securely on the right side to prevent clipping */}
           {qrData && (
-            <div style={{ background: 'white', padding: 6, borderRadius: 8, display: 'flex', marginLeft: 16, flexShrink: 0, width: 82, height: 82, alignItems: 'center', justifyContent: 'center' }}>
-              <QRCode value={qrData} size={70} />
+            <div style={{ background: 'white', padding: 6, borderRadius: 8, display: 'block', marginLeft: 16, flexShrink: 0, minWidth: 82, maxWidth: 82, minHeight: 82, maxHeight: 82 }}>
+              <QRCode value={qrData} size={70} style={{ width: 70, height: 70, display: 'block' }} />
             </div>
           )}
         </div>
