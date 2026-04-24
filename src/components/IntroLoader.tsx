@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const loadingStages = [
   "Loading About page...",
-  "Loading Volunteer's page...",
+  "Loading Volunteers page...",
   "Loading Events...",
   "Loading Community...",
   "Loaded Repdox"

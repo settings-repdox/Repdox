@@ -41,7 +41,7 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const SolveForIndiaRegister = lazy(() => import("./pages/solveforindia/Register"));
 const AdminEvents = lazy(() => import("./pages/AdminEvents"));
 const AdminScanner = lazy(() => import("./pages/AdminScanner"));
-const Volunteer = lazy(() => import("./pages/Volunteer"));
+const Volunteers = lazy(() => import("./pages/Volunteers"));
 const DiscordLink = lazy(() => import("./pages/DiscordLink"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -75,7 +75,7 @@ function AppContent() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/volunteer" element={<Volunteer />} />
+            <Route path="/volunteers" element={<Volunteers />} />
 
             {/* NEW: Email Verification Routes (Public - No Auth Required) */}
             <Route path="/verify-email" element={<VerifyEmail />} />
