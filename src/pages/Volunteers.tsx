@@ -51,15 +51,16 @@ export default function Volunteers() {
       }
       setUser(currentUser);
       setFormData(prev => ({ ...prev, email: currentUser.email || "" }));
-      handleStatusCheck(currentUser.id);
+      handleStatusCheck(currentUser);
     };
     checkUser();
   }, [navigate]);
 
-  const handleStatusCheck = async (userId: string) => {
+  const handleStatusCheck = async (currentUser: any) => {
+    if (!currentUser?.email) return;
     try {
       // Check status in the OLD project
-      const { data, error } = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${user.email}&select=status`, {
+      const data = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${currentUser.email}&select=status`, {
         headers: { "apikey": OLD_PROJECT_KEY, "Authorization": `Bearer ${OLD_PROJECT_KEY}` }
       }).then(res => res.json());
 
@@ -80,12 +81,13 @@ export default function Volunteers() {
 
     setIsSubmitting(true);
     try {
-      const { error: submitError } = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses`, {
+      const response = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses`, {
         method: "POST",
         headers: { 
             "apikey": OLD_PROJECT_KEY, 
             "Authorization": `Bearer ${OLD_PROJECT_KEY}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
         },
         body: JSON.stringify([{
           student_name: formData.fullName,
@@ -102,7 +104,10 @@ export default function Volunteers() {
         }])
       });
 
-      if (!submitError) throw new Error("Submission failed");
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Submission failed");
+      }
 
       setHasApplied(true);
       setApplicationStatus('pending');
