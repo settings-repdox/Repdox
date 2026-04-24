@@ -188,18 +188,12 @@ export default function Volunteers() {
                 <p className="text-xl text-white mb-8">
                   Congratulations! You are officially part of the Repdox community.
                 </p>
-                <div className="p-4 bg-green-500/10 rounded-2xl border border-green-500/20 text-center mb-8">
+                <div className="p-4 bg-green-500/10 rounded-2xl border border-green-500/20 text-center mb-4">
                   <p className="text-green-400 font-bold mb-1">NEXT STEPS</p>
                   <p className="text-sm text-white/80">
                     You will receive a call and a WhatsApp message from our team shortly regarding your onboarding.
                   </p>
                 </div>
-                <Button 
-                  onClick={() => navigate('/dashboard')}
-                  className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:opacity-90 h-12 px-10 rounded-xl font-bold shadow-lg shadow-purple-500/20"
-                >
-                  Go to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
               </>
             )}
 
