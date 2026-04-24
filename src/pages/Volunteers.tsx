@@ -15,6 +15,13 @@ import {
 import { CheckCircle2, Mail, Send, ArrowRight, Sparkles, Trophy, Users, GraduationCap, MapPin, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Dedicated client for the old volunteer database
+const OLD_PROJECT_URL = "https://fpdbrvmejpujuwtitfbi.supabase.co";
+const OLD_PROJECT_KEY = "sb_publishable__s8qGXZm8TyOT2X5QnQ-1g_MMeWWpS2";
+const oldDb = (window as any).supabase?.createClient 
+  ? (window as any).supabase.createClient(OLD_PROJECT_URL, OLD_PROJECT_KEY)
+  : null;
+
 export default function Volunteers() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -51,15 +58,14 @@ export default function Volunteers() {
 
   const handleStatusCheck = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('volunteer_applications' as any)
-        .select('status')
-        .eq('user_id', userId)
-        .single();
+      // Check status in the OLD project
+      const { data, error } = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${user.email}&select=status`, {
+        headers: { "apikey": OLD_PROJECT_KEY, "Authorization": `Bearer ${OLD_PROJECT_KEY}` }
+      }).then(res => res.json());
 
-      if (data) {
+      if (data && data.length > 0) {
         setHasApplied(true);
-        setApplicationStatus(data.status);
+        setApplicationStatus(data[0].status);
       }
     } catch (err) {
       console.error('Error checking status:', err);
@@ -74,23 +80,29 @@ export default function Volunteers() {
 
     setIsSubmitting(true);
     try {
-      const { error: submitError } = await supabase
-        .from('volunteer_applications' as any)
-        .insert([{
-          user_id: user.id,
-          full_name: formData.fullName,
+      const { error: submitError } = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses`, {
+        method: "POST",
+        headers: { 
+            "apikey": OLD_PROJECT_KEY, 
+            "Authorization": `Bearer ${OLD_PROJECT_KEY}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify([{
+          student_name: formData.fullName,
           email: formData.email,
           phone: formData.phone,
           school: formData.school,
           city: formData.city,
           branch: formData.branch,
           class: formData.class,
-          role_preference: formData.rolePreference,
-          motivation: formData.motivation,
-          status: 'pending'
-        }]);
+          preferred_game: formData.rolePreference,
+          reason: formData.motivation,
+          status: 'pending',
+          submitted_at: new Date().toISOString()
+        }])
+      });
 
-      if (submitError) throw submitError;
+      if (!submitError) throw new Error("Submission failed");
 
       setHasApplied(true);
       setApplicationStatus('pending');
