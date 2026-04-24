@@ -259,27 +259,52 @@ export default function Volunteers() {
                     <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                   </div>
                   <h3 className="text-3xl font-bold">
-                    {applicationStatus === 'approved' ? "You're a Volunteer!" : "Application Received!"}
+                    {applicationStatus === 'approved' ? "You're a Volunteer!" : 
+                     applicationStatus === 'interview' ? "Interview Selected!" :
+                     applicationStatus === 'rejected' ? "Application Status" : "Application Received!"}
                   </h3>
-                  <div className="inline-block px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-semibold">
+                  <div className={`inline-block px-4 py-2 rounded-full text-sm font-semibold border ${
+                    applicationStatus === 'approved' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
+                    applicationStatus === 'interview' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
+                    applicationStatus === 'rejected' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
+                    'bg-purple-500/10 border-purple-500/20 text-purple-400'
+                  }`}>
                     Status: {applicationStatus?.toUpperCase() || 'PENDING'}
                   </div>
                   <p className="text-muted-foreground leading-relaxed">
                     {applicationStatus === 'approved' 
                       ? "Welcome to the team! You are officially a Repdox volunteer. You can now access volunteer-only features and help us build amazing events."
+                      : applicationStatus === 'interview'
+                      ? "Congratulations! You have been selected for an interview. We are excited to talk to you. We will get back to you via mail with the schedule and details shortly."
+                      : applicationStatus === 'rejected'
+                      ? "Thank you for your interest in joining Repdox. Unfortunately, we are not moving forward with your application at this time."
                       : "You have already filled out the Join Us form. Our team is currently reviewing your application. We'll get in touch with you soon!"}
                   </p>
-                  {applicationStatus === 'approved' ? (
-                    <Link to="/profile?section=dashboard">
-                      <Button className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 font-bold px-8 py-6 rounded-xl">
-                        Go to Your Dashboard
-                      </Button>
-                    </Link>
-                  ) : (
-                    <p className="text-xs text-muted-foreground/60 italic">
-                      Check back later for updates on your application status.
-                    </p>
-                  )}
+                  
+                  <div className="flex flex-col gap-4 items-center">
+                    {applicationStatus === 'approved' ? (
+                      <Link to="/profile?section=dashboard">
+                        <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 font-bold px-8 py-6 rounded-xl">
+                          Go to Your Dashboard
+                        </Button>
+                      </Link>
+                    ) : applicationStatus === 'rejected' ? (
+                      <a href="mailto:support@repdox.com?subject=Re: Volunteer Application Inquiry">
+                        <Button variant="outline" className="border-purple-500/30 hover:bg-purple-500/10 font-bold px-8 py-6 rounded-xl">
+                          Contact Support via Mail
+                        </Button>
+                      </a>
+                    ) : applicationStatus === 'interview' ? (
+                      <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 flex items-center gap-3 text-blue-400">
+                        <Mail className="w-5 h-5" />
+                        <span className="text-sm font-medium">Keep an eye on your inbox!</span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground/60 italic">
+                        Check back later for updates on your application status.
+                      </p>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <>

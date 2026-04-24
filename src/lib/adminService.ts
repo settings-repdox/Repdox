@@ -77,3 +77,32 @@ export async function rejectEvent(eventId: string) {
   if (error) throw error;
   return true;
 }
+
+/**
+ * Fetch all volunteer applications
+ */
+export async function getVolunteerApplications() {
+  const { data, error } = await supabase
+    .from("volunteer_applications")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Update volunteer application status
+ */
+export async function updateVolunteerStatus(applicationId: string, status: string) {
+  const isAdmin = await isUserAdmin();
+  if (!isAdmin) throw new Error("Not authorized");
+
+  const { error } = await supabase
+    .from("volunteer_applications")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", applicationId);
+
+  if (error) throw error;
+  return true;
+}

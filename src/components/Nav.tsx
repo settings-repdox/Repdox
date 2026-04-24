@@ -327,7 +327,10 @@ export default function Nav() {
           ? [
               { label: "Profile", href: "/profile", ariaLabel: "My Profile" },
               { label: "My Events", href: "/my-events", ariaLabel: "My Events" },
-              ...(isAdmin ? [{ label: "Admin Portal", href: "/admin/events", ariaLabel: "Admin Portal" }] : []),
+              ...(isAdmin ? [
+                { label: "Admin: Events", href: "/admin/events", ariaLabel: "Admin Events" },
+                { label: "Admin: Volunteers", href: "/admin/volunteers", ariaLabel: "Admin Volunteers" }
+              ] : []),
             ]
           : [
               { label: "Sign In", href: "/signin", ariaLabel: "Sign In" },
@@ -498,16 +501,28 @@ export default function Nav() {
                       My Events
                     </button>
                     {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setMenuOpen(false);
-                          navigate("/admin/events");
-                        }}
-                        className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2"
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                        Admin Portal
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false);
+                            navigate("/admin/events");
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2 border-t border-border/50"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          Approve Events
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false);
+                            navigate("/admin/volunteers");
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2"
+                        >
+                          <Users className="w-4 h-4" />
+                          Manage Volunteers
+                        </button>
+                      </>
                     )}
                   </motion.div>
                 )}

@@ -43,6 +43,7 @@ const AdminEvents = lazy(() => import("./pages/AdminEvents"));
 const AdminScanner = lazy(() => import("./pages/AdminScanner"));
 const Volunteers = lazy(() => import("./pages/Volunteers"));
 const DiscordLink = lazy(() => import("./pages/DiscordLink"));
+const AdminVolunteers = lazy(() => import("./pages/AdminVolunteers"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -131,6 +132,14 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <AdminScanner />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/volunteers"
+              element={
+                <ProtectedRoute>
+                  <AdminVolunteers />
                 </ProtectedRoute>
               }
             />
