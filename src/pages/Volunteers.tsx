@@ -82,6 +82,10 @@ export default function Volunteers() {
     fullName: "",
     email: "",
     phone: "",
+    school: "",
+    city: "",
+    branch: "",
+    class: "",
     rolePreference: "",
     motivation: ""
   });
@@ -128,19 +132,23 @@ export default function Volunteers() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
+      const { error: submitError } = await supabase
         .from('volunteer_applications' as any)
-        .insert({
+        .insert([{
           user_id: user.id,
           full_name: formData.fullName,
           email: formData.email,
           phone: formData.phone,
+          school: formData.school,
+          city: formData.city,
+          branch: formData.branch,
+          class: formData.class,
           role_preference: formData.rolePreference,
           motivation: formData.motivation,
           status: 'pending'
-        });
+        }]);
 
-      if (error) throw error;
+      if (submitError) throw submitError;
 
       setHasApplied(true);
       setApplicationStatus('pending');
@@ -331,7 +339,7 @@ export default function Volunteers() {
                             Join Repdox Team
                           </DialogTitle>
                           <DialogDescription>
-                            Fill out the form below to apply for a volunteer position.
+                            Fill out the form below to apply for a volunteer position. (Database migration required for schema: add columns 'school', 'city', 'branch', 'class' to 'volunteer_applications' table)
                           </DialogDescription>
                         </DialogHeader>
 
@@ -375,7 +383,57 @@ export default function Volunteers() {
                               </div>
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="school">School / College</Label>
+                                <Input
+                                  id="school"
+                                  placeholder="Your educational institution"
+                                  value={formData.school}
+                                  onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                                  className="bg-white/5 border-white/10"
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="city">City</Label>
+                                <Input
+                                  id="city"
+                                  placeholder="Your city"
+                                  value={formData.city}
+                                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                  className="bg-white/5 border-white/10"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="branch">Branch / Stream</Label>
+                                <Input
+                                  id="branch"
+                                  placeholder="e.g. Science, Commerce, Arts"
+                                  value={formData.branch}
+                                  onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                                  className="bg-white/5 border-white/10"
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="class">Class / Year</Label>
+                                <Input
+                                  id="class"
+                                  placeholder="e.g. 11th, 2nd Year"
+                                  value={formData.class}
+                                  onChange={(e) => setFormData({ ...formData, class: e.target.value })}
+                                  className="bg-white/5 border-white/10"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
                               <Label htmlFor="role">Preferred Role</Label>
                               <Select 
                                 onValueChange={(val) => setFormData({ ...formData, rolePreference: val })}
