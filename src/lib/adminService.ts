@@ -83,7 +83,7 @@ export async function rejectEvent(eventId: string) {
  */
 export async function getVolunteerApplications() {
   const { data, error } = await supabase
-    .from("volunteer_applications")
+    .from("volunteer_applications" as any)
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -99,7 +99,7 @@ export async function updateVolunteerStatus(applicationId: string, status: strin
   if (!isAdmin) throw new Error("Not authorized");
 
   const { error } = await supabase
-    .from("volunteer_applications")
+    .from("volunteer_applications" as any)
     .update({ status, updated_at: new Date().toISOString() })
     .eq("id", applicationId);
 

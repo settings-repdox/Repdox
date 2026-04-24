@@ -11,7 +11,7 @@ import CardNav from "@/components/ui/CardNav";
 import logo from "@/assets/logo.svg";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun, ShieldCheck } from "lucide-react";
+import { Moon, Sun, ShieldCheck, Users } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { isUserAdmin } from "@/lib/adminService";
@@ -247,7 +247,7 @@ export default function Nav() {
 
   const navigationLinks = [
     { href: "/events", label: "Events" },
-    { href: "/volunteers", label: "Join Us" },
+    { href: "/join-us", label: "Join Us" },
     // { href: "/community", label: "Community" },
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact" },
@@ -287,7 +287,7 @@ export default function Nav() {
       textColor: theme === 'dark' ? "#fff" : "#111827",
       links: [
         { label: "About Us", href: "/about", ariaLabel: "About Repdox" },
-        { label: "Join Us", href: "/volunteers", ariaLabel: "Join Us" },
+        { label: "Join Us", href: "/join-us", ariaLabel: "Join Us" },
         { label: "Our Team", href: "/team", ariaLabel: "Meet Our Team" },
         { label: "Partners", href: "/partners", ariaLabel: "Our Partners" },
       ],
@@ -313,7 +313,7 @@ export default function Nav() {
         textColor: theme === 'dark' ? "#fff" : "#1F2937",
         links: [
           { label: "Events", href: "/events", ariaLabel: "Browse Events" },
-          { label: "Join Us", href: "/volunteers", ariaLabel: "Join Us" },
+          { label: "Join Us", href: "/join-us", ariaLabel: "Join Us" },
           // { label: "Community", href: "/community", ariaLabel: "Community" },
           { label: "About Us", href: "/about", ariaLabel: "About Us" },
           { label: "Contact", href: "/contact", ariaLabel: "Contact Us" },

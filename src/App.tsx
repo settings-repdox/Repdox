@@ -76,7 +76,7 @@ function AppContent() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/volunteers" element={<Volunteers />} />
+            <Route path="/join-us" element={<Volunteers />} />
 
             {/* NEW: Email Verification Routes (Public - No Auth Required) */}
             <Route path="/verify-email" element={<VerifyEmail />} />

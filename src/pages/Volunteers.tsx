@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { Users, Award, Globe, Rocket, Heart, ChevronRight, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { Users, Award, Globe, Rocket, Heart, ChevronRight, CheckCircle2, Loader2, Sparkles, Mail } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,7 +107,7 @@ export default function Volunteers() {
 
           if (data) {
             setHasApplied(true);
-            setApplicationStatus(data.status);
+            setApplicationStatus((data as any).status);
           }
         } catch (err) {
           console.error("Error checking volunteer status:", err);
