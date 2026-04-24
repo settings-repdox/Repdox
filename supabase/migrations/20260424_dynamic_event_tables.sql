@@ -49,6 +49,28 @@ BEGIN
       
       EXECUTE 'ALTER TABLE public.' || table_name || ' ENABLE ROW LEVEL SECURITY';
       
+      -- Add RLS policies
+      -- 1. Admins can do everything
+      EXECUTE 'DROP POLICY IF EXISTS "Admins can manage all" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Admins can manage all" ON public.' || table_name || ' FOR ALL TO authenticated USING (
+        auth.jwt() ->> ''email'' IN (''shlokram5mar@gmail.com'', ''amishgandhi316@gmail.com'')
+      )';
+      
+      -- 2. Users can view their own registration
+      EXECUTE 'DROP POLICY IF EXISTS "Users can view own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can view own" ON public.' || table_name || ' FOR SELECT TO authenticated USING (auth.uid() = user_id)';
+      
+      -- 3. Users can insert their own registration
+      EXECUTE 'DROP POLICY IF EXISTS "Users can insert own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can insert own" ON public.' || table_name || ' FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id)';
+      
+      -- 4. Users can update their own registration
+      EXECUTE 'DROP POLICY IF EXISTS "Users can update own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can update own" ON public.' || table_name || ' FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)';
+      
+      -- Reload schema cache so PostgREST sees the new table immediately
+      NOTIFY pgrst, 'reload schema';
+      
     -- 2. Create specific schema for Offline and Hybrid Hackathons (includes check-in system)
     ELSIF NEW.type::text ILIKE '%Hackathon%' AND (NEW.format::text ILIKE '%Offline%' OR NEW.format::text ILIKE '%Hybrid%') THEN
 
@@ -91,6 +113,24 @@ BEGIN
       )';
       
       EXECUTE 'ALTER TABLE public.' || table_name || ' ENABLE ROW LEVEL SECURITY';
+
+      -- Add RLS policies
+      EXECUTE 'DROP POLICY IF EXISTS "Admins can manage all" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Admins can manage all" ON public.' || table_name || ' FOR ALL TO authenticated USING (
+        auth.jwt() ->> ''email'' IN (''shlokram5mar@gmail.com'', ''amishgandhi316@gmail.com'')
+      )';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can view own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can view own" ON public.' || table_name || ' FOR SELECT TO authenticated USING (auth.uid() = user_id)';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can insert own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can insert own" ON public.' || table_name || ' FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id)';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can update own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can update own" ON public.' || table_name || ' FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)';
+
+      -- Reload schema cache
+      NOTIFY pgrst, 'reload schema';
       
     -- 3. Create specific schema for Online Workshops
     ELSIF NEW.type::text ILIKE '%Workshop%' AND NEW.format::text ILIKE '%Online%' THEN
@@ -122,6 +162,24 @@ BEGIN
       )';
       
       EXECUTE 'ALTER TABLE public.' || table_name || ' ENABLE ROW LEVEL SECURITY';
+
+      -- Add RLS policies
+      EXECUTE 'DROP POLICY IF EXISTS "Admins can manage all" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Admins can manage all" ON public.' || table_name || ' FOR ALL TO authenticated USING (
+        auth.jwt() ->> ''email'' IN (''shlokram5mar@gmail.com'', ''amishgandhi316@gmail.com'')
+      )';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can view own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can view own" ON public.' || table_name || ' FOR SELECT TO authenticated USING (auth.uid() = user_id)';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can insert own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can insert own" ON public.' || table_name || ' FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id)';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can update own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can update own" ON public.' || table_name || ' FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)';
+
+      -- Reload schema cache
+      NOTIFY pgrst, 'reload schema';
       
     -- 4. Create specific schema for Offline and Hybrid Workshops (includes check-in)
     ELSIF NEW.type::text ILIKE '%Workshop%' AND (NEW.format::text ILIKE '%Offline%' OR NEW.format::text ILIKE '%Hybrid%') THEN
@@ -158,6 +216,24 @@ BEGIN
       )';
       
       EXECUTE 'ALTER TABLE public.' || table_name || ' ENABLE ROW LEVEL SECURITY';
+
+      -- Add RLS policies
+      EXECUTE 'DROP POLICY IF EXISTS "Admins can manage all" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Admins can manage all" ON public.' || table_name || ' FOR ALL TO authenticated USING (
+        auth.jwt() ->> ''email'' IN (''shlokram5mar@gmail.com'', ''amishgandhi316@gmail.com'')
+      )';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can view own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can view own" ON public.' || table_name || ' FOR SELECT TO authenticated USING (auth.uid() = user_id)';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can insert own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can insert own" ON public.' || table_name || ' FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id)';
+      
+      EXECUTE 'DROP POLICY IF EXISTS "Users can update own" ON public.' || table_name;
+      EXECUTE 'CREATE POLICY "Users can update own" ON public.' || table_name || ' FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)';
+
+      -- Reload schema cache
+      NOTIFY pgrst, 'reload schema';
       
     END IF;
     
