@@ -120,15 +120,24 @@ export default function AdminScanner() {
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
+        video: { 
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       if (videoRef.current) {
+        console.log("Setting video stream...");
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "true"); // required to tell iOS safari we don't want fullscreen
-        videoRef.current.play();
-        setHasPermission(true);
-        setScanning(true);
-        requestAnimationFrame(tick);
+        videoRef.current.setAttribute("playsinline", "true"); 
+        
+        // Wait for video to be ready before starting loop
+        videoRef.current.onloadedmetadata = () => {
+          console.log("Video metadata loaded, starting scan loop.");
+          videoRef.current?.play();
+          setHasPermission(true);
+          setScanning(true);
+        };
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
@@ -152,6 +161,13 @@ export default function AdminScanner() {
     }
     return () => stopCamera();
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (scanning) {
+      console.log("Scan loop started.");
+      requestAnimationFrame(tick);
+    }
+  }, [scanning]);
 
   const processScan = async (qrData: string) => {
     setProcessing(true);
@@ -420,17 +436,20 @@ export default function AdminScanner() {
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       
       if (ctx) {
-        // Boost contrast and brightness to help jsQR read through screen glare
-        ctx.filter = 'contrast(1.4) brightness(1.1)';
-        
-        // SMART CROP: Focus on the center 70% of the frame to increase resolution for jsQR
-        const size = Math.min(video.videoWidth, video.videoHeight) * 0.8;
-        const x = (video.videoWidth - size) / 2;
-        const y = (video.videoHeight - size) / 2;
+        const vWidth = video.videoWidth;
+        const vHeight = video.videoHeight;
+
+        if (vWidth === 0 || vHeight === 0) return;
+
+        // Use a larger scan area (90% of the smaller dimension)
+        const size = Math.min(vWidth, vHeight) * 0.9;
+        const x = (vWidth - size) / 2;
+        const y = (vHeight - size) / 2;
         
         canvas.width = size;
         canvas.height = size;
         
+        // Clean capture without filters (filters can sometimes blur QR edges)
         ctx.drawImage(video, x, y, size, size, 0, 0, size, size);
         const imageData = ctx.getImageData(0, 0, size, size);
         
