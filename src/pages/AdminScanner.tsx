@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, Camera, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Camera, Loader2, Zap, RefreshCw } from "lucide-react";
+import { createWorker } from "tesseract.js";
 import { isUserAdmin, ADMIN_EMAILS } from "@/lib/adminService";
 import { useNavigate } from "react-router-dom";
 import { getRegistrationTableName } from "@/lib/utils";
@@ -24,6 +25,37 @@ export default function AdminScanner() {
   const [scanColor, setScanColor] = useState<string>("border-purple-500");
   const [lastCheckedName, setLastCheckedName] = useState<string | null>(null);
   const [isDetected, setIsDetected] = useState(false);
+  const [scanningMode, setScanningMode] = useState<"qr" | "ocr">("qr");
+  const [ocrWorker, setOcrWorker] = useState<any>(null);
+  const [ocrStatus, setOcrStatus] = useState("");
+  const lastProcessedTime = useRef<number>(0);
+
+  // Initialize OCR Worker
+  useEffect(() => {
+    let worker: any;
+    const initOCR = async () => {
+      try {
+        setOcrStatus("Loading OCR...");
+        worker = await createWorker('eng');
+        setOcrWorker(worker);
+        setOcrStatus("");
+      } catch (err) {
+        console.error("OCR Init Error:", err);
+        setOcrStatus("OCR Failed to load");
+      }
+    };
+    
+    if (scanningMode === "ocr" && !ocrWorker) {
+      initOCR();
+    }
+
+    return () => {
+      if (worker) {
+        worker.terminate();
+      }
+    };
+  }, [scanningMode]);
+
   const audioCtxRef = useRef<AudioContext | null>(null);
   const navigate = useNavigate();
 
@@ -402,20 +434,43 @@ export default function AdminScanner() {
         ctx.drawImage(video, x, y, size, size, 0, 0, size, size);
         const imageData = ctx.getImageData(0, 0, size, size);
         
+        // 1. TRY QR SCAN (Always try first as it's faster)
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: "attemptBoth",
         });
 
         if (code) {
-          // Guard: Don't re-trigger if already processing or if we just scanned this same code
           if (processing || lastScanned === code.data) return;
-
-          // Visual feedback that SOMETHING was detected
           setIsDetected(true);
           setTimeout(() => setIsDetected(false), 200);
-          
-          console.log("QR Code Detected:", code.data);
           processScan(code.data);
+          return;
+        }
+
+        // 2. TRY OCR SCAN (If QR failed and in OCR mode, or just every second)
+        const now = Date.now();
+        if (scanningMode === "ocr" && ocrWorker && !processing && now - lastProcessedTime.current > 1000) {
+          lastProcessedTime.current = now;
+          
+          (async () => {
+            try {
+              setOcrStatus("Reading ID...");
+              const { data: { text } } = await ocrWorker.recognize(canvasRef.current);
+              
+              // Look for the pattern REG- followed by 8 characters
+              const match = text.match(/REG-[A-Z0-9]{8}/i);
+              if (match) {
+                const id = match[0].toUpperCase();
+                console.log("OCR Detected ID:", id);
+                setIsDetected(true);
+                setTimeout(() => setIsDetected(false), 200);
+                processScan(id);
+              }
+              setOcrStatus("");
+            } catch (err) {
+              console.error("OCR Error:", err);
+            }
+          })();
         }
       }
     }
@@ -495,16 +550,22 @@ export default function AdminScanner() {
         {/* Mode Toggles */}
         <div className="flex bg-zinc-900 p-1 rounded-2xl border border-white/5">
           <button 
-            onClick={() => setShowManual(false)}
-            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${!showManual ? 'bg-zinc-800 text-white shadow-xl' : 'text-gray-500'}`}
+            onClick={() => { setShowManual(false); setScanningMode("qr"); }}
+            className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-tighter transition-all ${!showManual && scanningMode === "qr" ? 'bg-zinc-800 text-white shadow-xl' : 'text-gray-500'}`}
           >
-            QR Scanner
+            QR Scan
+          </button>
+          <button 
+            onClick={() => { setShowManual(false); setScanningMode("ocr"); }}
+            className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-tighter transition-all ${!showManual && scanningMode === "ocr" ? 'bg-zinc-800 text-white shadow-xl' : 'text-gray-500'}`}
+          >
+            ID Scan
           </button>
           <button 
             onClick={() => setShowManual(true)}
-            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${showManual ? 'bg-zinc-800 text-white shadow-xl' : 'text-gray-500'}`}
+            className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-tighter transition-all ${showManual ? 'bg-zinc-800 text-white shadow-xl' : 'text-gray-500'}`}
           >
-            Manual Entry
+            Manual
           </button>
         </div>
 
@@ -537,7 +598,16 @@ export default function AdminScanner() {
                 <div className="absolute bottom-[50px] right-[50px] w-12 h-12 border-b-4 border-r-4 border-purple-500 rounded-br-lg" />
                 
                 {/* Moving Laser Line */}
-                <div className="absolute inset-x-[60px] top-[60px] h-0.5 bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-[scan_2s_linear_infinite]" />
+                <div className={`absolute inset-x-[60px] top-[60px] h-0.5 shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-[scan_2s_linear_infinite] ${
+                  scanningMode === 'ocr' ? 'bg-blue-500 shadow-blue-500/50' : 'bg-purple-500'
+                }`} />
+                
+                {ocrStatus && (
+                  <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
+                    <Zap className="w-3 h-3 text-blue-400 animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">{ocrStatus}</span>
+                  </div>
+                )}
                 
                 <style>{`
                   @keyframes scan {
