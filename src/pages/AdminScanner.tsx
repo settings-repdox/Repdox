@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { CheckCircle, XCircle, Camera, Loader2 } from "lucide-react";
 import { isUserAdmin, ADMIN_EMAILS } from "@/lib/adminService";
 import { useNavigate } from "react-router-dom";
+import { getRegistrationTableName } from "@/lib/utils";
 
 export default function AdminScanner() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -23,6 +24,7 @@ export default function AdminScanner() {
   const [scanColor, setScanColor] = useState<string>("border-purple-500");
   const [lastCheckedName, setLastCheckedName] = useState<string | null>(null);
   const [isDetected, setIsDetected] = useState(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,7 +41,16 @@ export default function AdminScanner() {
 
   const playBeep = () => {
     try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const audioCtx = audioCtxRef.current;
+      
+      // Resume if suspended (common in mobile browsers)
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
@@ -147,6 +158,17 @@ export default function AdminScanner() {
       
       if (!targetEventId) throw new Error("Please select an event in the scanner first.");
 
+      // Security check: If event_id from QR doesn't match selectedEventId, warn organizer
+      if (event_id && event_id !== 'null' && event_id !== selectedEventId) {
+        const confirmSwitch = window.confirm(`This QR code is for a different event than selected. Process anyway?`);
+        if (!confirmSwitch) {
+          setScanStatus("Ready to scan");
+          setScanColor("border-purple-500");
+          setProcessing(false);
+          return;
+        }
+      }
+
       const { data: eventData, error: eventErr } = await supabase
         .from("events")
         .select("slug, id, title, check_in_start, check_in_end")
@@ -168,11 +190,10 @@ export default function AdminScanner() {
         }
       }
 
-      const baseSlug = eventData.slug?.toLowerCase().replace(/-/g, "_") || "";
-      const tableName = `event_reg_${baseSlug}`;
+      const tableName = getRegistrationTableName(eventData);
       
-      // Also try a simplified version if the slug has a year (e.g. solveforindia2026 -> solveforindia)
-      const simplifiedName = `event_reg_${baseSlug.replace(/\d+$/, "")}`;
+      // Fallback for Solve For India year suffixes (solveforindia2026 -> solveforindia)
+      const simplifiedName = tableName.replace(/\d+$/, "");
 
       let updateErr;
       let updatedReg;
@@ -204,7 +225,16 @@ export default function AdminScanner() {
         }
       }
 
-      if (updateErr) throw new Error(`ID not found in ${tableName} or ${simplifiedName}`);
+      // If still failed, try the central table as a final fallback
+      if (updateErr) {
+        const centralResult = await attemptUpdate("event_registrations");
+        if (!centralResult.error) {
+          updatedReg = centralResult.data;
+          updateErr = null;
+        }
+      }
+
+      if (updateErr) throw new Error("Invalid Registration ID for this event.");
       
       const reg = updatedReg as any;
 
@@ -274,11 +304,14 @@ export default function AdminScanner() {
         }
       }
 
-      const tableName = eventData.slug 
-        ? `event_reg_${eventData.slug.toLowerCase().replace(/-/g, "_")}`
-        : `event_reg_${eventData.id.replace(/-/g, "_")}`;
+      const tableName = getRegistrationTableName(eventData);
+      const simplifiedName = tableName.replace(/\d+$/, "");
 
-      const { data: updatedReg, error: updateErr } = await supabase
+      let updatedReg;
+      let updateErr;
+
+      // Try dynamic table first
+      const { data: dynData, error: dynErr } = await supabase
         .from(tableName as any)
         .update({
           check_in_status: "checked_in",
@@ -287,9 +320,52 @@ export default function AdminScanner() {
         })
         .eq("registration_id", manualId.trim())
         .select("name")
-        .single();
+        .maybeSingle();
 
-      if (updateErr) throw new Error("Invalid Registration ID for this event.");
+      updatedReg = dynData;
+      updateErr = dynErr;
+
+      // Try simplified table name if dynamic failed
+      if (!updatedReg && tableName !== simplifiedName) {
+        const { data: simData, error: simErr } = await supabase
+          .from(simplifiedName as any)
+          .update({
+            check_in_status: "checked_in",
+            checked_in_at: new Date().toISOString(),
+            checked_in_by: adminEmail || "Admin"
+          })
+          .eq("registration_id", manualId.trim())
+          .select("name")
+          .maybeSingle();
+        
+        if (simData) {
+          updatedReg = simData;
+          updateErr = null;
+        }
+      }
+
+      // Try central table as final fallback
+      if (!updatedReg) {
+        const { data: centralData, error: centralErr } = await supabase
+          .from("event_registrations")
+          .update({
+            check_in_status: "checked_in",
+            checked_in_at: new Date().toISOString(),
+            checked_in_by: adminEmail || "Admin"
+          })
+          .eq("registration_id", manualId.trim())
+          .select("name")
+          .maybeSingle();
+        
+        if (centralData) {
+          updatedReg = centralData;
+          updateErr = null;
+        }
+      }
+
+      if (updateErr || !updatedReg) {
+        throw new Error("Invalid Registration ID for this event.");
+      }
 
       const reg = updatedReg as any;
       toast.success(`Successfully checked in ${reg.name}!`, {
@@ -331,6 +407,9 @@ export default function AdminScanner() {
         });
 
         if (code) {
+          // Guard: Don't re-trigger if already processing or if we just scanned this same code
+          if (processing || lastScanned === code.data) return;
+
           // Visual feedback that SOMETHING was detected
           setIsDetected(true);
           setTimeout(() => setIsDetected(false), 200);

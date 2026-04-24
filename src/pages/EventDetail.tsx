@@ -57,6 +57,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import AddToCalendar from "@/components/AddToCalendar";
 import RecentlyViewedEvents from "@/components/RecentlyViewedEvents";
+import { getRegistrationTableName } from "@/lib/utils";
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -123,14 +124,26 @@ export default function EventDetail() {
       setUser(currentUser);
       
       if (currentUser && event?.id) {
+        const tableName = getRegistrationTableName(event);
         const { data: reg, error } = await supabase
-          .from("event_registrations")
+          .from(tableName as any)
           .select("id")
           .eq("event_id", event.id)
           .eq("user_id", currentUser.id)
           .maybeSingle();
         
-        if (reg) setIsRegistered(true);
+        if (reg) {
+          setIsRegistered(true);
+        } else if (tableName !== "event_registrations") {
+          // Fallback check in central table
+          const { data: centralReg } = await supabase
+            .from("event_registrations")
+            .select("id")
+            .eq("event_id", event.id)
+            .eq("user_id", currentUser.id)
+            .maybeSingle();
+          if (centralReg) setIsRegistered(true);
+        }
       }
     };
     checkUserStatus();
@@ -144,7 +157,7 @@ export default function EventDetail() {
     (async () => {
       try {
         if (event?.id) {
-          const counts = await eventService.countRegistrationsByRole(event.id);
+          const counts = await eventService.countRegistrationsByRole(event.id, event.slug);
           if (mounted) setRoleCounts(counts);
         }
       } catch (e) {
@@ -427,6 +440,7 @@ export default function EventDetail() {
           phone: formData.phone,
           message: formData.message,
           role: formData.role || null,
+          tableName: getRegistrationTableName(event),
         };
 
         await eventService.registerForEvent(params);

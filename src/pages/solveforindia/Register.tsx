@@ -18,6 +18,7 @@ import {
   Sparkles,
   Clock
 } from "lucide-react";
+import { getRegistrationTableName } from "@/lib/utils";
 
 export default function SolveForIndiaRegister() {
   const navigate = useNavigate();
@@ -150,7 +151,7 @@ export default function SolveForIndiaRegister() {
         }
       }
 
-      const dynamicTableName = currentEventSlug ? `event_reg_${currentEventSlug.toLowerCase().replace(/-/g, '_')}` : null;
+      const dynamicTableName = currentEventId ? getRegistrationTableName({ id: currentEventId, slug: currentEventSlug }) : null;
       if (dynamicTableName) setTableName(dynamicTableName);
 
       // If user is authenticated and event ID is known, check for existing registration
@@ -229,27 +230,42 @@ export default function SolveForIndiaRegister() {
       // Basic team logic: if mode changed or name changed, we handle it
       if (formData.teamSize === "Team" && (!existingReg || formData.teamName !== (existingReg.event_teams as any)?.name)) {
         if (!formData.isJoiningExisting) {
+          // Check if team name is already taken for this event
+          const { data: nameCheck } = await supabase
+            .from("event_teams")
+            .select("id")
+            .eq("event_id", eventId)
+            .ilike("name", formData.teamName.trim())
+            .maybeSingle();
+          
+          if (nameCheck) {
+            throw new Error(`The team name "${formData.teamName}" is already taken. Please choose another or join the existing team.`);
+          }
+
           const { data: newTeam, error: teamError } = await supabase
             .from("event_teams")
             .insert([{
               event_id: eventId,
-              name: formData.teamName,
+              name: formData.teamName.trim(),
               max_members: parseInt(formData.memberCount)
             }])
             .select()
             .single();
           
-          if (teamError) console.error("Could not create team record:", teamError);
+          if (teamError) throw new Error("Could not create team: " + teamError.message);
           if (newTeam) teamId = newTeam.id;
         } else {
           const { data: existingTeam } = await supabase
             .from("event_teams")
             .select("id")
             .eq("event_id", eventId)
-            .ilike("name", formData.teamName)
+            .ilike("name", formData.teamName.trim())
             .maybeSingle();
           
-          if (existingTeam) teamId = existingTeam.id;
+          if (!existingTeam) {
+            throw new Error(`Team "${formData.teamName}" not found. Please check the spelling or create a new team.`);
+          }
+          teamId = existingTeam.id;
         }
       }
 

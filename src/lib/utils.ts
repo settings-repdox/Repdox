@@ -21,3 +21,13 @@ export function generateRandomString(len = 32, dictionary = "abcdefghijklmnopqrs
     out += dictionary[Math.floor(Math.random() * dictionary.length)];
   return out;
 }
+
+export function getRegistrationTableName(event: { slug?: string | null, id?: string | null }) {
+  if (event.slug) {
+    return `event_reg_${event.slug.toLowerCase().replace(/-/g, "_")}`;
+  }
+  if (event.id) {
+    return `event_reg_${event.id.replace(/-/g, "_")}`;
+  }
+  return "event_registrations";
+}

@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { User } from "@supabase/supabase-js";
-import { slugify, generateRandomString } from "@/lib/utils";
+import { slugify, generateRandomString, getRegistrationTableName } from "@/lib/utils";
 import { deleteFile } from "@/lib/storageService"; // ADDED: Import deleteFile
 
 type UploadedFile = { file: File; name: string };
@@ -677,18 +677,32 @@ export type RegistrationRow = {
   edit_count?: number | null;
 };
 
-export async function fetchEventRegistrations(eventId: string) {
+export async function fetchEventRegistrations(eventId: string, eventSlug?: string | null) {
+  const tableName = getRegistrationTableName({ id: eventId, slug: eventSlug });
+  
   const { data, error } = await supabase
-    .from("event_registrations")
+    .from(tableName as any)
     .select("*")
     .eq("event_id", eventId)
     .order("created_at", { ascending: false });
-  if (error) throw error;
+    
+  if (error) {
+    // If dynamic table fails (e.g. not created yet), fall back to central table
+    if (tableName !== "event_registrations") {
+      const { data: centralData, error: centralError } = await supabase
+        .from("event_registrations")
+        .select("*")
+        .eq("event_id", eventId)
+        .order("created_at", { ascending: false });
+      if (!centralError) return (centralData as RegistrationRow[]) || [];
+    }
+    throw error;
+  }
   return (data as RegistrationRow[]) || [];
 }
 
-export async function countRegistrationsByRole(eventId: string) {
-  const regs = await fetchEventRegistrations(eventId);
+export async function countRegistrationsByRole(eventId: string, eventSlug?: string | null) {
+  const regs = await fetchEventRegistrations(eventId, eventSlug);
   const counts: Record<string, number> = {};
   regs.forEach((r) => {
     const key = r.role || "__no_role__";
@@ -713,7 +727,7 @@ export async function canRegister(eventId: string, roleName?: string | null) {
   const target = roles.find((r) => r.name === roleName);
   if (!target || target.capacity == null) return true;
 
-  const counts = await countRegistrationsByRole(eventId);
+  const counts = await countRegistrationsByRole(eventId, (evt as any)?.slug);
   const current = counts[roleName] || 0;
   return current < (target.capacity ?? Infinity);
 }
@@ -726,7 +740,32 @@ export async function registerForEvent(params: {
   email?: string | null;
   phone?: string | null;
   message?: string | null;
+  tableName?: string | null;
 }) {
+  // If a dynamic table name is provided, use it directly instead of the central RPC
+  if (params.tableName && params.tableName !== "event_registrations") {
+    const { data, error } = await supabase
+      .from(params.tableName as any)
+      .insert([{
+        event_id: params.event_id,
+        user_id: params.user_id,
+        name: params.name,
+        email: params.email,
+        phone: params.phone,
+        message: params.message,
+        role: params.role,
+        status: "registered"
+      }])
+      .select()
+      .single();
+    
+    if (error) {
+      if (error.code === '23505') throw new Error("already_registered");
+      throw error;
+    }
+    return data;
+  }
+
   const rpcParams = {
     p_event_id: params.event_id,
     p_user_id: params.user_id ?? null,

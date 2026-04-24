@@ -1,6 +1,16 @@
--- Migration: Automatically create a new table for an event when it is approved (is_active = true)
 -- NOTE: This is generally considered a database anti-pattern compared to a single event_registrations table.
 -- However, this fulfills the requirement to create separate tables automatically.
+
+-- 1. Create the generator function for registration IDs
+CREATE OR REPLACE FUNCTION public.generate_registration_id()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.registration_id IS NULL THEN
+        NEW.registration_id := 'REG-' || upper(substring(replace(gen_random_uuid()::text, '-', ''), 1, 8));
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION public.create_event_table_on_approval()
 RETURNS TRIGGER AS $$
@@ -112,6 +122,12 @@ BEGIN
         UNIQUE(event_id, user_id)
       )';
       
+      -- Add registration ID trigger
+      EXECUTE 'CREATE TRIGGER tr_generate_registration_id_' || table_name || '
+               BEFORE INSERT ON public.' || table_name || '
+               FOR EACH ROW
+               EXECUTE FUNCTION public.generate_registration_id()';
+      
       EXECUTE 'ALTER TABLE public.' || table_name || ' ENABLE ROW LEVEL SECURITY';
 
       -- Add RLS policies
@@ -214,6 +230,12 @@ BEGIN
         created_at TIMESTAMPTZ DEFAULT now(),
         UNIQUE(event_id, user_id)
       )';
+      
+      -- Add registration ID trigger
+      EXECUTE 'CREATE TRIGGER tr_generate_registration_id_' || table_name || '
+               BEFORE INSERT ON public.' || table_name || '
+               FOR EACH ROW
+               EXECUTE FUNCTION public.generate_registration_id()';
       
       EXECUTE 'ALTER TABLE public.' || table_name || ' ENABLE ROW LEVEL SECURITY';
 
