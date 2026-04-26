@@ -92,15 +92,28 @@ export async function getVolunteerApplications() {
 }
 
 /**
- * Update volunteer application status
+ * Update volunteer application status and optionally interview details
  */
-export async function updateVolunteerStatus(applicationId: string, status: string) {
+export async function updateVolunteerStatus(
+  applicationId: string, 
+  status: string, 
+  interviewTime?: string, 
+  meetLink?: string
+) {
   const isAdmin = await isUserAdmin();
   if (!isAdmin) throw new Error("Not authorized");
 
+  const updateData: any = { 
+    status, 
+    updated_at: new Date().toISOString() 
+  };
+
+  if (interviewTime) updateData.interview_time = interviewTime;
+  if (meetLink) updateData.meet_link = meetLink;
+
   const { error } = await supabase
     .from("volunteer_applications" as any)
-    .update({ status, updated_at: new Date().toISOString() })
+    .update(updateData)
     .eq("id", applicationId);
 
   if (error) throw error;

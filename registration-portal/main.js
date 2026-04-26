@@ -105,7 +105,7 @@ form.addEventListener('submit', async (e) => {
         
     } catch (error) {
         console.error('Submission error:', error);
-        alert(`Registration failed: ${error.message}. Please contact support@repdox.com`);
+        alert(`Registration failed: ${error.message}. Please contact supportrepdox@gmail.com`);
     } finally {
         submitBtn.classList.remove('loading');
         submitBtn.disabled = false;

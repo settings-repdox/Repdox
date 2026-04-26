@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, Mail, Send, ArrowRight, Sparkles, Trophy, Users, GraduationCap, MapPin, Briefcase } from 'lucide-react';
+import { CheckCircle2, Mail, Send, ArrowRight, Sparkles, Trophy, Users, GraduationCap, MapPin, Briefcase, Video, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Dedicated client for the old volunteer database
@@ -28,6 +28,8 @@ export default function Volunteers() {
   const [loading, setLoading] = useState(true);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
+  const [interviewTime, setInterviewTime] = useState<string | null>(null);
+  const [meetLink, setMeetLink] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -60,13 +62,15 @@ export default function Volunteers() {
     if (!currentUser?.email) return;
     try {
       // Check status in the OLD project
-      const data = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${currentUser.email}&select=status`, {
+      const data = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${currentUser.email}&select=status,interview_time,meet_link`, {
         headers: { "apikey": OLD_PROJECT_KEY, "Authorization": `Bearer ${OLD_PROJECT_KEY}` }
       }).then(res => res.json());
 
       if (data && data.length > 0) {
         setHasApplied(true);
         setApplicationStatus(data[0].status);
+        setInterviewTime(data[0].interview_time);
+        setMeetLink(data[0].meet_link);
       }
     } catch (err) {
       console.error('Error checking status:', err);
@@ -169,15 +173,72 @@ export default function Volunteers() {
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-cyan-400 text-sm font-bold mb-6">
                   <Sparkles className="w-4 h-4" /> RECRUITMENT PHASE 2
                 </div>
-                <p className="text-xl text-white mb-8">
-                  Great news! You've been shortlisted for an interview. We will reach out to you via email shortly to schedule the call.
+                <h2 className="text-2xl font-bold text-white mb-4">Interview Invitation</h2>
+                <p className="text-muted-foreground mb-8 text-lg">
+                  Great news! You've been shortlisted for an interview. We have mailed you the scheduled time for your call.
                 </p>
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-left mb-8">
-                  <p className="text-sm text-muted-foreground mb-2">Next Steps:</p>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">✅ Keep an eye on your inbox</li>
-                    <li className="flex items-center gap-2">✅ Prepare to discuss your experience</li>
-                    <li className="flex items-center gap-2">✅ Research about Repdox projects</li>
+
+                {interviewTime ? (
+                  <div className="space-y-6">
+                    <div className="p-6 bg-purple-500/10 rounded-2xl border border-purple-500/20 flex flex-col items-center">
+                      <Clock className="w-8 h-8 text-purple-400 mb-3" />
+                      <p className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-2">Scheduled Time</p>
+                      <p className="text-xl font-bold text-white">
+                        {new Date(interviewTime).toLocaleString('en-IN', {
+                          dateStyle: 'long',
+                          timeStyle: 'short',
+                          timeZone: 'Asia/Kolkata'
+                        })}
+                      </p>
+                    </div>
+
+                    {(() => {
+                      const now = new Date();
+                      const scheduled = new Date(interviewTime);
+                      // Show link 10 minutes before and up to 1 hour after
+                      const isMeetVisible = now.getTime() >= (scheduled.getTime() - 10 * 60 * 1000) && 
+                                          now.getTime() <= (scheduled.getTime() + 60 * 60 * 1000);
+                      
+                      if (isMeetVisible && meetLink) {
+                        return (
+                          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <Button 
+                              onClick={() => window.open(meetLink, '_blank')}
+                              className="w-full h-16 bg-gradient-to-r from-purple-600 to-cyan-500 hover:opacity-90 rounded-2xl text-lg font-black tracking-wider shadow-2xl shadow-purple-500/20 group"
+                            >
+                              JOIN INTERVIEW MEET <Video className="ml-3 w-6 h-6 group-hover:scale-110 transition-transform" />
+                            </Button>
+                            <p className="text-xs text-muted-foreground mt-4 italic">
+                              * Please ensure you are in a quiet environment with a stable internet connection.
+                            </p>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div className="p-6 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center">
+                            <Video className="w-8 h-8 text-muted-foreground/50 mb-3" />
+                            <p className="text-muted-foreground italic text-center">
+                              The meet link will become active 10 minutes before your scheduled time.
+                            </p>
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+                ) : (
+                  <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                    <p className="text-muted-foreground">
+                      Our team is currently finalizing your interview slot. You will receive an email confirmation very shortly.
+                    </p>
+                  </div>
+                )}
+                
+                <div className="mt-10 p-4 bg-white/5 rounded-2xl border border-white/10 text-left">
+                  <p className="text-sm text-muted-foreground mb-3 font-bold uppercase tracking-widest">Preparation Tips:</p>
+                  <ul className="space-y-2 text-sm text-white/80">
+                    <li className="flex items-center gap-2 font-medium"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full" /> Be ready to discuss your skills and motivation</li>
+                    <li className="flex items-center gap-2 font-medium"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full" /> Have your portfolio or previous work ready if applicable</li>
+                    <li className="flex items-center gap-2 font-medium"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full" /> Find a quiet space with good lighting</li>
                   </ul>
                 </div>
               </>
@@ -207,7 +268,7 @@ export default function Volunteers() {
                 </p>
                 <Button 
                   variant="outline"
-                  onClick={() => window.location.href = 'mailto:support@repdox.com'}
+                  onClick={() => window.location.href = 'mailto:supportrepdox@gmail.com'}
                   className="border-white/10 hover:bg-white/5 h-12 px-8 rounded-xl font-bold"
                 >
                   <Mail className="w-4 h-4 mr-2" /> Contact Support
@@ -339,14 +400,27 @@ export default function Volunteers() {
                   <Label htmlFor="class" className="text-muted-foreground flex items-center gap-2">
                     Class / Year <span className="text-cyan-400">*</span>
                   </Label>
-                  <Input
-                    id="class"
-                    placeholder="e.g. 11th, 1st Year"
-                    value={formData.class}
-                    onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                    className="h-14 bg-white/5 border-white/10 focus:border-cyan-500/50 focus:bg-cyan-500/5 transition-all rounded-2xl"
+                  <Select 
+                    onValueChange={(val) => setFormData({ ...formData, class: val })}
                     required
-                  />
+                  >
+                    <SelectTrigger className="h-14 bg-white/5 border-white/10 focus:ring-cyan-500/30 rounded-2xl">
+                      <SelectValue placeholder="Select your year" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0e0c1e] border-white/10 text-white">
+                      <SelectItem value="9th Grade">9th Grade</SelectItem>
+                      <SelectItem value="10th Grade">10th Grade</SelectItem>
+                      <SelectItem value="11th Grade">11th Grade</SelectItem>
+                      <SelectItem value="12th Grade">12th Grade</SelectItem>
+                      <SelectItem value="1st Year">1st Year (UG)</SelectItem>
+                      <SelectItem value="2nd Year">2nd Year (UG)</SelectItem>
+                      <SelectItem value="3rd Year">3rd Year (UG)</SelectItem>
+                      <SelectItem value="4th Year">4th Year (UG)</SelectItem>
+                      <SelectItem value="Graduate">Graduate</SelectItem>
+                      <SelectItem value="Post Graduate">Post Graduate</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>

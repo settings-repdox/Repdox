@@ -14,6 +14,7 @@ import CommandPalette from "@/components/CommandPalette";
 import { BackgroundProvider } from "@/components/BackgroundSystem/BackgroundContext";
 import LightPillarBackground from "@/components/BackgroundSystem/LightPillarBackground";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 import { useLocation } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -44,6 +45,7 @@ const AdminScanner = lazy(() => import("./pages/AdminScanner"));
 const Volunteers = lazy(() => import("./pages/Volunteers"));
 const DiscordLink = lazy(() => import("./pages/DiscordLink"));
 const AdminVolunteers = lazy(() => import("./pages/AdminVolunteers"));
+const FAQ = lazy(() => import("./pages/FAQ"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -144,6 +146,8 @@ function AppContent() {
               }
             />
 
+            <Route path="/faq" element={<FAQ />} />
+
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -212,6 +216,7 @@ const App = () => {
             <Sonner />
 
             <BrowserRouter>
+              <ScrollToTop />
               {!showIntro && <LightPillarBackground />}
               <CommandPalette />
               {showIntro && <IntroLoader onComplete={handleIntroComplete} />}

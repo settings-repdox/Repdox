@@ -22,8 +22,21 @@ import {
   ShieldCheck,
   Calendar,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  Video,
+  Clock,
+  ExternalLink
 } from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatDate } from "@/lib/timeUtils";
 
 export default function AdminVolunteers() {
@@ -36,6 +49,11 @@ export default function AdminVolunteers() {
     isUserAdmin().then(setIsAdmin);
   }, []);
 
+  const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [interviewTime, setInterviewTime] = useState("");
+  const [meetLink, setMeetLink] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const { data: applications = [], isLoading, isError, error } = useQuery({
     queryKey: ["volunteer-applications"],
     enabled: isAdmin === true,
@@ -43,10 +61,12 @@ export default function AdminVolunteers() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => 
-      updateVolunteerStatus(id, status),
+    mutationFn: ({ id, status, time, link }: { id: string; status: string; time?: string; link?: string }) => 
+      updateVolunteerStatus(id, status, time, link),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["volunteer-applications"] });
+      setIsDialogOpen(false);
+      setSelectedApp(null);
       toast({
         title: `Status Updated`,
         description: `Application status changed to ${variables.status.toUpperCase()}.`,
@@ -168,6 +188,36 @@ export default function AdminVolunteers() {
                         </div>
                       </div>
 
+                      {app.status === 'interview' && (
+                        <div className="grid gap-4 md:grid-cols-2 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
+                          <div className="space-y-1.5">
+                            <div className="text-[10px] uppercase tracking-wider font-bold text-blue-500 flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> Interview Time
+                            </div>
+                            <p className="text-sm font-bold">
+                              {app.interview_time ? new Date(app.interview_time).toLocaleString() : 'Not set'}
+                            </p>
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="text-[10px] uppercase tracking-wider font-bold text-blue-500 flex items-center gap-1">
+                              <Video className="w-3 h-3" /> Meet Link
+                            </div>
+                            {app.meet_link ? (
+                              <a 
+                                href={app.meet_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1"
+                              >
+                                Open Link <ExternalLink className="w-3 h-3" />
+                              </a>
+                            ) : (
+                              <p className="text-sm font-medium text-muted-foreground italic">Not set</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/60 flex items-center gap-1">
                           <MessageSquare className="w-3 h-3" /> Motivation
@@ -188,7 +238,12 @@ export default function AdminVolunteers() {
                         <XCircle className="w-4 h-4 mr-2" /> Reject
                       </Button>
                       <Button 
-                        onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'interview' })}
+                        onClick={() => {
+                          setSelectedApp(app);
+                          setInterviewTime(app.interview_time || "");
+                          setMeetLink(app.meet_link || "");
+                          setIsDialogOpen(true);
+                        }}
                         disabled={updateStatusMutation.isPending}
                         variant="outline"
                         className="border-blue-500/30 text-blue-500 hover:bg-blue-500/10 rounded-xl"
@@ -210,6 +265,61 @@ export default function AdminVolunteers() {
           </div>
         )}
       </div>
+
+      {/* Interview Scheduling Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-[#0e0c1e] text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Schedule Interview</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Set the interview time and provide a meet link for {selectedApp?.full_name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="time" className="text-sm font-bold text-purple-400">Date & Time</Label>
+              <Input
+                id="time"
+                type="datetime-local"
+                value={interviewTime}
+                onChange={(e) => setInterviewTime(e.target.value)}
+                className="bg-white/5 border-white/10 focus:border-purple-500 h-12 rounded-xl text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="link" className="text-sm font-bold text-cyan-400">Meeting Link (Google Meet/Zoom)</Label>
+              <Input
+                id="link"
+                placeholder="https://meet.google.com/..."
+                value={meetLink}
+                onChange={(e) => setMeetLink(e.target.value)}
+                className="bg-white/5 border-white/10 focus:border-cyan-500 h-12 rounded-xl text-white"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="ghost" 
+              onClick={() => setIsDialogOpen(false)}
+              className="text-white hover:bg-white/5"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => updateStatusMutation.mutate({ 
+                id: selectedApp.id, 
+                status: 'interview', 
+                time: interviewTime, 
+                link: meetLink 
+              })}
+              disabled={updateStatusMutation.isPending}
+              className="bg-gradient-to-r from-purple-600 to-cyan-500 hover:opacity-90 font-bold px-8 rounded-xl"
+            >
+              {updateStatusMutation.isPending ? "Scheduling..." : "Save & Schedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -17,7 +17,7 @@ const footerLinks = {
   ],
   resources: [
     { label: "Event Guidelines", href: "#" },
-    { label: "FAQs", href: "#" },
+    { label: "FAQs", href: "/faq" },
     { label: "Support", href: "/contact" },
   ],
 };
@@ -222,7 +222,7 @@ export default function Footer() {
            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground/60">
              <p>© {currentYear} Repdox. All rights reserved.</p>
              <div className="flex gap-6">
-               <Link to="#" className="hover:text-foreground transition-colors">
+               <Link to="/privacy" className="hover:text-foreground transition-colors">
                  Privacy Policy
                </Link>
                <Link to="#" className="hover:text-foreground transition-colors">
