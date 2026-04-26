@@ -16,7 +16,7 @@ const footerLinks = {
     // { label: "Community", href: "/community" },
   ],
   resources: [
-    { label: "Event Guidelines", href: "#" },
+    { label: "Hosting Guidelines", href: "/hosting-guidelines" },
     { label: "FAQs", href: "/faq" },
     { label: "Support", href: "/contact" },
   ],
