@@ -48,6 +48,7 @@ const AdminVolunteers = lazy(() => import("./pages/AdminVolunteers"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const HostingGuidelines = lazy(() => import("./pages/HostingGuidelines"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -151,6 +152,7 @@ function AppContent() {
             <Route path="/faq" element={<FAQ />} />
             <Route path="/hosting-guidelines" element={<HostingGuidelines />} />
             <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/cookies" element={<CookiePolicy />} />
 
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
