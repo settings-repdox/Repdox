@@ -61,16 +61,26 @@ export default function Volunteers() {
   const handleStatusCheck = async (currentUser: any) => {
     if (!currentUser?.email) return;
     try {
-      // Check status in the OLD project
-      const data = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${currentUser.email}&select=status,interview_time,meet_link`, {
+      // Try to fetch with new interview columns
+      let response = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${currentUser.email}&select=status,interview_time,meet_link`, {
         headers: { "apikey": OLD_PROJECT_KEY, "Authorization": `Bearer ${OLD_PROJECT_KEY}` }
-      }).then(res => res.json());
+      });
+
+      if (!response.ok) {
+        // Fallback: fetch only status if the new columns don't exist yet
+        console.warn('Falling back to basic status check...');
+        response = await fetch(`${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${currentUser.email}&select=status`, {
+          headers: { "apikey": OLD_PROJECT_KEY, "Authorization": `Bearer ${OLD_PROJECT_KEY}` }
+        });
+      }
+
+      const data = await response.json();
 
       if (data && data.length > 0) {
         setHasApplied(true);
         setApplicationStatus(data[0].status);
-        setInterviewTime(data[0].interview_time);
-        setMeetLink(data[0].meet_link);
+        setInterviewTime(data[0].interview_time || null);
+        setMeetLink(data[0].meet_link || null);
       }
     } catch (err) {
       console.error('Error checking status:', err);
