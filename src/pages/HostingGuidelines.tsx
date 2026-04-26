@@ -39,6 +39,16 @@ export default function HostingGuidelines() {
       ]
     },
     {
+      title: "4. Budget & Financials",
+      icon: <Info className="w-5 h-5 text-amber-400" />,
+      content: "Transparency is key. We work with fixed fees or revenue share models. A 50% non-refundable advance is required to initiate work.",
+      subpoints: [
+        "Fixed / Revenue Share / Hybrid",
+        "50% Non-refundable Advance",
+        "Scope change cost revisions"
+      ]
+    },
+    {
       title: "5. Branding & Creative Control",
       icon: <Sparkles className="w-5 h-5 text-pink-400" />,
       content: "Branding requires mutual approval. Repdox can use the event in its professional portfolio.",
@@ -187,31 +197,6 @@ export default function HostingGuidelines() {
               </ul>
             </motion.div>
           ))}
-
-          {/* Budget Section (Inserted at index 3 visually) */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 backdrop-blur-xl p-8 rounded-[32px] order-4"
-          >
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
-                <Info className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-2">4. Budget & Financials</h2>
-                <p className="text-muted-foreground leading-relaxed mb-6">
-                  Transparency is key. We work with fixed fees or revenue share models.
-                </p>
-                <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 inline-block">
-                  <p className="text-sm font-bold text-amber-200">
-                    * 50% non-refundable advance required to initiate work.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
 
           {/* Contact Section */}
           <motion.div
