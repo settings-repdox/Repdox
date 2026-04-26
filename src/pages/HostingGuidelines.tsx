@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Shield, FileText, CheckCircle2, MessageSquare, Info } from "lucide-react";
+import { ArrowLeft, Shield, FileText, CheckCircle2, MessageSquare, Info, Sparkles, Trophy, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -10,18 +10,18 @@ export default function HostingGuidelines() {
     {
       title: "1. Scope of Services",
       icon: <FileText className="w-5 h-5 text-purple-400" />,
-      content: "Repdox handles event concept design, end-to-end execution, marketing, and participant management. We provide the infrastructure and expertise to bring your vision to life.",
+      content: "Repdox handles event concept design, end-to-end execution, marketing, and participant management.",
       subpoints: [
         "Event Architecture (Hackathons, MUNs, Workshops)",
         "Logistics & Registrations",
-        "Strategic Marketing & Outreach",
+        "Marketing & Outreach",
         "Participant Lifecycle Management"
       ]
     },
     {
       title: "2. Roles & Responsibilities",
       icon: <CheckCircle2 className="w-5 h-5 text-cyan-400" />,
-      content: "Clear boundaries ensure success. The host provides the venue and final approvals, while Repdox manages the execution and technical framework.",
+      content: "Clear boundaries ensure success. The host provides the venue and final approvals, while Repdox manages the execution.",
       subpoints: [
         "Client: Venue, permissions, and final authority",
         "Repdox: Strategy, vendor coordination, and tech",
@@ -31,11 +31,101 @@ export default function HostingGuidelines() {
     {
       title: "3. Timeline Commitments",
       icon: <Shield className="w-5 h-5 text-amber-400" />,
-      content: "To maintain Repdox standards, we require specific lead times for preparation and marketing cycles.",
+      content: "To maintain standards, we require specific lead times for preparation.",
       subpoints: [
         "Hackathons: 8–12 weeks",
         "MUNs: 6–8 weeks",
         "Workshops: 2–4 weeks"
+      ]
+    },
+    {
+      title: "5. Branding & Creative Control",
+      icon: <Sparkles className="w-5 h-5 text-pink-400" />,
+      content: "Branding requires mutual approval. Repdox can use the event in its professional portfolio.",
+      subpoints: [
+        "Mutual approval on all assets",
+        "Sponsor placements pre-approved",
+        "Media rights for portfolio use"
+      ]
+    },
+    {
+      title: "6. Sponsorship Policy",
+      icon: <Trophy className="w-5 h-5 text-yellow-400" />,
+      content: "Sponsorship outreach is effort-based and not guaranteed. Sponsors need mutual approval.",
+      subpoints: [
+        "Effort-based outreach",
+        "Predefined revenue split",
+        "Mutual sponsor approval"
+      ]
+    },
+    {
+      title: "7. Communication Protocol",
+      icon: <MessageSquare className="w-5 h-5 text-green-400" />,
+      content: "Single point of contact from both sides with bi-weekly meetings for transparency.",
+      subpoints: [
+        "Dedicated SPOCs",
+        "Bi-weekly strategy meetings",
+        "Documented approvals"
+      ]
+    },
+    {
+      title: "8. Risk & Contingency Planning",
+      icon: <Shield className="w-5 h-5 text-red-400" />,
+      content: "Repdox does not provide redundant backups for speakers or host-provided technical infrastructure.",
+      subpoints: [
+        "Host handles primary tech infra",
+        "Force Majeure coverage",
+        "Speaker backups not included"
+      ]
+    },
+    {
+      title: "9. Participant Experience",
+      icon: <Users className="w-5 h-5 text-blue-400" />,
+      content: "We ensure smooth registration, clear scheduling, fair judging, and professional moderation.",
+      subpoints: [
+        "Digital registration & check-in",
+        "Transparent judging systems",
+        "Professional moderation"
+      ]
+    },
+    {
+      title: "10. Legal & Compliance",
+      icon: <Shield className="w-5 h-5 text-purple-400" />,
+      content: "Adherence to local regulations, data privacy standards, and our professional Code of Conduct.",
+      subpoints: [
+        "Regulatory compliance",
+        "Strict Data Privacy",
+        "Code of Conduct enforcement"
+      ]
+    },
+    {
+      title: "11. Cancellation & Refund",
+      icon: <Info className="w-5 h-5 text-gray-400" />,
+      content: "Defined refund conditions and deadlines based on non-refundable advance and incurred costs.",
+      subpoints: [
+        "50% advance non-refundable",
+        "Incurred costs forfeiture",
+        "Per-event deadline specifics"
+      ]
+    },
+    {
+      title: "12. Post-Event Deliverables",
+      icon: <FileText className="w-5 h-5 text-cyan-400" />,
+      content: "Within 14 days, Repdox provides impact reports, media assets, and feedback analysis.",
+      subpoints: [
+        "Comprehensive Impact Reports",
+        "Professional Media Assets",
+        "Participant Data Analytics"
+      ]
+    },
+    {
+      title: "13. Code of Collaboration",
+      icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />,
+      content: "Respect for deadlines, professional communication, and no last-minute major structural changes.",
+      subpoints: [
+        "Deadline adherence",
+        "Structural stability (15 days)",
+        "Transparent communication"
       ]
     }
   ];
@@ -73,7 +163,7 @@ export default function HostingGuidelines() {
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
+              transition={{ delay: idx * 0.05 }}
               className="bg-white/5 border border-white/10 backdrop-blur-xl p-8 rounded-[32px] hover:bg-white/[0.07] transition-all duration-300"
             >
               <div className="flex items-start gap-4 mb-4">
@@ -98,12 +188,12 @@ export default function HostingGuidelines() {
             </motion.div>
           ))}
 
-          {/* Budget Section */}
+          {/* Budget Section (Inserted at index 3 visually) */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 backdrop-blur-xl p-8 rounded-[32px]"
+            className="bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 backdrop-blur-xl p-8 rounded-[32px] order-4"
           >
             <div className="flex items-start gap-4 mb-4">
               <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
