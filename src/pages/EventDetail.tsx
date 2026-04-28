@@ -425,7 +425,7 @@ export default function EventDetail() {
     }
   });
 
-  const teams = Array.from(groupedTeamsMap.values());
+  const teams = Array.from(groupedTeamsMap.values()).filter(t => t.members && t.members.length > 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
