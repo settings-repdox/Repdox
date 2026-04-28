@@ -411,7 +411,7 @@ export default function EventDetail() {
       }
     });
     return { ...team, members };
-  }).filter(team => team.members && team.members.length > 0);
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
