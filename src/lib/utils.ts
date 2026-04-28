@@ -24,7 +24,12 @@ export function generateRandomString(len = 32, dictionary = "abcdefghijklmnopqrs
 
 export function getRegistrationTableName(event: { slug?: string | null, id?: string | null }) {
   if (event.slug) {
-    return `event_reg_${event.slug.toLowerCase().replace(/-/g, "_")}`;
+    let formattedSlug = event.slug.toLowerCase().replace(/-/g, "_");
+    // Prevent 404 errors by mapping the 2026 slug to the actual database table name
+    if (formattedSlug === "solveforindia2026") {
+      formattedSlug = "solveforindia";
+    }
+    return `event_reg_${formattedSlug}`;
   }
   if (event.id) {
     return `event_reg_${event.id.replace(/-/g, "_")}`;
