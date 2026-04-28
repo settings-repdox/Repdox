@@ -226,6 +226,7 @@ export default function SolveForIndiaRegister() {
 
       // 1. Handle Team Creation/Selection (Only if not already in a team or changing it)
       let teamId = existingReg?.team_id || null;
+      let isNewTeamCreated = false;
       
       // Basic team logic: if mode changed or name changed, we handle it
       if (formData.teamSize === "Team" && (!existingReg || formData.teamName !== (existingReg.event_teams as any)?.name)) {
@@ -253,7 +254,10 @@ export default function SolveForIndiaRegister() {
             .single();
           
           if (teamError) throw new Error("Could not create team: " + teamError.message);
-          if (newTeam) teamId = newTeam.id;
+          if (newTeam) {
+            teamId = newTeam.id;
+            isNewTeamCreated = true;
+          }
         } else {
           const { data: existingTeam } = await supabase
             .from("event_teams")
@@ -294,12 +298,16 @@ export default function SolveForIndiaRegister() {
           .from(tableName as any)
           .update(registrationData as any)
           .eq("id", existingReg.id);
-        if (error) throw error;
+        if (error) {
+          if (isNewTeamCreated && teamId) await supabase.from("event_teams").delete().eq("id", teamId);
+          throw error;
+        }
       } else {
         const { error } = await supabase
           .from(tableName as any)
           .insert([registrationData as any]);
         if (error) {
+          if (isNewTeamCreated && teamId) await supabase.from("event_teams").delete().eq("id", teamId);
           if (error.code === '23505') throw new Error("You have already registered for this event!");
           throw error;
         }
