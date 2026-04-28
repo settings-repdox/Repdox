@@ -289,6 +289,7 @@ export default function SolveForIndiaRegister() {
         linkedin: formData.linkedin,
         participation_mode: formData.teamSize,
         expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
+        message: formData.teamName ? JSON.stringify({ teamName: formData.teamName }) : null,
         edit_count: existingReg ? (existingReg.edit_count || 0) + 1 : 0
       };
 

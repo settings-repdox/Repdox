@@ -310,9 +310,19 @@ export async function createEvent(payload: CreateEventPayload) {
       };
     });
 
+    // Deduplicate teams by name (case-insensitive)
+    const uniqueTeamsMap = new Map<string, any>();
+    teamInserts.forEach(t => {
+      const lowerName = t.name.toLowerCase();
+      if (!uniqueTeamsMap.has(lowerName)) {
+        uniqueTeamsMap.set(lowerName, t);
+      }
+    });
+    const uniqueTeams = Array.from(uniqueTeamsMap.values());
+
     const { error: teamsError } = await supabase
       .from("event_teams")
-      .insert(teamInserts);
+      .insert(uniqueTeams);
 
     if (teamsError) {
       console.warn("Failed to insert teams", teamsError);
@@ -541,10 +551,16 @@ export async function updateEvent(
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
-    // Deduplicate teams by name
-    const uniqueTeams = Array.from(
-      new Map(teamInserts.map((t) => [t.name, t])).values(),
-    );
+    // Deduplicate teams by name (case-insensitive)
+    const uniqueTeamsMap = new Map<string, any>();
+    teamInserts.forEach(t => {
+      const lowerName = t.name.toLowerCase();
+      if (!uniqueTeamsMap.has(lowerName)) {
+        uniqueTeamsMap.set(lowerName, t);
+      }
+    });
+    const uniqueTeams = Array.from(uniqueTeamsMap.values());
+    
     if (uniqueTeams.length > 0) {
       await supabase.from("event_teams").insert(uniqueTeams);
     }

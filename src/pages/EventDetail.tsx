@@ -396,22 +396,36 @@ export default function EventDetail() {
     enabled: !!event?.id && activeTab === "teams",
   });
 
-  const teams = rawTeams.map(team => {
+  // Group teams by name to handle duplicates gracefully in the UI
+  const groupedTeamsMap = new Map<string, any>();
+  
+  rawTeams.forEach(team => {
+    const lowerName = team.name.toLowerCase();
     const members = registrations.filter(r => {
-      // 1. Try matching by relational team_id (Newer "Solve For India" style)
+      // 1. Try matching by relational team_id
       if (r.team_id && r.team_id === team.id) return true;
 
-      // 2. Try matching by string name in message (Legacy / Generic style)
+      // 2. Try matching by string name in message
       try {
         const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
         const teamName = msg?.participation?.teamName || msg?.teamName;
-        return teamName && teamName.toLowerCase() === team.name.toLowerCase();
+        return teamName && teamName.toLowerCase() === lowerName;
       } catch (e) {
         return false;
       }
     });
-    return { ...team, members };
+
+    if (groupedTeamsMap.has(lowerName)) {
+      const existing = groupedTeamsMap.get(lowerName);
+      // Combine members and ensure uniqueness by ID
+      const allMembers = [...existing.members, ...members];
+      existing.members = Array.from(new Map(allMembers.map(m => [m.id, m])).values());
+    } else {
+      groupedTeamsMap.set(lowerName, { ...team, members });
+    }
   });
+
+  const teams = Array.from(groupedTeamsMap.values());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
