@@ -367,12 +367,31 @@ export default function EventDetail() {
     queryKey: ["event_registrations_all", event?.id],
     queryFn: async () => {
       if (!event?.id) return [];
+      const tableName = getRegistrationTableName(event);
+      let allData: any[] = [];
+      
+      // Try fetching from the dynamic table
       const { data, error } = await supabase
-        .from("event_registrations")
+        .from(tableName as any)
         .select("id, name, message, team_id")
         .eq("event_id", event.id);
-      if (error) throw error;
-      return data || [];
+        
+      if (!error && data) {
+        allData = [...data];
+      }
+
+      // If dynamic table is different from the central one, check the central one too
+      if (tableName !== "event_registrations") {
+        const { data: fallbackData } = await supabase
+          .from("event_registrations")
+          .select("id, name, message, team_id")
+          .eq("event_id", event.id);
+        if (fallbackData) {
+          allData = [...allData, ...fallbackData];
+        }
+      }
+      
+      return allData;
     },
     enabled: !!event?.id && activeTab === "teams",
   });
