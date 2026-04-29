@@ -838,7 +838,7 @@ export default function EventDetail() {
               {isOwner && activeTab === "registrations" && (
                 <div>
                   {/* Organizer Registrations component will fetch registrations and provide exports */}
-                  <OrganizerRegistrations eventId={event.id} />
+                  <OrganizerRegistrations eventId={event.id} eventSlug={event.slug} />
                 </div>
               )}
 

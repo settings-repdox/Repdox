@@ -132,7 +132,7 @@ export default function SolveForIndiaRegister() {
       const { data: eventData } = await supabase
         .from("events")
         .select("id, slug")
-        .eq("slug", "SolveForIndia")
+        .eq("slug", "SolveForIndia2026")
         .maybeSingle();
       
       let currentEventId = null;
@@ -223,6 +223,7 @@ export default function SolveForIndiaRegister() {
     try {
       if (!eventId) throw new Error("Event ID not found. Please try again.");
       if (!tableName) throw new Error("Event table not loaded. Please refresh.");
+      if (!userId) throw new Error("You must be logged in to register.");
 
       // 1. Handle Team Creation/Selection (Only if not already in a team or changing it)
       let teamId = existingReg?.team_id || null;

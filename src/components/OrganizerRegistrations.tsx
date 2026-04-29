@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function OrganizerRegistrations({
   eventId,
+  eventSlug,
 }: {
   eventId: string;
+  eventSlug?: string | null;
 }) {
   const [registrations, setRegistrations] = useState<RegistrationRow[]>([]);
   const [teamMap, setTeamMap] = useState<Record<string, string>>({});
@@ -21,9 +23,9 @@ export default function OrganizerRegistrations({
   const load = async () => {
     setLoading(true);
     try {
-      const regs = await eventService.fetchEventRegistrations(eventId);
+      const regs = await eventService.fetchEventRegistrations(eventId, eventSlug);
       setRegistrations(regs);
-      setCounts(await eventService.countRegistrationsByRole(eventId));
+      setCounts(await eventService.countRegistrationsByRole(eventId, eventSlug));
 
       // Fetch team names for registrations with team_id
       const teamIds = Array.from(new Set(regs.map(r => r.team_id).filter(Boolean))) as string[];
