@@ -373,7 +373,7 @@ export default function EventDetail() {
       // Try fetching from the dynamic table
       const { data, error } = await supabase
         .from(tableName as any)
-        .select("id, name, message, team_id")
+        .select("id, name, email, user_id, message, team_id")
         .eq("event_id", event.id);
         
       if (!error && data) {
@@ -384,7 +384,7 @@ export default function EventDetail() {
       if (tableName !== "event_registrations") {
         const { data: fallbackData } = await supabase
           .from("event_registrations")
-          .select("id, name, message, team_id")
+          .select("id, name, email, user_id, message, team_id")
           .eq("event_id", event.id);
         if (fallbackData) {
           allData = [...allData, ...fallbackData];
@@ -417,11 +417,14 @@ export default function EventDetail() {
 
     if (groupedTeamsMap.has(lowerName)) {
       const existing = groupedTeamsMap.get(lowerName);
-      // Combine members and ensure uniqueness by ID
+      // Combine members and ensure uniqueness by user_id or email
       const allMembers = [...existing.members, ...members];
-      existing.members = Array.from(new Map(allMembers.map(m => [m.id, m])).values());
+      existing.members = Array.from(new Map(allMembers.map(m => [m.user_id || m.email || m.id, m])).values());
     } else {
-      groupedTeamsMap.set(lowerName, { ...team, members });
+      groupedTeamsMap.set(lowerName, { 
+        ...team, 
+        members: Array.from(new Map(members.map(m => [m.user_id || m.email || m.id, m])).values())
+      });
     }
   });
 
