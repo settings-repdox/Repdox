@@ -245,6 +245,7 @@ export default function OrganizerRegistrations({
           <table className="w-full table-auto border-separate border-spacing-0">
             <thead>
               <tr className="text-muted-foreground text-xs uppercase tracking-wider">
+                <th className="text-left pb-3 w-12">Sr No</th>
                 <th 
                   className="text-left pb-3 cursor-pointer hover:text-foreground transition-colors"
                   onClick={() => handleSort('created_at')}
@@ -270,8 +271,11 @@ export default function OrganizerRegistrations({
               </tr>
             </thead>
             <tbody>
-              {sortedRegistrations.map((r) => (
+              {sortedRegistrations.map((r, index) => (
                 <tr key={r.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors">
+                  <td className="py-3 text-xs text-muted-foreground font-medium">
+                    {index + 1}
+                  </td>
                   <td className="py-3 text-xs text-muted-foreground">
                     {formatDateTime(r.created_at)}
                   </td>
