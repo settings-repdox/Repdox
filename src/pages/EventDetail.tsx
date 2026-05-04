@@ -589,13 +589,13 @@ export default function EventDetail() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       {/* Hero */}
-      <section className="relative h-[60vh] overflow-hidden">
+      <section className="relative h-[60vh] overflow-hidden bg-black/90">
         <img
           src={
             heroImageSrc ?? getEventImage(event?.image_url) ?? event?.image_url
           }
           alt={event?.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain md:object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
@@ -610,11 +610,17 @@ export default function EventDetail() {
               </Link>
 
               {isOwner && (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <Link to={`/events/${event.slug}/registrations`}>
+                    <Button variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-none">
+                      <Users className="mr-2 h-4 w-4" />
+                      Registrations
+                    </Button>
+                  </Link>
                   <Link to={`/events/${event.slug}/edit`}>
                     <Button variant="default" size="sm">
                       <Edit className="mr-2 h-4 w-4" />
-                      Edit Event
+                      Edit
                     </Button>
                   </Link>
                   <Button
@@ -717,18 +723,7 @@ export default function EventDetail() {
                 </button>
               )}
 
-              {isOwner && (
-                <button
-                  onClick={() => setTab("registrations")}
-                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                    activeTab === "registrations"
-                      ? "border-accent text-accent"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Registrations
-                </button>
-              )}
+
             </div>
           </div>
 
@@ -836,13 +831,6 @@ export default function EventDetail() {
                     )}
                   </CardContent>
                 </Card>
-              )}
-
-              {isOwner && activeTab === "registrations" && (
-                <div>
-                  {/* Organizer Registrations component will fetch registrations and provide exports */}
-                  <OrganizerRegistrations eventId={event.id} eventSlug={event.slug} />
-                </div>
               )}
 
               {activeTab === "details" && (

@@ -1,9 +1,7 @@
 import { motion } from "framer-motion";
-import { MessageCircle, Instagram, Mail, ArrowRight, CheckCircle } from "lucide-react";
+import { MessageCircle, Instagram, Mail, ArrowRight } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
-import { FaDiscord, FaInstagram } from "react-icons/fa";
-import { supabase } from "@/integrations/supabase/client";
+import { FaDiscord, FaInstagram, FaWhatsapp } from "react-icons/fa";
 
 const footerLinks = {
   events: [
@@ -25,36 +23,6 @@ const footerLinks = {
 export default function Footer() {
   const { pathname } = useLocation();
   const currentYear = new Date().getFullYear();
-  const [email, setEmail] = useState("");
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleNewsletterSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes("@")) return;
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("newsletter_subscribers")
-        .insert([{ email }]);
-
-      // We ignore unique constraint errors (code 23505) so if they are already subscribed, 
-      // we just act like it succeeded to prevent leaking user data or annoying them.
-      if (error && error.code !== '23505') {
-        console.error("Subscription error:", error);
-        return;
-      }
-
-      setIsSubscribed(true);
-      setEmail("");
-      setTimeout(() => setIsSubscribed(false), 3000);
-    } catch (err) {
-      console.error("Unexpected error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   if (pathname.startsWith("/profile")) return null;
 
@@ -93,54 +61,12 @@ export default function Footer() {
                 Think. Build. Transform.<br />
                 Empowering the next generation of innovators.
               </p>
-
-              {/* Newsletter signup */}
-              <motion.form
-                onSubmit={handleNewsletterSubscribe}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="space-y-3"
-              >
-                <p className="text-sm font-semibold text-foreground/80">Subscribe to our newsletter</p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <motion.input
-                    type="email"
-                    placeholder="Your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isSubscribed || isLoading}
-                    whileFocus={{ scale: 1.02 }}
-                    className="flex-1 px-4 py-2 rounded-lg bg-card/50 border border-border/30 text-foreground placeholder-muted-foreground/60 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all disabled:opacity-50"
-                  />
-                  <motion.button
-                    type="submit"
-                    disabled={isSubscribed || isLoading}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:shadow-[0_0_15px_rgba(168, 85, 247, 0.3)] transition-all disabled:opacity-50 whitespace-nowrap"
-                  >
-                    {isSubscribed ? "✓ Subscribed" : isLoading ? "..." : "Subscribe"}
-                  </motion.button>
-                </div>
-                {isSubscribed && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-green-500 text-xs flex items-center gap-1"
-                  >
-                    <CheckCircle className="w-3 h-3" />
-                    Thanks for subscribing!
-                  </motion.p>
-                )}
-              </motion.form>
-              
               {/* Social Links */}
               <div className="flex gap-3">
                 {[
                   { icon: FaDiscord, href: "https://discord.gg/TbAqDgy4cw", label: "Discord", color: "from-indigo-500 to-blue-500", glow: "rgba(79, 70, 229, 0.5)" },
                   { icon: FaInstagram, href: "https://www.instagram.com/repdox.official", label: "Instagram", color: "from-pink-500 to-rose-500", glow: "rgba(236, 72, 153, 0.5)" },
+                  { icon: FaWhatsapp, href: "https://chat.whatsapp.com/HhJfHtq7gE411KEYa6qpQP", label: "WhatsApp", color: "from-green-500 to-emerald-500", glow: "rgba(16, 185, 129, 0.5)" },
                 ].map((social, index) => {
                   const Icon = social.icon;
                   return (

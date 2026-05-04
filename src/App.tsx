@@ -24,6 +24,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 const Index = lazy(() => import("./pages/Index"));
 const EventsList = lazy(() => import("./pages/EventsList"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
+const EventRegistrations = lazy(() => import("./pages/EventRegistrations"));
 const AddEvent = lazy(() => import("./pages/AddEvent"));
 const MyEvents = lazy(() => import("./pages/MyEvents"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -92,6 +93,14 @@ function AppContent() {
             {/* Profile Routes - Public Access (own profile requires auth internally) */}
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<Profile />} />
+            <Route
+              path="/events/:slug/registrations"
+              element={
+                <ProtectedRoute>
+                  <EventRegistrations />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/events/new"
               element={

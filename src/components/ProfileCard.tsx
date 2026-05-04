@@ -650,9 +650,6 @@ const getInitials = (name: string) => {
   <div className="reflective-sheen" />
   <div className="reflective-border" style={{ borderColor: roleTheme.border }} />
   
-  <div className="pc-shine" />
-  <div className="pc-glare" />
-  
   {mode === 'event' ? renderEventCard() : renderPersonalCard()}
 </div>
         </section>
