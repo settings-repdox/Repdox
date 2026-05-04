@@ -33,6 +33,7 @@ import {
   Edit,
   Instagram,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import {
   formatDate,
@@ -617,6 +618,12 @@ export default function EventDetail() {
                       Registrations
                     </Button>
                   </Link>
+                  <Link to={`/events/${event.slug}/teams`}>
+                    <Button variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-none">
+                      <Users className="mr-2 h-4 w-4" />
+                      Teams
+                    </Button>
+                  </Link>
                   <Link to={`/events/${event.slug}/edit`}>
                     <Button variant="default" size="sm">
                       <Edit className="mr-2 h-4 w-4" />
@@ -710,20 +717,14 @@ export default function EventDetail() {
               >
                 Event Schedule
               </button>
+
               {isOwner && (
-                <button
-                  onClick={() => setTab("teams")}
-                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                    activeTab === "teams"
-                      ? "border-accent text-accent"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Teams
-                </button>
+                <div className="ml-auto">
+                  <Link to={`/events/${event.slug}/registrations`} className="text-xs font-bold text-accent hover:text-accent/80 flex items-center gap-1 bg-accent/10 px-3 py-1.5 rounded-full">
+                    View Registrations & Teams <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
               )}
-
-
             </div>
           </div>
 
@@ -768,70 +769,7 @@ export default function EventDetail() {
                 </Card>
               )}
 
-              {isOwner && activeTab === "teams" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Teams</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {teams.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        No teams listed for this event.
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {teams.map(
-                          (t: {
-                            id: string;
-                            name: string;
-                            description?: string;
-                            contact_email?: string;
-                            members?: any[];
-                          }) => (
-                            <div key={t.id} className="border border-border/50 bg-accent/5 rounded-xl p-6 space-y-4">
-                              <div className="flex items-center justify-between">
-                                <div className="font-bold text-lg text-accent">{t.name}</div>
-                                <Badge variant="outline" className="text-xs">
-                                  {t.members?.length || 0} members
-                                </Badge>
-                              </div>
-                              
-                              {t.description && (
-                                <div className="text-sm text-muted-foreground italic">
-                                  "{t.description}"
-                                </div>
-                              )}
 
-                              <div className="space-y-2">
-                                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                  <Users className="w-3 h-3" /> Team Members
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {t.members && t.members.length > 0 ? (
-                                    t.members.map((m) => (
-                                      <Badge key={m.id} variant="secondary" className="bg-background/50">
-                                        {m.name}
-                                      </Badge>
-                                    ))
-                                  ) : (
-                                    <span className="text-xs text-muted-foreground italic">No members found</span>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {t.contact_email && (
-                                <div className="pt-2 text-xs text-muted-foreground border-t border-border/30">
-                                  Contact: {t.contact_email}
-                                </div>
-                              )}
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
 
               {activeTab === "details" && (
                 <>

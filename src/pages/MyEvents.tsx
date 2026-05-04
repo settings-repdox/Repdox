@@ -284,6 +284,28 @@ export default function MyEvents() {
                             </>
                           )}
                         </div>
+                        <div className="grid grid-cols-2 gap-2 w-full">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs"
+                            asChild
+                          >
+                            <Link to={`/events/${event.slug}/registrations`}>
+                              Registrations
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs"
+                            asChild
+                          >
+                            <Link to={`/events/${event.slug}/teams`}>
+                              Teams
+                            </Link>
+                          </Button>
+                        </div>
                         <Button
                           variant="ghost"
                           size="sm"
