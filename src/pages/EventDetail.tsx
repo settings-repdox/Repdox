@@ -719,11 +719,20 @@ export default function EventDetail() {
               </button>
 
               {isOwner && (
-                <div className="ml-auto">
-                  <Link to={`/events/${event.slug}/registrations`} className="text-xs font-bold text-accent hover:text-accent/80 flex items-center gap-1 bg-accent/10 px-3 py-1.5 rounded-full">
-                    View Registrations & Teams <ArrowRight className="w-3 h-3" />
+                <>
+                  <Link
+                    to={`/events/${event.slug}/registrations`}
+                    className="px-4 py-2 font-medium transition-colors border-b-2 border-transparent text-muted-foreground hover:text-foreground flex items-center gap-2"
+                  >
+                    Registrations
                   </Link>
-                </div>
+                  <Link
+                    to={`/events/${event.slug}/teams`}
+                    className="px-4 py-2 font-medium transition-colors border-b-2 border-transparent text-muted-foreground hover:text-foreground flex items-center gap-2"
+                  >
+                    Teams
+                  </Link>
+                </>
               )}
             </div>
           </div>
