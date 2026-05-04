@@ -28,7 +28,11 @@ export default function EventsList() {
         .order('start_at', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      return (data || []).map(event => ({
+        ...event,
+        type: event.type as string | string[],
+        format: event.format as string | string[],
+      }));
     },
   });
 

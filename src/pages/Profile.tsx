@@ -709,6 +709,17 @@ export default function Profile() {
                   </button>
                 );
               })}
+              
+              {/* Mobile Sign Out Button */}
+              {isOwnProfile && (
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm">Sign Out</span>
+                </button>
+              )}
           </div>
         </div>
 
