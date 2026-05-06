@@ -95,7 +95,6 @@ const sections = [
   { id: "achievements", label: "Achievements", icon: Award },
   { id: "professional", label: "Professional", icon: Briefcase },
   { id: "contact", label: "Contact", icon: Phone },
-  { id: "card", label: "Digital Card", icon: QrCode },
   { id: "security", label: "Security", icon: UserIcon },
 ];
 

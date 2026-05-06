@@ -329,6 +329,7 @@ export default function Nav() {
               { label: "My Events", href: "/my-events", ariaLabel: "My Events" },
               ...(isAdmin ? [
                 { label: "Admin: Events", href: "/admin/events", ariaLabel: "Admin Events" },
+                { label: "Admin: Scanner", href: "/admin/scanner", ariaLabel: "Admin Scanner" },
                 { label: "Admin: Volunteers", href: "/admin/volunteers", ariaLabel: "Admin Volunteers" }
               ] : []),
             ]
@@ -511,6 +512,16 @@ export default function Nav() {
                         >
                           <ShieldCheck className="w-4 h-4" />
                           Approve Events
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false);
+                            navigate("/admin/scanner");
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2"
+                        >
+                          <Zap className="w-4 h-4" />
+                          Event Scanner
                         </button>
                         <button
                           onClick={() => {

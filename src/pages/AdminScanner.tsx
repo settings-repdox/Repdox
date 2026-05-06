@@ -25,7 +25,7 @@ export default function AdminScanner() {
   const [scanColor, setScanColor] = useState<string>("border-purple-500");
   const [lastCheckedName, setLastCheckedName] = useState<string | null>(null);
   const [isDetected, setIsDetected] = useState(false);
-  const [scanningMode, setScanningMode] = useState<"qr" | "ocr">("qr");
+  const [scanningMode, setScanningMode] = useState<"qr" | "ocr">("ocr");
   const [ocrWorker, setOcrWorker] = useState<any>(null);
   const [ocrStatus, setOcrStatus] = useState("");
   const lastProcessedTime = useRef<number>(0);
@@ -568,12 +568,6 @@ export default function AdminScanner() {
 
         {/* Mode Toggles */}
         <div className="flex bg-zinc-900 p-1 rounded-2xl border border-white/5">
-          <button 
-            onClick={() => { setShowManual(false); setScanningMode("qr"); }}
-            className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-tighter transition-all ${!showManual && scanningMode === "qr" ? 'bg-zinc-800 text-white shadow-xl' : 'text-gray-500'}`}
-          >
-            QR Scan
-          </button>
           <button 
             onClick={() => { setShowManual(false); setScanningMode("ocr"); }}
             className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-tighter transition-all ${!showManual && scanningMode === "ocr" ? 'bg-zinc-800 text-white shadow-xl' : 'text-gray-500'}`}

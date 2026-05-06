@@ -107,6 +107,7 @@ export default function EventDetail() {
   });
 
   const countdown = useCountdown(event?.start_at || "");
+  const regCountdown = useCountdown(event?.registration_deadline || "");
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [user, setUser] = useState<import("@supabase/supabase-js").User | null>(
@@ -669,24 +670,43 @@ export default function EventDetail() {
               {event.title}
             </motion.h1>
 
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex items-center gap-4 text-white bg-black/40 backdrop-blur-md w-fit px-6 py-3 rounded-2xl border border-white/10 font-mono text-lg shadow-xl"
-            >
-              <Clock className="h-5 w-5 text-purple-400 animate-pulse" />
-              {countdown.isExpired ? (
-                <span className="font-bold text-green-400">Event has started</span>
-              ) : (
-                <span className="font-medium">
-                  Starts in{" "}
-                  <span className="text-purple-400 font-bold">
-                    {`${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center gap-4 text-white bg-black/40 backdrop-blur-md w-fit px-6 py-3 rounded-2xl border border-white/10 font-mono text-lg shadow-xl"
+              >
+                <Clock className="h-5 w-5 text-purple-400 animate-pulse" />
+                {countdown.isExpired ? (
+                  <span className="font-bold text-green-400">Event has started</span>
+                ) : (
+                  <span className="font-medium">
+                    Starts in{" "}
+                    <span className="text-purple-400 font-bold">
+                      {`${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
+                    </span>
                   </span>
-                </span>
+                )}
+              </motion.div>
+
+              {event.registration_deadline && !regCountdown.isExpired && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex items-center gap-4 text-white bg-orange-500/20 backdrop-blur-md w-fit px-6 py-3 rounded-2xl border border-orange-500/30 font-mono text-lg shadow-xl"
+                >
+                  <Clock className="h-5 w-5 text-orange-400" />
+                  <span className="font-medium text-sm sm:text-lg">
+                    Reg. closes in:{" "}
+                    <span className="text-orange-400 font-bold">
+                      {regCountdown.formatted}
+                    </span>
+                  </span>
+                </motion.div>
               )}
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -1151,6 +1171,28 @@ export default function EventDetail() {
                             ? event.format.join(" / ")
                             : String(event.format)}
                         </Badge>
+                      </div>
+                    </div>
+                  )}
+
+                  {event.registration_deadline && (
+                    <div className="flex items-start gap-3">
+                      <Clock className="h-5 w-5 text-orange-500 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-orange-500">Registration Deadline</p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDateWithOptions(event.registration_deadline, {
+                            weekday: true,
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                        <p className="text-xs text-muted-foreground/80">
+                          Ends at {new Date(event.registration_deadline).toLocaleTimeString("en-IN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
                       </div>
                     </div>
                   )}
