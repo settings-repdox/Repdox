@@ -11,7 +11,7 @@ import CardNav from "@/components/ui/CardNav";
 import logo from "@/assets/logo.svg";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun, ShieldCheck, Users } from "lucide-react";
+import { Moon, Sun, ShieldCheck, Users, Zap } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { isUserAdmin } from "@/lib/adminService";

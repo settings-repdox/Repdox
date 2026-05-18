@@ -1183,8 +1183,6 @@ export default function EventDetail() {
                         <p className="text-sm text-muted-foreground">
                           {formatDateWithOptions(event.registration_deadline, {
                             weekday: true,
-                            month: "long",
-                            day: "numeric",
                           })}
                         </p>
                         <p className="text-xs text-muted-foreground/80">

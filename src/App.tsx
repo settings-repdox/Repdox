@@ -33,6 +33,7 @@ const SignIn = lazy(() => import("./pages/SignIn"));
 const SignUp = lazy(() => import("./pages/SignUp"));
 const About = lazy(() => import("./pages/About"));
 const PrivacyPolicy = lazy(() => import("./pages/Privacy_policy"));
+const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const Profile = lazy(() => import("./pages/Profile"));
 // COMMUNITY FEATURE COMMENTED OUT FOR RELEASE
 // const Community = lazy(() => import("./pages/Community"));
@@ -81,6 +82,7 @@ function AppContent() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/about" element={<About />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/join-us" element={<Volunteers />} />
