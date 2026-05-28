@@ -11,10 +11,14 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first
-    const stored = localStorage.getItem('theme');
-    if (stored === 'light' || stored === 'dark') {
-      return stored;
+    try {
+      // Check localStorage first
+      const stored = localStorage.getItem('theme');
+      if (stored === 'light' || stored === 'dark') {
+        return stored;
+      }
+    } catch (e) {
+      console.warn("localStorage access denied in ThemeProvider:", e);
     }
     // Default to dark instead of system or light preference
     return 'dark';
@@ -28,8 +32,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       root.classList.remove('dark');
     }
-    // Save to localStorage
-    localStorage.setItem('theme', theme);
+    try {
+      // Save to localStorage
+      localStorage.setItem('theme', theme);
+    } catch (e) {
+      console.warn("localStorage setItem denied in ThemeProvider:", e);
+    }
   }, [theme]);
 
   const toggleTheme = () => {

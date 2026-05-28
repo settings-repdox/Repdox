@@ -59,12 +59,14 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-// Use the beautiful PageLoader component as the global loading fallback
-const LoadingFallback = () => <PageLoader />;
+// Return null to prevent the old page loader from flashing on lazy loads
+const LoadingFallback = () => null;
 
 function AppContent() {
   const location = useLocation();
   const { user, loading, isProfileComplete } = useAuth();
+  
+  console.log("AppContent Render State:", { user, loading, isProfileComplete, pathname: location.pathname });
   
   const hideFooterRoutes = ["/signin", "/signup"];
   const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
@@ -72,25 +74,21 @@ function AppContent() {
   // Define routes that are allowed without being signed in (auth pages)
   const isAuthRoute = ["/signin", "/signup", "/auth/callback"].includes(location.pathname);
 
-  // Show page loader while loading auth state to prevent flash of content
+  // Show nothing while loading auth state to prevent flash of loading screen
   if (loading) {
-    return <LoadingFallback />;
+    return null;
   }
 
-  // 1. If not authenticated, redirect to sign-in unless on an auth route
-  if (!user) {
-    if (!isAuthRoute) {
-      return <Navigate to="/signin" state={{ from: location }} replace />;
-    }
-  } else {
-    // 2. If authenticated, but email is not verified, they must be on /verify-email (or callback/signin)
+  // Only apply checks if the user is authenticated (logged in)
+  if (user) {
+    // 1. If authenticated, but email is not verified, they must be on /verify-email (or callback/signin)
     const isVerified = !!user.email_confirmed_at;
     if (!isVerified) {
       if (location.pathname !== "/verify-email" && location.pathname !== "/auth/callback") {
         return <Navigate to={`/verify-email?email=${encodeURIComponent(user.email || "")}`} replace />;
       }
     } else {
-      // 3. If authenticated and verified, but profile is not complete (e.g. missing name or dob),
+      // 2. If authenticated and verified, but profile is not complete (e.g. missing name or dob),
       // they must complete it. Only allow them on /profile page (or its sub-routes) or callback.
       if (!isProfileComplete) {
         const isOnProfilePage = location.pathname === "/profile" || location.pathname.startsWith("/profile/");
@@ -213,21 +211,68 @@ const App = () => {
   const [showIntro, setShowIntro] = useState(false);
   const isFirstLoad = useRef(true);
 
-  // Check if intro should be shown (only on first session)
+  console.log("App Render State:", { showIntro });
+
+  // Check if intro should be shown (fresh tab or after being idle for 30 minutes)
   useEffect(() => {
     try {
       const hasSeenIntro = sessionStorage.getItem("hasSeenIntro");
       const skipInitial = sessionStorage.getItem("skipInitialLoad");
+      const lastActivityStr = localStorage.getItem("lastActivity");
+
+      let shouldShow = false;
 
       if (skipInitial) {
         sessionStorage.removeItem("skipInitialLoad");
         // Coming from navigation, don't show anything
       } else if (!hasSeenIntro) {
-        setShowIntro(true); // Show intro only if NOT seen before
+        // Fresh tab (sessionStorage is scoped to a single tab and is empty on new tabs)
+        shouldShow = true;
+      } else if (lastActivityStr) {
+        // Check if idle for more than 30 minutes (30 * 60 * 1000 ms)
+        const lastActivity = parseInt(lastActivityStr, 10);
+        if (!isNaN(lastActivity) && Date.now() - lastActivity > 30 * 60 * 1000) {
+          shouldShow = true;
+        }
+      }
+
+      if (shouldShow) {
+        setShowIntro(true);
       }
     } catch (e) {
       console.warn("[App] Error determining intro display:", e);
     }
+  }, []);
+
+  // Track user activity in localStorage (throttled to save writes)
+  useEffect(() => {
+    let lastWriteTime = 0;
+    
+    const updateActivity = () => {
+      const now = Date.now();
+      if (now - lastWriteTime > 10000) { // 10 seconds throttle
+        lastWriteTime = now;
+        try {
+          localStorage.setItem("lastActivity", now.toString());
+        } catch (e) {
+          console.debug("[App] Failed to write lastActivity to localStorage:", e);
+        }
+      }
+    };
+
+    // Record initial activity on mount
+    updateActivity();
+
+    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
+    events.forEach(name => {
+      window.addEventListener(name, updateActivity, { passive: true });
+    });
+
+    return () => {
+      events.forEach(name => {
+        window.removeEventListener(name, updateActivity);
+      });
+    };
   }, []);
 
   useEffect(() => {

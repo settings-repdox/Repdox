@@ -320,13 +320,12 @@ export default function Nav() {
       <CardNav
         logo={
           <span
-            className="text-[14px] font-black tracking-[0.05em] uppercase whitespace-nowrap flex-shrink-0"
+            className="text-[14px] font-black tracking-[0.05em] uppercase whitespace-nowrap flex-shrink-0 bg-clip-text text-transparent"
             style={{
               fontFamily: "'Outfit', sans-serif",
-              background:
-                "linear-gradient(to right, #ffffff, #a855f7, #ec4899)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              backgroundImage: theme === "dark"
+                ? "linear-gradient(to right, #ffffff, #a855f7, #ec4899)"
+                : "linear-gradient(to right, #09090b, #7c3aed, #db2777)",
               display: "inline-block",
             }}
           >
@@ -351,9 +350,11 @@ export default function Nav() {
         height: scrolled ? 56 : 64,
       }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 border-b border-border/30"
+      className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 transition-colors duration-300"
       style={{
-        background: scrolled ? "rgba(0, 0, 0, 0.4)" : "rgba(0, 0, 0, 0.2)",
+        background: theme === "dark"
+          ? (scrolled ? "rgba(13, 7, 22, 0.5)" : "rgba(13, 7, 22, 0.2)")
+          : (scrolled ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.3)"),
         backdropFilter: scrolled
           ? "blur(20px) saturate(200%)"
           : "blur(16px) saturate(180%)",
@@ -369,13 +370,12 @@ export default function Nav() {
             <Link to="/" className="flex-shrink-0 group relative py-2">
               <div className="flex items-center">
                 <span
-                  className="text-2xl font-black tracking-[0.15em] transition-all duration-300"
+                  className="text-2xl font-black tracking-[0.15em] transition-all duration-300 bg-clip-text text-transparent"
                   style={{
                     fontFamily: "'Outfit', sans-serif",
-                    background:
-                      "linear-gradient(to right, #ffffff, #a855f7, #ec4899)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    backgroundImage: theme === "dark"
+                      ? "linear-gradient(to right, #ffffff, #a855f7, #ec4899)"
+                      : "linear-gradient(to right, #09090b, #7c3aed, #db2777)",
                   }}
                 >
                   REPDOX
@@ -388,15 +388,17 @@ export default function Nav() {
                 {navigationLinks.map((link, index) => (
                   <NavigationMenuItem key={index}>
                     <NavigationMenuLink
-                      href={link.href}
+                      asChild
                       className="relative px-5 py-2.5 text-sm font-bold text-foreground/60 hover:text-foreground transition-all duration-300 group whitespace-nowrap tracking-widest uppercase"
                       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                     >
-                      {link.label}
-                      <motion.span
-                        className="absolute bottom-1 left-5 right-5 h-0.5 bg-gradient-to-r from-purple-500 to-cyan w-0 group-hover:w-[calc(100%-40px)] transition-all origin-left"
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                      />
+                      <Link to={link.href}>
+                        {link.label}
+                        <motion.span
+                          className="absolute bottom-1 left-5 right-5 h-0.5 bg-gradient-to-r from-purple-500 to-cyan w-0 group-hover:w-[calc(100%-40px)] transition-all origin-left"
+                          transition={{ duration: 0.3, ease: "easeOut" }}
+                        />
+                      </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                 ))}

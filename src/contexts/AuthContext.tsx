@@ -49,11 +49,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initial session check
     const initAuth = async () => {
       try {
+        console.log("[AuthContext] initAuth start");
         const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log("[AuthContext] initAuth getSession resolved:", initialSession);
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
         
         if (initialSession?.user) {
+          console.log("[AuthContext] User exists, checking admin status and profile...");
           const adminStatus = await isUserAdmin();
           setIsAdmin(adminStatus);
           await checkProfileStatus(initialSession.user.id);
@@ -61,8 +64,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsProfileComplete(false);
         }
       } catch (error) {
-        console.error("Auth initialization error:", error);
+        console.error("[AuthContext] Auth initialization error:", error);
       } finally {
+        console.log("[AuthContext] initAuth finished, setting loading = false");
         setLoading(false);
       }
     };
@@ -70,7 +74,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
 
     // Listen for auth changes
+    console.log("[AuthContext] Registering onAuthStateChange listener...");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      console.log("[AuthContext] onAuthStateChange event fired:", event, currentSession);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
@@ -83,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsProfileComplete(false);
       }
       
+      console.log("[AuthContext] onAuthStateChange callback finished, setting loading = false");
       setLoading(false);
     });
 

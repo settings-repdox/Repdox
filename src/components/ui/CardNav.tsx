@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { GoArrowUpRight } from 'react-icons/go';
+import { Link } from 'react-router-dom';
 import '@/components/ui_CSS/CardNav.css';
 
 type CardNavLink = {
@@ -190,12 +191,40 @@ const CardNav: React.FC<CardNavProps> = ({
             >
               <div className="nav-card-label">{item.label}</div>
               <div className="nav-card-links">
-                {item.links?.map((lnk, i) => (
-                  <a key={`${lnk.label}-${i}`} className="nav-card-link" href={lnk.href} aria-label={lnk.ariaLabel}>
-                    <GoArrowUpRight className="nav-card-link-icon" aria-hidden="true" />
-                    {lnk.label}
-                  </a>
-                ))}
+                {item.links?.map((lnk, i) => {
+                  const isExternal = lnk.href.startsWith('http://') || lnk.href.startsWith('https://');
+                  return isExternal ? (
+                    <a
+                      key={`${lnk.label}-${i}`}
+                      className="nav-card-link"
+                      href={lnk.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={lnk.ariaLabel}
+                    >
+                      <GoArrowUpRight className="nav-card-link-icon" aria-hidden="true" />
+                      {lnk.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={`${lnk.label}-${i}`}
+                      className="nav-card-link"
+                      to={lnk.href}
+                      aria-label={lnk.ariaLabel}
+                      onClick={() => {
+                        setIsHamburgerOpen(false);
+                        const tl = tlRef.current;
+                        if (tl && isExpanded) {
+                          tl.eventCallback('onReverseComplete', () => setIsExpanded(false));
+                          tl.reverse();
+                        }
+                      }}
+                    >
+                      <GoArrowUpRight className="nav-card-link-icon" aria-hidden="true" />
+                      {lnk.label}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
