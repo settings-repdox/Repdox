@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { isUserAdmin } from "@/lib/adminService";
+import { isUserAdmin, ADMIN_EMAILS } from "@/lib/adminService";
 
 interface AuthContextType {
   user: User | null;
@@ -57,7 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (initialSession?.user) {
           console.log("[AuthContext] User exists, checking admin status and profile...");
-          const adminStatus = await isUserAdmin();
+          const email = initialSession.user.email;
+          const adminStatus = email ? ADMIN_EMAILS.includes(email.toLowerCase()) : false;
           setIsAdmin(adminStatus);
           await checkProfileStatus(initialSession.user.id);
         } else {
@@ -77,20 +78,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("[AuthContext] Registering onAuthStateChange listener...");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("[AuthContext] onAuthStateChange event fired:", event, currentSession);
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      
-      if (currentSession?.user) {
-        const adminStatus = await isUserAdmin();
-        setIsAdmin(adminStatus);
-        await checkProfileStatus(currentSession.user.id);
-      } else {
-        setIsAdmin(false);
-        setIsProfileComplete(false);
+      try {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
+          const email = currentSession.user.email;
+          const adminStatus = email ? ADMIN_EMAILS.includes(email.toLowerCase()) : false;
+          setIsAdmin(adminStatus);
+          await checkProfileStatus(currentSession.user.id);
+        } else {
+          setIsAdmin(false);
+          setIsProfileComplete(false);
+        }
+      } catch (err) {
+        console.error("[AuthContext] Error in onAuthStateChange callback:", err);
+      } finally {
+        console.log("[AuthContext] onAuthStateChange callback finished, setting loading = false");
+        setLoading(false);
       }
-      
-      console.log("[AuthContext] onAuthStateChange callback finished, setting loading = false");
-      setLoading(false);
     });
 
     // Periodically query the database to verify the session/user is active and fresh
@@ -105,6 +111,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsProfileComplete(false);
         } else {
           setUser(currentUser);
+          const email = currentUser.email;
+          const adminStatus = email ? ADMIN_EMAILS.includes(email.toLowerCase()) : false;
+          setIsAdmin(adminStatus);
           const { data: { session: currentSession } } = await supabase.auth.getSession();
           setSession(currentSession);
           await checkProfileStatus(currentUser.id);
