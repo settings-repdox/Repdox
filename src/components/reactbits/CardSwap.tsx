@@ -51,6 +51,7 @@ interface CardSwapProps {
   onActiveCardChange?: (idx: number) => void;
   skewAmount?: number;
   easing?: 'linear' | 'elastic';
+  paused?: boolean;
   children: React.ReactNode;
 }
 
@@ -65,6 +66,7 @@ const CardSwap: React.FC<CardSwapProps> = ({
   onActiveCardChange,
   skewAmount = 6,
   easing = 'elastic',
+  paused = false,
   children
 }) => {
   const config =
@@ -78,12 +80,12 @@ const CardSwap: React.FC<CardSwapProps> = ({
           returnDelay: 0.05
         }
       : {
-          ease: 'power1.inOut',
-          durDrop: 0.8,
-          durMove: 0.8,
-          durReturn: 0.8,
-          promoteOverlap: 0.45,
-          returnDelay: 0.2
+          ease: 'power2.out',
+          durDrop: 0.6,
+          durMove: 0.6,
+          durReturn: 0.6,
+          promoteOverlap: 0.5,
+          returnDelay: 0.1
         };
 
   const childArr = useMemo(() => Children.toArray(children), [children]);
@@ -104,6 +106,8 @@ const CardSwap: React.FC<CardSwapProps> = ({
     const total = refs.length;
     refs.forEach((r, i) => placeNow(r.current, makeSlot(i, cardDistance, verticalDistance, total), skewAmount));
 
+    if (paused) return;
+
     const swap = () => {
       if (order.current.length < 2) return;
 
@@ -113,7 +117,7 @@ const CardSwap: React.FC<CardSwapProps> = ({
       tlRef.current = tl;
 
       tl.to(elFront, {
-        y: '+=500',
+        y: '+=160',
         duration: config.durDrop,
         ease: config.ease
       });
@@ -190,7 +194,7 @@ const CardSwap: React.FC<CardSwapProps> = ({
     }
     return () => clearInterval(intervalRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardDistance, verticalDistance, delay, pauseOnHover, skewAmount, easing]);
+  }, [cardDistance, verticalDistance, delay, pauseOnHover, skewAmount, easing, paused]);
 
   const rendered = childArr.map((child, i) =>
     isValidElement(child)

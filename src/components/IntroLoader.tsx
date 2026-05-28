@@ -76,6 +76,7 @@ export default function IntroLoader({ onComplete }: { onComplete: () => void }) 
           skewAmount={4}
           easing="linear" // Use fast power1 transition (0.8s) instead of slow elastic
           onActiveCardChange={handleActiveCardChange}
+          paused={activeIndex === 3 || isExiting}
         >
           {/* Card 1: Think */}
           <Card className="flex flex-col items-center justify-center p-6 rounded-3xl bg-[#09090b]/90 border border-white/10 shadow-[0px_0px_40px_-10px_rgba(168,85,247,0.2)]">
