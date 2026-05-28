@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const email = initialSession.user.email;
           const adminStatus = email ? ADMIN_EMAILS.includes(email.toLowerCase()) : false;
           setIsAdmin(adminStatus);
-          await checkProfileStatus(initialSession.user.id);
+          checkProfileStatus(initialSession.user.id);
         } else {
           setIsProfileComplete(false);
         }
@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const email = currentSession.user.email;
           const adminStatus = email ? ADMIN_EMAILS.includes(email.toLowerCase()) : false;
           setIsAdmin(adminStatus);
-          await checkProfileStatus(currentSession.user.id);
+          checkProfileStatus(currentSession.user.id);
         } else {
           setIsAdmin(false);
           setIsProfileComplete(false);
@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsAdmin(adminStatus);
           const { data: { session: currentSession } } = await supabase.auth.getSession();
           setSession(currentSession);
-          await checkProfileStatus(currentUser.id);
+          checkProfileStatus(currentUser.id);
         }
       } catch (err) {
         console.error("Auth periodic database check failed:", err);
