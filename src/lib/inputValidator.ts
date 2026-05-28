@@ -29,7 +29,8 @@ export const escapeSQLString = (str: string): string => {
     .replace(/\0/g, "\\0") // Escape null bytes
     .replace(/\n/g, "\\n") // Escape newlines
     .replace(/\r/g, "\\r") // Escape carriage returns
-    .replace(/\u001a/g, "\\Z"); // Escape Ctrl+Z
+    // eslint-disable-next-line no-control-regex
+    .replace(/\x1a/g, "\\Z"); // Escape Ctrl+Z
 };
 
 /**
@@ -236,7 +237,7 @@ export const validateTime = (time: string): ValidationResult => {
 /**
  * Sanitize form data object
  */
-export const sanitizeFormData = <T extends Record<string, any>>(data: T): T => {
+export const sanitizeFormData = <T extends Record<string, unknown>>(data: T): T => {
   const sanitized = { ...data };
 
   for (const key in sanitized) {

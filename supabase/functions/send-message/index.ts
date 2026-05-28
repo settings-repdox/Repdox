@@ -4,7 +4,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // Edge Function: upload attachments to private `messages` bucket and call `app.send_message` RPC.
 // Expects SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SERVICE_ROLE_KEY / SERVICE_ROLE) env vars.
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? process.env.SUPABASE_URL;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SERVICE_ROLE_KEY") || Deno.env.get("SERVICE_ROLE");
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) console.warn("SUPABASE_URL or service role key not found. Set SUPABASE_SERVICE_ROLE_KEY or SERVICE_ROLE_KEY in Function environment variables.");
 
@@ -60,8 +60,9 @@ serve(async (req: Request) => {
     if (rpcError) throw rpcError;
 
     return new Response(JSON.stringify({ ok: true, message: data }), { status: 200 });
-  } catch (err: any) {
-    console.error("send-message error:", err);
-    return new Response(JSON.stringify({ error: err.message || String(err) }), { status: 500 });
+  } catch (err) {
+    const error = err as Error;
+    console.error("send-message error:", error);
+    return new Response(JSON.stringify({ error: error.message || String(error) }), { status: 500 });
   }
 });

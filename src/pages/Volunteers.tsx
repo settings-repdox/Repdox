@@ -18,13 +18,18 @@ import { toast } from 'sonner';
 // Dedicated client for the old volunteer database
 const OLD_PROJECT_URL = "https://fpdbrvmejpujuwtitfbi.supabase.co";
 const OLD_PROJECT_KEY = "sb_publishable__s8qGXZm8TyOT2X5QnQ-1g_MMeWWpS2";
-const oldDb = (window as any).supabase?.createClient 
-  ? (window as any).supabase.createClient(OLD_PROJECT_URL, OLD_PROJECT_KEY)
+
+interface OldSupabaseClient {
+  createClient: (url: string, key: string) => any;
+}
+
+const oldDb = (window as unknown as { supabase?: OldSupabaseClient }).supabase?.createClient 
+  ? (window as unknown as { supabase: OldSupabaseClient }).supabase.createClient(OLD_PROJECT_URL, OLD_PROJECT_KEY)
   : null;
 
 export default function Volunteers() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<import('@supabase/supabase-js').User | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
@@ -58,7 +63,7 @@ export default function Volunteers() {
     checkUser();
   }, [navigate]);
 
-  const handleStatusCheck = async (currentUser: any) => {
+  const handleStatusCheck = async (currentUser: import('@supabase/supabase-js').User) => {
     if (!currentUser?.email) return;
     try {
       // Try to fetch with new interview columns
@@ -126,7 +131,8 @@ export default function Volunteers() {
       setHasApplied(true);
       setApplicationStatus('pending');
       toast.success("Application submitted successfully!");
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error submitting application:', error);
       toast.error(error.message || "Failed to submit application");
     } finally {

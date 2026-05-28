@@ -7,6 +7,36 @@ import { deleteFile } from "@/lib/storageService"; // ADDED: Import deleteFile
 type UploadedFile = { file: File; name: string };
 type FAQ = { question: string; answer: string };
 
+// RSVP Types
+export type RSVPType = "opt-in" | "opt-out";
+export type RSVPResponse = "attending" | "not_attending" | "maybe";
+
+export interface RSVPSettings {
+  rsvp_enabled: boolean;
+  rsvp_type: RSVPType;
+  rsvp_start_date?: string;
+  rsvp_end_date?: string;
+}
+
+export interface RSVPSubmission {
+  event_id: string;
+  response: RSVPResponse;
+  email?: string;
+  user_id?: string;
+  notes?: string;
+}
+
+export interface RSVPResponseData {
+  id: string;
+  event_id: string;
+  user_id?: string;
+  email: string;
+  response: RSVPResponse;
+  notes?: string;
+  responded_at: string;
+  created_at: string;
+}
+
 export interface CreateEventPayload {
   form: {
     title: string;
@@ -33,6 +63,12 @@ export interface CreateEventPayload {
     registration_link?: string;
     discord_invite?: string;
     instagram_handle?: string;
+    rsvp_enabled?: boolean;
+    rsvp_type?: RSVPType;
+    rsvp_start_date?: string;
+    rsvp_start_time?: string;
+    rsvp_end_date?: string;
+    rsvp_end_time?: string;
   };
   tags?: string[];
   scheduleText?: string;
@@ -136,6 +172,17 @@ export async function createEvent(payload: CreateEventPayload) {
     image_url: null,
     created_by: user.id,
     is_active: false, // ALL new events require admin approval
+    // RSVP settings
+    rsvp_enabled: form.rsvp_enabled ?? false,
+    rsvp_type: form.rsvp_type ?? "opt-in",
+    rsvp_start_date:
+      form.rsvp_enabled && form.rsvp_start_date && form.rsvp_start_time
+        ? new Date(`${form.rsvp_start_date}T${form.rsvp_start_time}`).toISOString()
+        : null,
+    rsvp_end_date:
+      form.rsvp_enabled && form.rsvp_end_date && form.rsvp_end_time
+        ? new Date(`${form.rsvp_end_date}T${form.rsvp_end_time}`).toISOString()
+        : null,
   };
 
   if (uploadedFiles && uploadedFiles.length > 0) {
@@ -311,7 +358,7 @@ export async function createEvent(payload: CreateEventPayload) {
     });
 
     // Deduplicate teams by name (case-insensitive)
-    const uniqueTeamsMap = new Map<string, any>();
+    const uniqueTeamsMap = new Map<string, typeof teamInserts[0]>();
     teamInserts.forEach(t => {
       const lowerName = t.name.toLowerCase();
       if (!uniqueTeamsMap.has(lowerName)) {
@@ -552,7 +599,7 @@ export async function updateEvent(
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
     // Deduplicate teams by name (case-insensitive)
-    const uniqueTeamsMap = new Map<string, any>();
+    const uniqueTeamsMap = new Map<string, typeof teamInserts[0]>();
     teamInserts.forEach(t => {
       const lowerName = t.name.toLowerCase();
       if (!uniqueTeamsMap.has(lowerName)) {
@@ -731,10 +778,9 @@ export async function canRegister(eventId: string, roleName?: string | null) {
   const { data: evt, error: evtErr } = await supabase
     .from("events")
     .select("roles")
-    .eq("id", eventId)
     .single();
   if (evtErr) throw evtErr;
-  const roles = (evt as any)?.roles as Role[] | undefined;
+  const roles = (evt as Database["public"]["Tables"]["events"]["Row"])?.roles as Role[] | undefined;
 
   if (!roleName) return true;
 
@@ -743,7 +789,7 @@ export async function canRegister(eventId: string, roleName?: string | null) {
   const target = roles.find((r) => r.name === roleName);
   if (!target || target.capacity == null) return true;
 
-  const counts = await countRegistrationsByRole(eventId, (evt as any)?.slug);
+  const counts = await countRegistrationsByRole(eventId, (evt as Database["public"]["Tables"]["events"]["Row"])?.slug);
   const current = counts[roleName] || 0;
   return current < (target.capacity ?? Infinity);
 }
@@ -801,7 +847,7 @@ export async function registerForEvent(params: {
 
 export function registrationsToCSV(rows: RegistrationRow[]) {
   if (!rows || rows.length === 0) return "";
-  const headers = [
+  const headers: (keyof RegistrationRow)[] = [
     "id",
     "created_at",
     "event_id",
@@ -817,7 +863,7 @@ export function registrationsToCSV(rows: RegistrationRow[]) {
   for (const r of rows) {
     const line = headers
       .map((h) => {
-        const val = (r as any)[h] ?? "";
+        const val = r[h] ?? "";
         if (typeof val === "string")
           return `"${String(val).replace(/"/g, '""')}"`;
         return `"${String(val ?? "")}"`;
@@ -830,7 +876,7 @@ export function registrationsToCSV(rows: RegistrationRow[]) {
 
 export function registrationsToMarkdown(rows: RegistrationRow[]) {
   if (!rows || rows.length === 0) return "";
-  const headers = [
+  const headers: (keyof RegistrationRow)[] = [
     "id",
     "created_at",
     "name",
@@ -845,7 +891,7 @@ export function registrationsToMarkdown(rows: RegistrationRow[]) {
   ];
   for (const r of rows) {
     table.push(
-      "| " + headers.map((h) => (r as any)[h] ?? "").join(" | ") + " |",
+      "| " + headers.map((h) => r[h] ?? "").join(" | ") + " |",
     );
   }
   return table.join("\n");
@@ -855,9 +901,9 @@ export async function exportRegistrationsXLSX(eventId: string) {
   // include auth header so the edge function can verify the caller
   const sessionRes = await supabase.auth.getSession();
   const token = sessionRes?.data?.session?.access_token ?? null;
-  const invokeOptions: any = { body: JSON.stringify({ eventId }) };
+  const invokeOptions: { body: string; headers?: Record<string, string> } = { body: JSON.stringify({ eventId }) };
   if (token) invokeOptions.headers = { Authorization: `Bearer ${token}` };
-  const fnRes = await (supabase as any).functions.invoke(
+  const fnRes = await supabase.functions.invoke(
     "export-registrations-xlsx",
     invokeOptions,
   );
@@ -916,6 +962,141 @@ export async function registrationsToXLSX(rows: RegistrationRow[]) {
   }
 }
 
+// ============ RSVP Functions ============
+
+/**
+ * Submit an RSVP response for an event
+ */
+export async function submitRSVP(rsvp: RSVPSubmission): Promise<RSVPResponseData> {
+  const sessionRes = await supabase.auth.getSession();
+  const token = sessionRes?.data?.session?.access_token;
+
+  const response = await fetch("/api/events/rsvp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: JSON.stringify(rsvp),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to submit RSVP");
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch RSVP responses for an event (organizers/admins only)
+ */
+export async function fetchRSVPResponses(eventId: string): Promise<RSVPResponseData[]> {
+  const { data, error } = await supabase
+    .from("event_rsvp_responses")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("responded_at", { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as RSVPResponseData[];
+}
+
+/**
+ * Get RSVP summary for an event
+ */
+export async function getRSVPSummary(eventId: string): Promise<{
+  total_responses: number;
+  attending: number;
+  not_attending: number;
+  maybe: number;
+  response_rate: number;
+} | null> {
+  const { data, error } = await supabase.rpc("get_rsvp_summary", {
+    p_event_id: eventId,
+  });
+
+  if (error) {
+    console.error("Error fetching RSVP summary:", error);
+    return null;
+  }
+
+  if (!data || data.length === 0) return null;
+  return data[0];
+}
+
+/**
+ * Send RSVP emails to all registrants of an event
+ */
+export async function sendRSVPEmails(eventId: string): Promise<{
+  success: boolean;
+  emails_sent: number;
+  failed: number;
+}> {
+  const sessionRes = await supabase.auth.getSession();
+  const token = sessionRes?.data?.session?.access_token;
+
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch("/api/events/send-rsvp-emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ event_id: eventId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to send RSVP emails");
+  }
+
+  return response.json();
+}
+
+/**
+ * Get user's RSVP response for a specific event
+ */
+export async function getUserRSVPResponse(
+  eventId: string,
+  email: string
+): Promise<RSVPResponseData | null> {
+  const { data, error } = await supabase
+    .from("event_rsvp_responses")
+    .select("*")
+    .eq("event_id", eventId)
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as RSVPResponseData | null;
+}
+
+/**
+ * Check if RSVP window is open for an event
+ */
+export async function isRSVPWindowOpen(eventId: string): Promise<boolean> {
+  const { data: event } = await supabase
+    .from("events")
+    .select("rsvp_enabled, rsvp_start_date, rsvp_end_date")
+    .eq("id", eventId)
+    .single();
+
+  if (!event || !event.rsvp_enabled) return false;
+
+  const now = new Date();
+  const startDate = event.rsvp_start_date ? new Date(event.rsvp_start_date) : null;
+  const endDate = event.rsvp_end_date ? new Date(event.rsvp_end_date) : null;
+
+  if (startDate && startDate > now) return false; // Not started yet
+  if (endDate && endDate < now) return false; // Deadline passed
+
+  return true;
+}
+
 export default {
   createEvent,
   updateEvent,
@@ -929,4 +1110,10 @@ export default {
   exportRegistrationsXLSX,
   registrationsToCSV,
   registrationsToMarkdown,
+  submitRSVP,
+  fetchRSVPResponses,
+  getRSVPSummary,
+  sendRSVPEmails,
+  getUserRSVPResponse,
+  isRSVPWindowOpen,
 };

@@ -15,7 +15,6 @@ interface DashboardSection {
   icon: React.ComponentType<{ className?: string }>;
   visible: boolean;
   order: number;
-  component: React.ReactNode;
 }
 
 interface RegistrationWithEvent {
@@ -68,19 +67,17 @@ export default function Dashboard({ embeddedUser, userEvents = [] }: DashboardPr
       const prefs = stored ? JSON.parse(stored) : null;
       
       const defaultSections: DashboardSection[] = [
-        { id: 'upcoming', title: 'Upcoming Events', icon: Calendar, visible: true, order: 0, component: <UpcomingEvents events={userEvents} /> },
-        { id: 'joined', title: 'Events Joined', icon: Users, visible: true, order: 1, component: <JoinedEvents events={userEvents} /> },
-        { id: 'saved', title: 'Saved Events', icon: Bookmark, visible: true, order: 2, component: <SavedEvents /> },
-        { id: 'drafts', title: 'Draft Events', icon: FileText, visible: true, order: 3, component: <DraftEvents /> }
+        { id: 'upcoming', title: 'Upcoming Events', icon: Calendar, visible: true, order: 0 },
+        { id: 'joined', title: 'Events Joined', icon: Users, visible: true, order: 1 },
+        { id: 'saved', title: 'Saved Events', icon: Bookmark, visible: true, order: 2 },
+        { id: 'drafts', title: 'Draft Events', icon: FileText, visible: true, order: 3 }
       ];
 
       if (prefs) {
         type Pref = { id: string; visible: boolean; order: number };
         const merged = defaultSections.map(section => {
           const pref = (prefs as Pref[]).find((p) => p.id === section.id);
-          // Re-attach component from defaultSections
-          const base = defaultSections.find(s => s.id === section.id);
-          return pref ? { ...section, visible: pref.visible, order: pref.order, component: base?.component } : section;
+          return pref ? { ...section, visible: pref.visible, order: pref.order } : section;
         });
         setSections(merged.sort((a, b) => a.order - b.order));
       } else {
@@ -175,26 +172,36 @@ export default function Dashboard({ embeddedUser, userEvents = [] }: DashboardPr
 
         {/* Dashboard Sections */}
         <div className="space-y-6">
-          {visibleSections.map(section => (
-            <div
-              key={section.id}
-              draggable
-              onDragStart={() => handleDragStart(section.id)}
-              onDragOver={(e) => handleDragOver(e, section.id)}
-              onDragEnd={() => setDraggedSection(null)}
-              className={`transition ${draggedSection === section.id ? 'opacity-50' : ''}`}
-            >
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-3">
-                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
-                  <CardTitle>{section.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {section.component}
-                </CardContent>
-              </Card>
-            </div>
-          ))}
+          {visibleSections.map(section => {
+            let component: React.ReactNode = null;
+            switch (section.id) {
+              case 'upcoming': component = <UpcomingEvents events={userEvents} />; break;
+              case 'joined': component = <JoinedEvents events={userEvents} />; break;
+              case 'saved': component = <SavedEvents />; break;
+              case 'drafts': component = <DraftEvents />; break;
+            }
+
+            return (
+              <div
+                key={section.id}
+                draggable
+                onDragStart={() => handleDragStart(section.id)}
+                onDragOver={(e) => handleDragOver(e, section.id)}
+                onDragEnd={() => setDraggedSection(null)}
+                className={`transition ${draggedSection === section.id ? 'opacity-50' : ''}`}
+              >
+                <Card>
+                  <CardHeader className="flex flex-row items-center gap-3">
+                    <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
+                    <CardTitle>{section.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {component}
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

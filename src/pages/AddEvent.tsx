@@ -432,7 +432,7 @@ export default function AddEvent() {
     loadEvent();
   }, [isEditMode, slug, navigate]);
 
-  const onChange = (k: string, v: any) => setForm((s) => ({ ...s, [k]: v }));
+  const onChange = (k: keyof typeof form, v: string | string[]) => setForm((s) => ({ ...s, [k]: v }));
 
   // keep `draft` in sync with the main form and extras (for preview / autosave)
   useEffect(() => {
@@ -1471,7 +1471,7 @@ export default function AddEvent() {
             <div className="space-y-4">
               <Label>Uploaded Files</Label>
               <FileUpload
-                onFilesChange={(files: any[]) => {
+                onFilesChange={(files: Array<{ file: File; name: string; preview?: string }>) => {
                   if (files && files.length > 0) {
                     const latest = files[files.length - 1];
                     if (latest.preview) {

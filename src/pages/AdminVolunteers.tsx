@@ -4,9 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   getVolunteerApplications, 
-  updateVolunteerStatus, 
-  isUserAdmin 
+  updateVolunteerStatus,
+  VolunteerApplication
 } from "@/lib/adminService";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,14 +43,9 @@ import { formatDate } from "@/lib/timeUtils";
 export default function AdminVolunteers() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { isAdmin, loading: authLoading } = useAuth();
 
-  // Check admin status on mount
-  useEffect(() => {
-    isUserAdmin().then(setIsAdmin);
-  }, []);
-
-  const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [selectedApp, setSelectedApp] = useState<VolunteerApplication | null>(null);
   const [interviewTime, setInterviewTime] = useState("");
   const [meetLink, setMeetLink] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -81,6 +77,17 @@ export default function AdminVolunteers() {
     },
   });
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
+          <p className="text-muted-foreground italic">Verifying credentials...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isAdmin === false) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
@@ -89,17 +96,6 @@ export default function AdminVolunteers() {
           <h1 className="text-3xl font-bold">Access Denied</h1>
           <p className="text-muted-foreground">You do not have administrative privileges to access this page.</p>
           <Button onClick={() => navigate("/")}>Go Home</Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isAdmin === null || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
-          <p className="text-muted-foreground italic">Verifying credentials...</p>
         </div>
       </div>
     );
@@ -139,7 +135,7 @@ export default function AdminVolunteers() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <AnimatePresence>
-              {applications.map((app: any) => (
+              {applications.map((app: VolunteerApplication) => (
                 <motion.div
                   key={app.id}
                   layout

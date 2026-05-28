@@ -56,59 +56,62 @@ export default function About() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            const [isHovered, setIsHovered] = useState(false);
-
-            return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                onHoverStart={() => setIsHovered(true)}
-                onHoverEnd={() => setIsHovered(false)}
-                className="group"
-              >
-                <motion.div
-                  className="bg-card rounded-lg p-6 h-full border border-border/50 transition-all duration-300 relative overflow-hidden"
-                  animate={{
-                    boxShadow: isHovered
-                      ? `0 10px 30px -10px ${feature.glow.replace('0.4', '0.2')}`
-                      : "0 0 0 rgba(0, 0, 0, 0)",
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div 
-                    className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none" 
-                    style={{ background: feature.gradient }}
-                  />
-                  
-                  <motion.div
-                    className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 shadow-lg transition-all duration-300"
-                    style={{ background: feature.gradient }}
-                    whileHover={{
-                      scale: 1.1,
-                      rotate: 2,
-                    }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Icon className="h-7 w-7 text-white" />
-                  </motion.div>
-                  <h3 className="text-xl font-semibold font-display mb-2 text-foreground group-hover:text-purple-500 transition-colors duration-300">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm">
-                    {feature.description}
-                  </p>
-                </motion.div>
-              </motion.div>
-            );
-          })}
+          {features.map((feature, index) => (
+            <FeatureCard key={index} feature={feature} index={index} />
+          ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function FeatureCard({ feature, index }: { feature: typeof features[0], index: number }) {
+  const Icon = feature.icon;
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      className="group"
+    >
+      <motion.div
+        className="bg-card rounded-lg p-6 h-full border border-border/50 transition-all duration-300 relative overflow-hidden"
+        animate={{
+          boxShadow: isHovered
+            ? `0 10px 30px -10px ${feature.glow.replace('0.4', '0.2')}`
+            : "0 0 0 rgba(0, 0, 0, 0)",
+        }}
+        transition={{ duration: 0.3 }}
+      >
+        <div 
+          className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none" 
+          style={{ background: feature.gradient }}
+        />
+        
+        <motion.div
+          className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 shadow-lg transition-all duration-300"
+          style={{ background: feature.gradient }}
+          whileHover={{
+            scale: 1.1,
+            rotate: 2,
+          }}
+          transition={{ duration: 0.3 }}
+        >
+          <Icon className="h-7 w-7 text-white" />
+        </motion.div>
+        <h3 className="text-xl font-semibold font-display mb-2 text-foreground group-hover:text-purple-500 transition-colors duration-300">
+          {feature.title}
+        </h3>
+        <p className="text-muted-foreground leading-relaxed text-sm">
+          {feature.description}
+        </p>
+      </motion.div>
+    </motion.div>
   );
 }

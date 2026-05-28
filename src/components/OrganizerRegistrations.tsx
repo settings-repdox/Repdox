@@ -41,10 +41,11 @@ export default function OrganizerRegistrations({
           setTeamMap(map);
         }
       }
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as Error;
       toast({
         title: "Failed to load registrations",
-        description: err?.message || String(err),
+        description: error.message || String(error),
         variant: "destructive",
       });
     } finally {
@@ -75,7 +76,7 @@ export default function OrganizerRegistrations({
   const sortedRegistrations = [...registrations].sort((a, b) => {
     if (!sortConfig) return 0;
     
-    let aVal: any, bVal: any;
+    let aVal: string | number, bVal: string | number;
     if (sortConfig.key === 'team') {
       aVal = getTeamName(a).toLowerCase();
       bVal = getTeamName(b).toLowerCase();
@@ -83,8 +84,9 @@ export default function OrganizerRegistrations({
       aVal = new Date(a.created_at).getTime();
       bVal = new Date(b.created_at).getTime();
     } else {
-      aVal = String((a as any)[sortConfig.key] || "").toLowerCase();
-      bVal = String((b as any)[sortConfig.key] || "").toLowerCase();
+      const key = sortConfig.key as keyof RegistrationRow;
+      aVal = String(a[key] || "").toLowerCase();
+      bVal = String(b[key] || "").toLowerCase();
     }
 
     if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
@@ -113,10 +115,11 @@ export default function OrganizerRegistrations({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as Error;
       toast({
         title: "Export failed",
-        description: err?.message || String(err),
+        description: error.message || String(error),
         variant: "destructive",
       });
     }
@@ -149,10 +152,11 @@ export default function OrganizerRegistrations({
                     title: "Copied",
                     description: "CSV copied to clipboard",
                   });
-                } catch (err: any) {
+                } catch (err) {
+                  const error = err as Error;
                   toast({
                     title: "Copy failed",
-                    description: err?.message || String(err),
+                    description: error.message || String(error),
                     variant: "destructive",
                   });
                 }
@@ -189,9 +193,9 @@ export default function OrganizerRegistrations({
                   const res = await eventService.exportRegistrationsXLSX(
                     eventId as string,
                   );
-                  if ((res as any).url) {
+                  if ('url' in res) {
                     // open signed URL in new tab
-                    window.open((res as any).url, "_blank");
+                    window.open(res.url, "_blank");
                     toast({
                       title: "Export ready",
                       description:

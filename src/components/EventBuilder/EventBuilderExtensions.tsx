@@ -182,7 +182,7 @@ export default function EventBuilderExtensions({
                           onChange={e => updateItem(speakers, setSpeakers, i, 'role', e.target.value)}
                           className="flex-1 h-9 bg-card/50"
                         />
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-red-500" onClick={() => removeItem(speakers, setSpeakers, i)}>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-red-500" onClick={() => removeItem(speakers, setSpeakers, i)} aria-label="Remove speaker">
                            <Trash2 className="w-4 h-4"/>
                         </Button>
                      </div>
@@ -223,7 +223,7 @@ export default function EventBuilderExtensions({
                         <LinkIcon className="w-4 h-4 text-purple-600" />
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Resources</h2>
                      </div>
-                     <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => addItem(resources, setResources, {id: crypto.randomUUID(), title: '', link: ''})}>
+                     <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => addItem(resources, setResources, {id: crypto.randomUUID(), title: '', link: ''})} aria-label="Add resource">
                         <Plus className="w-4 h-4"/>
                      </Button>
                   </div>
@@ -237,7 +237,7 @@ export default function EventBuilderExtensions({
                                 placeholder="Title" className="h-8 bg-card/50" 
                                 value={res.title} onChange={e => updateItem(resources, setResources, i, 'title', e.target.value)}
                               />
-                               <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 shrink-0" onClick={() => removeItem(resources, setResources, i)}>
+                               <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 shrink-0" onClick={() => removeItem(resources, setResources, i)} aria-label="Remove resource">
                                  <Trash2 className="w-3 h-3"/>
                               </Button>
                            </div>
@@ -261,7 +261,7 @@ export default function EventBuilderExtensions({
                         <HelpCircle className="w-4 h-4 text-purple-600" />
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">FAQs</h2>
                      </div>
-                     <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => addItem(faqs, setFaqs, {question: '', answer: ''})}>
+                     <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => addItem(faqs, setFaqs, {question: '', answer: ''})} aria-label="Add FAQ">
                         <Plus className="w-4 h-4"/>
                      </Button>
                   </div>

@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 import { 
   getPendingEvents, 
   approveEvent, 
-  rejectEvent, 
-  isUserAdmin 
+  rejectEvent 
 } from "@/lib/adminService";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,12 +19,7 @@ import { getEventImage } from "@/lib/eventImages";
 export default function AdminEvents() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-
-  // Check admin status on mount
-  useEffect(() => {
-    isUserAdmin().then(setIsAdmin);
-  }, []);
+  const { isAdmin, loading: authLoading } = useAuth();
 
   const { data: pendingEvents = [], isLoading, isError, error } = useQuery({
     queryKey: ["pending-events"],
@@ -69,6 +64,17 @@ export default function AdminEvents() {
     },
   });
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
+          <p className="text-muted-foreground italic">Verifying credentials...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isAdmin === false) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
@@ -77,17 +83,6 @@ export default function AdminEvents() {
           <h1 className="text-3xl font-bold">Access Denied</h1>
           <p className="text-muted-foreground">You do not have administrative privileges to access this page.</p>
           <Button onClick={() => navigate("/")}>Go Home</Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isAdmin === null || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
-          <p className="text-muted-foreground italic">Verifying credentials...</p>
         </div>
       </div>
     );

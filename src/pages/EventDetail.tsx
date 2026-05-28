@@ -127,8 +127,8 @@ export default function EventDetail() {
       
       if (currentUser && event?.id) {
         const tableName = getRegistrationTableName(event);
-        const { data: reg, error } = await supabase
-          .from(tableName as any)
+        const { data: reg } = await supabase
+          .from(tableName as "event_registrations")
           .select("id")
           .eq("event_id", event.id)
           .eq("user_id", currentUser.id)
@@ -149,7 +149,7 @@ export default function EventDetail() {
       }
     };
     checkUserStatus();
-  }, [event?.id]);
+  }, [event?.id, event?.slug]);
 
   const isOwner = user && event?.created_by === user.id;
 
@@ -169,7 +169,7 @@ export default function EventDetail() {
     return () => {
       mounted = false;
     };
-  }, [event?.id]);
+  }, [event?.id, event?.slug]);
 
   useEffect(() => {
     if (window.location.hash === "#register") {
@@ -369,17 +369,24 @@ export default function EventDetail() {
     queryKey: ["event_registrations_all", event?.id],
     queryFn: async () => {
       if (!event?.id) return [];
-      const tableName = getRegistrationTableName(event);
-      let allData: any[] = [];
+      interface Registration {
+        id: string;
+        name: string | null;
+        email: string | null;
+        user_id: string | null;
+        message: string | null;
+        team_id: string | null;
+      }
+      let allData: Registration[] = [];
       
       // Try fetching from the dynamic table
       const { data, error } = await supabase
-        .from(tableName as any)
+        .from(tableName as "event_registrations")
         .select("id, name, email, user_id, message, team_id")
         .eq("event_id", event.id);
         
       if (!error && data) {
-        allData = [...data];
+        allData = (data as Registration[]).map(r => r);
       }
 
       // If dynamic table is different from the central one, check the central one too
@@ -389,7 +396,7 @@ export default function EventDetail() {
           .select("id, name, email, user_id, message, team_id")
           .eq("event_id", event.id);
         if (fallbackData) {
-          allData = [...allData, ...fallbackData];
+          allData = [...allData, ...(fallbackData as Registration[])];
         }
       }
       

@@ -1,4 +1,4 @@
-// @ts-nocheck: Deno handles type checking for this file; suppressing standard TS engine clash.
+// Event Notification Edge Function
 import { createClient } from "@supabase/supabase-js";
 
 const corsHeaders = {

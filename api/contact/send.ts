@@ -24,8 +24,9 @@
  */
 
 import { VercelRequest, VercelResponse } from "@vercel/node";
+import { performSecurityCheck } from "../../src/lib/inputValidator";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   // Only allow POST requests
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -34,17 +35,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { name, email, message } = req.body;
 
+    // Security check for potential injection attempts
+    const securityCheck = performSecurityCheck(`${name} ${email} ${message}`);
+    if (!securityCheck.safe) {
+      console.error("Security anomaly detected in contact form", { 
+        reasons: securityCheck.reasons,
+        ip: req.headers["x-forwarded-for"] || "unknown"
+      });
+      // Throwing a security error to be caught by the SecurityErrorBoundary on frontend if desired, 
+      // but here we just return a 403.
+      return res.status(403).json({ 
+        error: "Security validation failed. Unusual activity detected.",
+        code: "security_anomaly"
+      });
+    }
+
     // Trim and validate required fields
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedEmail = typeof email === "string" ? email.trim() : "";
     const trimmedMessage = typeof message === "string" ? message.trim() : "";
 
     if (!trimmedName || !trimmedEmail || !trimmedMessage) {
-      console.warn("Contact form: Missing required fields", {
-        hasName: !!trimmedName,
-        hasEmail: !!trimmedEmail,
-        hasMessage: !!trimmedMessage,
-      });
       return res.status(400).json({
         error: "Missing required fields: name, email, and message",
       });
@@ -122,7 +133,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify(supportEmailPayload),
     });
 
-    let supportResponseData: any = {};
+    interface ResendResponse {
+      id?: string;
+      error?: string;
+      message?: string;
+    }
+
+    let supportResponseData: ResendResponse = {};
     try {
       const responseText = await supportResponse.text();
       if (responseText) {

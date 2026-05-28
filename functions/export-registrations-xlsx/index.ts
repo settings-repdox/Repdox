@@ -58,15 +58,19 @@ serve(async (req: Request) => {
 
     if (!authorized && user && ev.organisers) {
       try {
-        const orgs = typeof ev.organisers === 'string' ? JSON.parse(ev.organisers) : ev.organisers;
+        interface Organiser {
+          user_id?: string;
+          email?: string;
+        }
+        const orgs = (typeof ev.organisers === 'string' ? JSON.parse(ev.organisers) : ev.organisers) as (string | Organiser)[];
         if (Array.isArray(orgs)) {
           for (const o of orgs) {
             if (!o) continue;
             if (typeof o === 'string') {
               if (o === user.email || o === user.id) { authorized = true; break; }
             } else {
-              if ((o as any).user_id && (o as any).user_id === user.id) { authorized = true; break; }
-              if ((o as any).email && (o as any).email === user.email) { authorized = true; break; }
+              if (o.user_id && o.user_id === user.id) { authorized = true; break; }
+              if (o.email && o.email === user.email) { authorized = true; break; }
             }
           }
         }
@@ -90,7 +94,7 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'failed_fetching_registrations' }), { status: 500 });
     }
 
-    const rows = (regs || []).map((r: any) => ({
+    const rows = (regs || []).map((r) => ({
       id: r.id,
       created_at: r.created_at,
       name: r.name || '',
@@ -108,9 +112,9 @@ serve(async (req: Request) => {
 
     const wbout = xlsx.write(wb, { bookType: 'xlsx', type: 'array' });
     let u8: Uint8Array;
-    if (wbout instanceof Uint8Array) u8 = wbout as Uint8Array;
-    else if (wbout instanceof ArrayBuffer) u8 = new Uint8Array(wbout as ArrayBuffer);
-    else u8 = new Uint8Array(wbout as any);
+    if (wbout instanceof Uint8Array) u8 = wbout;
+    else if (wbout instanceof ArrayBuffer) u8 = new Uint8Array(wbout);
+    else u8 = new Uint8Array(wbout as ArrayBufferLike);
 
     const filename = `registrations-${eventId}.xlsx`;
     const path = `registrations/${eventId}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.xlsx`;

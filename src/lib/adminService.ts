@@ -79,16 +79,32 @@ export async function rejectEvent(eventId: string) {
 }
 
 /**
+ * Volunteer Application Interface
+ */
+export interface VolunteerApplication {
+  id: string;
+  created_at: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  role_preference: string;
+  motivation: string;
+  status: 'pending' | 'interview' | 'approved' | 'rejected';
+  interview_time?: string;
+  meet_link?: string;
+}
+
+/**
  * Fetch all volunteer applications
  */
-export async function getVolunteerApplications() {
+export async function getVolunteerApplications(): Promise<VolunteerApplication[]> {
   const { data, error } = await supabase
     .from("volunteer_applications" as any)
     .select("*")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return (data as VolunteerApplication[]) || [];
 }
 
 /**
@@ -103,8 +119,8 @@ export async function updateVolunteerStatus(
   const isAdmin = await isUserAdmin();
   if (!isAdmin) throw new Error("Not authorized");
 
-  const updateData: any = { 
-    status, 
+  const updateData: Partial<VolunteerApplication> & { updated_at: string } = { 
+    status: status as any, 
     updated_at: new Date().toISOString() 
   };
 

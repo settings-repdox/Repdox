@@ -1,9 +1,8 @@
 // src/components/ProtectedRoute.tsx
 // Wrapper component to protect routes that require authentication and email verification
 
-import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -11,56 +10,11 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
+  const { user, loading, session } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    checkAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setIsAuthenticated(true);
-        setIsVerified(!!session.user.email_confirmed_at);
-        setUserEmail(session.user.email || '');
-      } else {
-        setIsAuthenticated(false);
-        setIsVerified(false);
-        setUserEmail('');
-      }
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  async function checkAuth() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setIsAuthenticated(false);
-        setIsVerified(false);
-        setLoading(false);
-        return;
-      }
-
-      setIsAuthenticated(true);
-      setIsVerified(!!user.email_confirmed_at);
-      setUserEmail(user.email || '');
-    } catch (error) {
-      console.error('Auth check error:', error);
-      setIsAuthenticated(false);
-      setIsVerified(false);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const isVerified = !!user?.email_confirmed_at;
+  const userEmail = user?.email || '';
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -76,7 +30,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 }
 
   // Redirect to signin if not authenticated
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 

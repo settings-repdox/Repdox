@@ -4,9 +4,25 @@ import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getRegistrationTableName } from "@/lib/utils";
+import { Database } from "@/integrations/supabase/types";
+
+type Registration = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  user_id: string | null;
+  message: string | null;
+  team_id: string | null;
+};
+
+type TeamMember = Registration;
+
+type Team = Database["public"]["Tables"]["event_teams"]["Row"] & {
+  members: TeamMember[];
+};
 
 export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string; eventSlug?: string }) {
-  const [teams, setTeams] = useState<any[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,15 +40,15 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
 
         // Fetch registrations
         const tableName = getRegistrationTableName({ id: eventId, slug: eventSlug });
-        let allRegs: any[] = [];
+        let allRegs: Registration[] = [];
         
         const { data: regsData } = await supabase
-          .from(tableName as any)
+          .from(tableName as "event_registrations")
           .select("id, name, email, user_id, message, team_id")
           .eq("event_id", eventId);
           
         if (regsData) {
-          allRegs = [...regsData];
+          allRegs = (regsData as Registration[]).map(r => r);
         }
 
         if (tableName !== "event_registrations") {
@@ -41,12 +57,12 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
             .select("id, name, email, user_id, message, team_id")
             .eq("event_id", eventId);
           if (fallbackData) {
-            allRegs = [...allRegs, ...fallbackData];
+            allRegs = [...allRegs, ...(fallbackData as Registration[])];
           }
         }
 
         // Group teams
-        const groupedTeamsMap = new Map<string, any>();
+        const groupedTeamsMap = new Map<string, Team>();
         
         (rawTeams || []).forEach(team => {
           const lowerName = team.name.toLowerCase();
@@ -103,7 +119,7 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {teams.map((t: any) => (
+            {teams.map((t) => (
               <div key={t.id} className="border border-border/50 bg-accent/5 rounded-xl p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="font-bold text-lg text-accent">{t.name}</div>
@@ -124,7 +140,7 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {t.members && t.members.length > 0 ? (
-                      t.members.map((m: any) => (
+                      t.members.map((m) => (
                         <Badge key={m.id} variant="secondary" className="bg-background/50">
                           {m.name || m.email || "Unknown"}
                         </Badge>

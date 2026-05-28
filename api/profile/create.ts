@@ -33,55 +33,9 @@
  */
 
 import { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin, verifyAuth } from "../_utils";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || "",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  },
-);
-
-/**
- * Decode JWT payload without verification
- * Only use this to extract user ID; Supabase will validate token on DB operations
- */
-function decodeJWT(token: string): { sub?: string; user_id?: string } | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-
-    const payload = parts[1];
-    const decoded = JSON.parse(
-      Buffer.from(payload, "base64").toString("utf-8"),
-    );
-    return decoded;
-  } catch {
-    return null;
-  }
-}
-
-async function verifyAuth(token: string): Promise<string | null> {
-  try {
-    // Decode JWT to get user ID
-    const payload = decodeJWT(token);
-    if (!payload || !payload.sub) return null;
-
-    // Verify user exists using admin API with service role
-    const { data: user, error } = await (
-      supabase.auth as any
-    ).admin.getUserById(payload.sub);
-
-    if (error || !user) return null;
-    return user.id;
-  } catch {
-    return null;
-  }
-}
+const supabase = getSupabaseAdmin();
 
 /**
  * Check if handle is available

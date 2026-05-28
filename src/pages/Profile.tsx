@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -100,6 +101,7 @@ const sections = [
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { refreshProfileStatus } = useAuth();
   const { userId } = useParams();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -533,6 +535,7 @@ export default function Profile() {
       setAvatarPreview(null);
 
       await loadUserProfile();
+      await refreshProfileStatus();
 
       setTimeout(() => setSuccess(null), 5000);
     } catch (err: unknown) {

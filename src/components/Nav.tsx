@@ -11,10 +11,11 @@ import CardNav from "@/components/ui/CardNav";
 import logo from "@/assets/logo.svg";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun, ShieldCheck, Users, Zap } from "lucide-react";
+import { Moon, Sun, ShieldCheck, Users } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import { isUserAdmin } from "@/lib/adminService";
+import { useAuth } from "@/contexts/AuthContext";
+import { Zap } from "lucide-react";
 
 type UserProfile = {
   id: string;
@@ -24,98 +25,55 @@ type UserProfile = {
   handle?: string | null;
 };
 
+interface Metadata {
+  full_name?: string;
+  avatar_url?: string;
+  picture?: string;
+  avatar?: string | { url: string };
+  photo_url?: string;
+}
+
 export default function Nav() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [fullName, setFullName] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState(false);
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
-  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Onboarding check
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!mounted) return;
-      setUser(data?.user ?? null);
-      if (data?.user) {
-        isUserAdmin().then(setIsAdmin);
-      }
+    if (authLoading || !user) return;
 
-      // If there's a logged-in user, check whether they already have a profile.
-      // If not, redirect them to the Profile page to complete onboarding.
+    const checkOnboarding = async () => {
       try {
-        const u = data?.user;
-        if (u) {
-          const { data: profile } = await supabase
-            .from("user_profiles")
-            .select("id")
-            .eq("user_id", u.id)
-            .maybeSingle();
-          if (!profile) {
-            // only navigate if we're not already on the profile page
-            if (window.location.pathname !== "/profile") {
-              navigate("/profile?onboard=1");
-            }
-          }
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!profile && window.location.pathname !== "/profile") {
+          navigate("/profile?onboard=1");
         }
       } catch (err) {
         console.error("Error checking onboarding status:", err);
       }
     };
-    load();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          isUserAdmin().then(setIsAdmin);
-        } else {
-          setIsAdmin(false);
-        }
-        // When auth state changes (e.g. sign in), check onboarding
-        (async () => {
-          const u = session?.user;
-          if (!u) return;
-          try {
-            const { data: profile } = await supabase
-              .from("user_profiles")
-              .select("id")
-              .eq("user_id", u.id)
-              .maybeSingle();
-            if (!profile) {
-              if (window.location.pathname !== "/profile") {
-                navigate("/profile?onboard=1");
-              }
-            }
-          } catch (err) {
-            console.error(
-              "Error checking onboarding status after auth change:",
-              err
-            );
-          }
-        })();
-      }
-    );
-
-    return () => {
-      mounted = false;
-      listener?.subscription?.unsubscribe();
-    };
-  }, [navigate]);
+    checkOnboarding();
+  }, [user, authLoading, navigate]);
 
   // derive avatar URL from user_profiles table, then metadata or identities
   useEffect(() => {
@@ -147,7 +105,7 @@ export default function Nav() {
             const { data } = await supabase.storage
               .from("avatars")
               .createSignedUrl(objectPath, 60 * 60);
-            
+
             if (data?.signedUrl) {
               setAvatarSrc(data.signedUrl);
             } else {
@@ -170,10 +128,10 @@ export default function Nav() {
       }
 
       // Fallback to user metadata
-      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+      const meta = (user.user_metadata ?? {}) as Metadata;
 
       // helper to pick first string url from candidates
-      const pick = (...keys: string[]) => {
+      const pick = (...keys: (keyof Metadata)[]) => {
         for (const k of keys) {
           const v = meta[k];
           if (typeof v === "string" && v.length > 0) return v;
@@ -185,8 +143,8 @@ export default function Nav() {
       let src: string | null = pick(
         "avatar_url",
         "picture",
-        "avatar",
-        "photo_url"
+        "avatar" as any, // Cast because it might be an object
+        "photo_url",
       );
 
       // check identities (OAuth providers) for avatar in identity_data
@@ -230,13 +188,13 @@ export default function Nav() {
     };
     window.addEventListener(
       "profile:updated",
-      onProfileUpdated as EventListener
+      onProfileUpdated as EventListener,
     );
 
     return () => {
       window.removeEventListener(
         "profile:updated",
-        onProfileUpdated as EventListener
+        onProfileUpdated as EventListener,
       );
     };
   }, [user]);
@@ -256,8 +214,8 @@ export default function Nav() {
   const items = [
     {
       label: "Events",
-      bgColor: theme === 'dark' ? "#0D0716" : "#F3F4F6",
-      textColor: theme === 'dark' ? "#fff" : "#1F2937",
+      bgColor: theme === "dark" ? "#0D0716" : "#F3F4F6",
+      textColor: theme === "dark" ? "#fff" : "#1F2937",
       links: [
         {
           label: "Hackathons",
@@ -283,8 +241,8 @@ export default function Nav() {
     },
     {
       label: "Company",
-      bgColor: theme === 'dark' ? "#170D27" : "#E5E7EB",
-      textColor: theme === 'dark' ? "#fff" : "#111827",
+      bgColor: theme === "dark" ? "#170D27" : "#E5E7EB",
+      textColor: theme === "dark" ? "#fff" : "#111827",
       links: [
         { label: "About Us", href: "/about", ariaLabel: "About Repdox" },
         { label: "Join Us", href: "/join-us", ariaLabel: "Join Us" },
@@ -294,12 +252,20 @@ export default function Nav() {
     },
     {
       label: "Contact",
-      bgColor: theme === 'dark' ? "#271E37" : "#D1D5DB",
-      textColor: theme === 'dark' ? "#fff" : "#000",
+      bgColor: theme === "dark" ? "#271E37" : "#D1D5DB",
+      textColor: theme === "dark" ? "#fff" : "#000",
       links: [
         { label: "Email", href: "/contact", ariaLabel: "Email us" },
-        { label: "Discord", href: "https://discord.gg/TbAqDgy4cw", ariaLabel: "Join Discord" },
-        { label: "Instagram", href: "https://www.instagram.com/repdox.official", ariaLabel: "Follow on Instagram" },
+        {
+          label: "Discord",
+          href: "https://discord.gg/TbAqDgy4cw",
+          ariaLabel: "Join Discord",
+        },
+        {
+          label: "Instagram",
+          href: "https://www.instagram.com/repdox.official",
+          ariaLabel: "Follow on Instagram",
+        },
       ],
     },
   ];
@@ -309,8 +275,8 @@ export default function Nav() {
     const mobileItems = [
       {
         label: "Menu",
-        bgColor: theme === 'dark' ? "#0D0716" : "#F3F4F6",
-        textColor: theme === 'dark' ? "#fff" : "#1F2937",
+        bgColor: theme === "dark" ? "#0D0716" : "#F3F4F6",
+        textColor: theme === "dark" ? "#fff" : "#1F2937",
         links: [
           { label: "Events", href: "/events", ariaLabel: "Browse Events" },
           { label: "Join Us", href: "/join-us", ariaLabel: "Join Us" },
@@ -321,45 +287,57 @@ export default function Nav() {
       },
       {
         label: "Account",
-        bgColor: theme === 'dark' ? "#170D27" : "#E5E7EB",
-        textColor: theme === 'dark' ? "#fff" : "#111827",
-        links: user 
+        bgColor: theme === "dark" ? "#170D27" : "#E5E7EB",
+        textColor: theme === "dark" ? "#fff" : "#111827",
+        links: user
           ? [
               { label: "Profile", href: "/profile", ariaLabel: "My Profile" },
-              { label: "My Events", href: "/my-events", ariaLabel: "My Events" },
-              ...(isAdmin ? [
-                { label: "Admin: Events", href: "/admin/events", ariaLabel: "Admin Events" },
-                { label: "Admin: Scanner", href: "/admin/scanner", ariaLabel: "Admin Scanner" },
-                { label: "Admin: Volunteers", href: "/admin/volunteers", ariaLabel: "Admin Volunteers" }
-              ] : []),
+              {
+                label: "My Events",
+                href: "/my-events",
+                ariaLabel: "My Events",
+              },
+              ...(isAdmin
+                ? [
+                    {
+                      label: "Admin: Events",
+                      href: "/admin/events",
+                      ariaLabel: "Admin Events",
+                    },
+                    {
+                      label: "Admin: Volunteers",
+                      href: "/admin/volunteers",
+                      ariaLabel: "Admin Volunteers",
+                    },
+                  ]
+                : []),
             ]
-          : [
-              { label: "Sign In", href: "/signin", ariaLabel: "Sign In" },
-            ]
-      }
+          : [{ label: "Sign In", href: "/signin", ariaLabel: "Sign In" }],
+      },
     ];
 
     return (
-        <CardNav
+      <CardNav
         logo={
-          <span 
+          <span
             className="text-[14px] font-black tracking-[0.05em] uppercase whitespace-nowrap flex-shrink-0"
-            style={{ 
+            style={{
               fontFamily: "'Outfit', sans-serif",
-              background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              display: 'inline-block'
+              background:
+                "linear-gradient(to right, #ffffff, #a855f7, #ec4899)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              display: "inline-block",
             }}
           >
             REPDOX
           </span>
         }
         items={mobileItems}
-        baseColor={theme === 'dark' ? "#0D0716" : "#fff"}
-        menuColor={theme === 'dark' ? "#fff" : "#000"}
-        buttonBgColor={theme === 'dark' ? "#fff" : "#000"}
-        buttonTextColor={theme === 'dark' ? "#000" : "#fff"}
+        baseColor={theme === "dark" ? "#0D0716" : "#fff"}
+        menuColor={theme === "dark" ? "#fff" : "#000"}
+        buttonBgColor={theme === "dark" ? "#fff" : "#000"}
+        buttonTextColor={theme === "dark" ? "#000" : "#fff"}
         ease="power3.out"
       />
     );
@@ -375,15 +353,13 @@ export default function Nav() {
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="fixed top-0 left-0 right-0 z-50 border-b border-border/30"
       style={{
-        background: scrolled
-          ? 'rgba(0, 0, 0, 0.4)'
-          : 'rgba(0, 0, 0, 0.2)',
+        background: scrolled ? "rgba(0, 0, 0, 0.4)" : "rgba(0, 0, 0, 0.2)",
         backdropFilter: scrolled
-          ? 'blur(20px) saturate(200%)'
-          : 'blur(16px) saturate(180%)',
+          ? "blur(20px) saturate(200%)"
+          : "blur(16px) saturate(180%)",
         WebkitBackdropFilter: scrolled
-          ? 'blur(20px) saturate(200%)'
-          : 'blur(16px) saturate(180%)',
+          ? "blur(20px) saturate(200%)"
+          : "blur(16px) saturate(180%)",
       }}
     >
       <div className="max-w-7xl mx-auto px-6 h-full">
@@ -392,20 +368,21 @@ export default function Nav() {
           <div className="flex items-center gap-8">
             <Link to="/" className="flex-shrink-0 group relative py-2">
               <div className="flex items-center">
-                <span 
+                <span
                   className="text-2xl font-black tracking-[0.15em] transition-all duration-300"
-                  style={{ 
+                  style={{
                     fontFamily: "'Outfit', sans-serif",
-                    background: 'linear-gradient(to right, #ffffff, #a855f7, #ec4899)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
+                    background:
+                      "linear-gradient(to right, #ffffff, #a855f7, #ec4899)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
                   }}
                 >
                   REPDOX
                 </span>
               </div>
             </Link>
-            
+
             <NavigationMenu>
               <NavigationMenuList className="gap-2">
                 {navigationLinks.map((link, index) => (
@@ -444,7 +421,9 @@ export default function Nav() {
               )}
             </motion.button>
 
-            {user ? (
+            {authLoading ? (
+              <div className="h-10 w-24 bg-accent/10 animate-pulse rounded-xl" />
+            ) : user ? (
               <div className="relative">
                 <motion.button
                   onClick={() => setMenuOpen((s) => !s)}
@@ -462,10 +441,21 @@ export default function Nav() {
                     />
                   ) : (
                     (() => {
-                      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-                      const name = fullName || 
-                        (typeof meta["full_name"] === "string" ? meta["full_name"] : user.email ?? "");
-                      const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
+                      const meta = (user.user_metadata ?? {}) as Record<
+                        string,
+                        unknown
+                      >;
+                      const name =
+                        fullName ||
+                        (typeof meta["full_name"] === "string"
+                          ? meta["full_name"]
+                          : (user.email ?? ""));
+                      const initials = name
+                        .split(" ")
+                        .map((s) => s[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase();
                       return (
                         <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
                           {initials || "U"}
@@ -512,16 +502,6 @@ export default function Nav() {
                         >
                           <ShieldCheck className="w-4 h-4" />
                           Approve Events
-                        </button>
-                        <button
-                          onClick={() => {
-                            setMenuOpen(false);
-                            navigate("/admin/scanner");
-                          }}
-                          className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2"
-                        >
-                          <Zap className="w-4 h-4" />
-                          Event Scanner
                         </button>
                         <button
                           onClick={() => {

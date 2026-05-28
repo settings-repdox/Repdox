@@ -55,8 +55,9 @@ serve(async (req) => {
       // Prefer admin API if available
       let userFound = false;
       try {
-        if ((supabase as any).auth?.admin?.getUserById) {
-          const ures = await (supabase as any).auth.admin.getUserById(userId);
+        const authAdmin = supabase.auth as unknown as { admin: { getUserById: (id: string) => Promise<{ data: { user: any } }> } };
+        if (authAdmin.admin?.getUserById) {
+          const ures = await authAdmin.admin.getUserById(userId);
           if (ures?.data?.user) userFound = true;
         }
       } catch (e) {
@@ -113,7 +114,7 @@ serve(async (req) => {
 
     if (error) {
       console.error("Insert verification failed", error);
-      const msg = (error && (error as any).message) ? (error as any).message : String(error);
+      const msg = error.message || String(error);
       return new Response(JSON.stringify({ error: "insert_failed", detail: msg }), { status: 500 });
     }
 
@@ -157,7 +158,7 @@ serve(async (req) => {
         });
 
         const twText = await twResp.text();
-        let twJson: any = null;
+        let twJson: { sid?: string; status?: string } | null = null;
         try {
           twJson = JSON.parse(twText);
         } catch (e) {
@@ -187,7 +188,7 @@ serve(async (req) => {
     }
 
     // If neither provider set, we still return success so that dev/testing can rely on DB entry / token dumps
-    const responseBody: any = { ok: true, sent };
+    const responseBody: Record<string, unknown> = { ok: true, sent };
     if (DEV_TWILIO_LOG) {
       responseBody.provider_sid = providerSid;
       responseBody.provider_status = providerStatus;
@@ -197,7 +198,7 @@ serve(async (req) => {
     return new Response(JSON.stringify(responseBody), { status: 200 });
   } catch (err) {
     console.error("send-verification error", err);
-    const msg = err && (err as any).message ? (err as any).message : String(err);
+    const msg = err instanceof Error ? err.message : String(err);
     return new Response(JSON.stringify({ error: 'internal_error', detail: msg }), { status: 500 });
   }
 });

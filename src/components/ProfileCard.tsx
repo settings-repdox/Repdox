@@ -60,6 +60,20 @@ export interface UserData {
   };
 }
 
+export interface EventRegistration {
+  role?: keyof typeof ROLE_THEMES;
+  check_in_status?: string;
+  registration_id?: string;
+  committee?: string;
+  position?: string;
+  country?: string;
+}
+
+export interface EventData {
+  type?: string;
+  title?: string;
+}
+
 interface ProfileCardProps {
   avatarUrl?: string;
   iconUrl?: string;
@@ -86,8 +100,8 @@ interface ProfileCardProps {
   showIdCard?: boolean;
   mode?: 'personal' | 'event';
   userData?: UserData;
-  eventRegistration?: any;
-  eventData?: any;
+  eventRegistration?: EventRegistration | null;
+  eventData?: EventData | null;
 }
 
 const ProfileCardComponent: React.FC<ProfileCardProps> = ({
@@ -144,6 +158,12 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
 
   const enterTimerRef = useRef<number | null>(null);
   const leaveRafRef = useRef<number | null>(null);
+
+  const getInitials = (name: string | null) => {
+    return name
+      ? name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
+      : 'U';
+  };
 
 const roleTheme = useMemo(() => {
   if (mode === 'event' && eventRegistration?.role) {
@@ -367,7 +387,7 @@ const qrData = useMemo(() => {
     const handleClick = () => {
       if (!enableMobileTilt || typeof window === 'undefined' || window.location.protocol !== 'https:') return;
       
-      const DeviceMotionEvent = (window as any).DeviceMotionEvent;
+      const DeviceMotionEvent = (window as unknown as { DeviceMotionEvent: any }).DeviceMotionEvent;
       if (DeviceMotionEvent && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
         (DeviceMotionEvent as any).requestPermission()
           .then((state: string) => {
@@ -634,11 +654,7 @@ const renderPersonalCard = () => (
   </div>
 );
 
-const getInitials = (name: string) => {
-  return name
-    ? name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
-    : 'U';
-};
+// getInitials moved up
 
   return (
     <div ref={wrapRef} className={`pc-card-wrapper ${className}`.trim()} style={cardStyle}>

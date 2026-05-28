@@ -6,15 +6,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import IntroLoader from "@/components/IntroLoader";
 import Nav from "@/components/Nav";
 import CommandPalette from "@/components/CommandPalette";
-import { BackgroundProvider } from "@/components/BackgroundSystem/BackgroundContext";
-import LightPillarBackground from "@/components/BackgroundSystem/LightPillarBackground";
+// import LightPillarBackground from "@/components/BackgroundSystem/LightPillarBackground";
+const LightPillarBackground = lazy(() => import("@/components/BackgroundSystem/LightPillarBackground"));
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import PageLoader from "@/components/PageLoader";
+import SecurityErrorBoundary from "@/components/SecurityErrorBoundary";
 import { useLocation } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -44,7 +47,6 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const SolveForIndiaRegister = lazy(() => import("./pages/solveforindia/Register"));
 const AdminEvents = lazy(() => import("./pages/AdminEvents"));
-const AdminScanner = lazy(() => import("./pages/AdminScanner"));
 const Volunteers = lazy(() => import("./pages/Volunteers"));
 const DiscordLink = lazy(() => import("./pages/DiscordLink"));
 const AdminVolunteers = lazy(() => import("./pages/AdminVolunteers"));
@@ -57,17 +59,48 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-// Simple fallback loader if PageLoader doesn't exist yet
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-  </div>
-);
+// Use the beautiful PageLoader component as the global loading fallback
+const LoadingFallback = () => <PageLoader />;
 
 function AppContent() {
   const location = useLocation();
+  const { user, loading, isProfileComplete } = useAuth();
+  
   const hideFooterRoutes = ["/signin", "/signup"];
   const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
+
+  // Define routes that are allowed without being signed in (auth pages)
+  const isAuthRoute = ["/signin", "/signup", "/auth/callback"].includes(location.pathname);
+
+  // Show page loader while loading auth state to prevent flash of content
+  if (loading) {
+    return <LoadingFallback />;
+  }
+
+  // 1. If not authenticated, redirect to sign-in unless on an auth route
+  if (!user) {
+    if (!isAuthRoute) {
+      return <Navigate to="/signin" state={{ from: location }} replace />;
+    }
+  } else {
+    // 2. If authenticated, but email is not verified, they must be on /verify-email (or callback/signin)
+    const isVerified = !!user.email_confirmed_at;
+    if (!isVerified) {
+      if (location.pathname !== "/verify-email" && location.pathname !== "/auth/callback") {
+        return <Navigate to={`/verify-email?email=${encodeURIComponent(user.email || "")}`} replace />;
+      }
+    } else {
+      // 3. If authenticated and verified, but profile is not complete (e.g. missing name or dob),
+      // they must complete it. Only allow them on /profile page (or its sub-routes) or callback.
+      if (!isProfileComplete) {
+        const isOnProfilePage = location.pathname === "/profile" || location.pathname.startsWith("/profile/");
+        const isCallback = location.pathname === "/auth/callback";
+        if (!isOnProfilePage && !isCallback) {
+          return <Navigate to="/profile?onboard=true" replace />;
+        }
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -153,14 +186,6 @@ function AppContent() {
               }
             />
             <Route
-              path="/admin/scanner"
-              element={
-                <ProtectedRoute>
-                  <AdminScanner />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/admin/volunteers"
               element={
                 <ProtectedRoute>
@@ -232,26 +257,28 @@ const App = () => {
   };
 
   return (
-    <ThemeProvider>
-      <Analytics />
-      <SpeedInsights />
-      <BackgroundProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
+    <SecurityErrorBoundary>
+      <AuthProvider>
+        <ThemeProvider>
+          <Analytics />
+          <SpeedInsights />
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
 
-            <BrowserRouter>
-              <ScrollToTop />
-              {!showIntro && <LightPillarBackground />}
-              <CommandPalette />
-              {showIntro && <IntroLoader onComplete={handleIntroComplete} />}
-              <AppContent />
-            </BrowserRouter>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </BackgroundProvider>
-    </ThemeProvider>
+              <BrowserRouter>
+                <ScrollToTop />
+                {!showIntro && <LightPillarBackground />}
+                <CommandPalette />
+                {showIntro && <IntroLoader onComplete={handleIntroComplete} />}
+                <AppContent />
+              </BrowserRouter>
+            </TooltipProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </SecurityErrorBoundary>
   );
 };
 

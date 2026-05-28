@@ -62,7 +62,7 @@ export default function EventTeams() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-2">
                 <Link to={`/events/${event.slug}`}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-accent/10 hover:bg-accent/20">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-accent/10 hover:bg-accent/20" aria-label="Action">
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 </Link>
