@@ -245,9 +245,9 @@ export const sanitizeFormData = <T extends Record<string, unknown>>(data: T): T 
 
     if (typeof value === "string") {
       // Apply basic sanitization to all strings
-      sanitized[key] = removeScriptTags(value.trim());
+      (sanitized[key] as any) = removeScriptTags(value.trim());
     } else if (Array.isArray(value)) {
-      sanitized[key] = value.map((item) =>
+      (sanitized[key] as any) = value.map((item) =>
         typeof item === "string" ? removeScriptTags(item.trim()) : item,
       );
     }

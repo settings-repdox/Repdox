@@ -24,7 +24,7 @@
  */
 
 import { VercelRequest, VercelResponse } from "@vercel/node";
-import { performSecurityCheck } from "../../src/lib/inputValidator";
+import { performSecurityCheck } from "../../src/lib/inputValidator.ts";
 
 export default async function handler(req: any, res: any) {
   // Only allow POST requests
