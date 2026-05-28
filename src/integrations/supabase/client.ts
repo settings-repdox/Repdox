@@ -8,9 +8,29 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 if (!supabaseUrl) throw new Error('supabaseUrl is required.');
 if (!supabaseKey) throw new Error('supabaseKey is required.');
 
+const getSafeStorage = (): Storage => {
+  try {
+    const testKey = "__storage_test__";
+    window.localStorage.setItem(testKey, testKey);
+    window.localStorage.removeItem(testKey);
+    return window.localStorage;
+  } catch (e) {
+    console.warn("Storage access denied, falling back to in-memory storage:", e);
+    const store: Record<string, string> = {};
+    return {
+      getItem: (key: string) => store[key] || null,
+      setItem: (key: string, value: string) => { store[key] = value; },
+      removeItem: (key: string) => { delete store[key]; },
+      clear: () => { for (const k in store) delete store[k]; },
+      key: (index: number) => Object.keys(store)[index] || null,
+      get length() { return Object.keys(store).length; }
+    } as Storage;
+  }
+};
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   auth: {
-    storage: localStorage,
+    storage: getSafeStorage(),
     persistSession: true,
     autoRefreshToken: true,
   }
