@@ -87,16 +87,6 @@ function AppContent() {
       if (location.pathname !== "/verify-email" && location.pathname !== "/auth/callback") {
         return <Navigate to={`/verify-email?email=${encodeURIComponent(user.email || "")}`} replace />;
       }
-    } else {
-      // 2. If authenticated and verified, but profile is not complete (e.g. missing name or dob),
-      // they must complete it. Only allow them on /profile page (or its sub-routes) or callback.
-      if (!isProfileComplete) {
-        const isOnProfilePage = location.pathname === "/profile" || location.pathname.startsWith("/profile/");
-        const isCallback = location.pathname === "/auth/callback";
-        if (!isOnProfilePage && !isCallback) {
-          return <Navigate to="/profile?onboard=true" replace />;
-        }
-      }
     }
   }
 

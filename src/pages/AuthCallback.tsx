@@ -43,17 +43,7 @@ export default function AuthCallback() {
         if (user.email_confirmed_at) {
           if (isMounted) setMessage('Email verified! Setting up your account...');
           
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('id, full_name, date_of_birth')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (!profile || !profile.full_name || !profile.date_of_birth) {
-            safeSetTimeout(() => navigate('/profile?onboard=true'), 1000);
-          } else {
-            safeSetTimeout(() => navigate('/'), 1000);
-          }
+          safeSetTimeout(() => navigate('/'), 1000);
         } else {
           if (isMounted) setMessage('Email not yet verified. Please check your email...');
           safeSetTimeout(() => navigate(`/verify-email?email=${encodeURIComponent(user.email || '')}`), 1500);

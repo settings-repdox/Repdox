@@ -54,18 +54,7 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
 
         // Email is verified - proceed with normal login
         if (data.user) {
-          const { data: profile } = await supabase
-            .from("user_profiles")
-            .select("id, full_name, date_of_birth")
-            .eq("user_id", data.user.id)
-            .maybeSingle();
-
-          // Check if profile is incomplete
-          if (!profile || !profile.full_name || !profile.date_of_birth) {
-            navigate("/profile?onboard=true");
-          } else {
-            navigate("/");
-          }
+          navigate("/");
         } else {
           navigate("/");
         }
