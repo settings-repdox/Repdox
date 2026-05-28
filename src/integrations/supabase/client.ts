@@ -5,8 +5,36 @@ import type { Database } from './types';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl) throw new Error('supabaseUrl is required.');
-if (!supabaseKey) throw new Error('supabaseKey is required.');
+// Log environment status for debugging
+console.log('[Supabase Client] Checking environment variables...');
+console.log('[Supabase Client] VITE_SUPABASE_URL:', supabaseUrl ? 'SET' : 'MISSING');
+console.log('[Supabase Client] VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'SET' : 'MISSING');
+
+if (!supabaseUrl || !supabaseKey) {
+  const missing = [];
+  if (!supabaseUrl) missing.push('VITE_SUPABASE_URL');
+  if (!supabaseKey) missing.push('VITE_SUPABASE_ANON_KEY');
+  
+  const errorMsg = `[CRITICAL] Missing environment variables: ${missing.join(', ')}\n\nPlease set these in your .env.local file or Vercel environment variables:\n1. VITE_SUPABASE_URL - Your Supabase project URL\n2. VITE_SUPABASE_ANON_KEY - Your Supabase anonymous key\n\nGet these from: https://supabase.com/dashboard -> Settings -> API`;
+  
+  console.error(errorMsg);
+  
+  // Display error on page
+  if (typeof window !== 'undefined') {
+    document.body.innerHTML = `
+      <div style="padding: 40px; font-family: monospace; background: #fee; color: #c00; border: 2px solid #c00; margin: 20px;">
+        <h1>❌ Configuration Error</h1>
+        <pre style="background: #fff; padding: 20px; border-radius: 4px; overflow-x: auto;">${errorMsg}</pre>
+        <p style="margin-top: 20px; font-size: 14px;">
+          For production (Vercel), add these in Project Settings → Environment Variables<br/>
+          For local development, create a <code>.env.local</code> file in the project root
+        </p>
+      </div>
+    `;
+  }
+  
+  throw new Error(errorMsg);
+}
 
 const getSafeStorage = (): Storage => {
   try {
@@ -35,3 +63,5 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
   }
 });
+
+console.log('[Supabase Client] Successfully initialized');
