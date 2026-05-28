@@ -49,7 +49,7 @@ export default function EmailChangeModal({
         onClose();
       }, 2000);
     } catch (err: any) {
-      console.error("Email change error: ", err);
+      console.error("Email change error:", err);
       setError(err.message || "Failed to update email");
     } finally {
       setLoading(false);
