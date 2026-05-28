@@ -29,7 +29,7 @@
  * { error: string, code: 'quota_exceeded' | 'duplicate_detected' | ... }
  */
 
-import { getSupabaseAdmin, verifyAuth, getClientIP } from "../_utils.ts";
+import { getSupabaseAdmin, verifyAuth, getClientIP } from "../_utils";
 
 const supabase = getSupabaseAdmin();
 

@@ -33,7 +33,7 @@
  */
 
 import { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabaseAdmin, verifyAuth } from "../_utils.ts";
+import { getSupabaseAdmin, verifyAuth } from "../_utils";
 
 const supabase = getSupabaseAdmin();
 

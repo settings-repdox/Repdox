@@ -24,7 +24,7 @@
  */
 
 import { VercelRequest, VercelResponse } from "@vercel/node";
-import { performSecurityCheck } from "../../src/lib/inputValidator.ts";
+import { performSecurityCheck } from "../../src/lib/inputValidator";
 
 export default async function handler(req: any, res: any) {
   // Only allow POST requests
@@ -39,7 +39,7 @@ export default async function handler(req: any, res: any) {
     const securityCheck = performSecurityCheck(`${name} ${email} ${message}`);
     if (!securityCheck.safe) {
       console.error("Security anomaly detected in contact form", { 
-        reasons: securityCheck.reasons,
+        threats: securityCheck.threats,
         ip: req.headers["x-forwarded-for"] || "unknown"
       });
       // Throwing a security error to be caught by the SecurityErrorBoundary on frontend if desired, 
