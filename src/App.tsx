@@ -269,7 +269,11 @@ const App = () => {
 
               <BrowserRouter>
                 <ScrollToTop />
-                {!showIntro && <LightPillarBackground />}
+                {!showIntro && (
+                  <Suspense fallback={null}>
+                    <LightPillarBackground />
+                  </Suspense>
+                )}
                 <CommandPalette />
                 {showIntro && <IntroLoader onComplete={handleIntroComplete} />}
                 <AppContent />
