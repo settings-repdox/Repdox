@@ -362,7 +362,8 @@ export default function EventRegister() {
         }
 
         if (submitError && tableName !== "event_registrations") {
-          console.warn("Insert into dynamic table failed, falling back to central event_registrations");
+          console.error(`🚨 INSERT FAILED for dynamic table '${tableName}'! Error:`, submitError);
+          console.warn("Falling back to central event_registrations");
           const { error } = await supabase
             .from("event_registrations")
             .insert([registrationData as any]);
