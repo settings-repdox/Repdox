@@ -136,6 +136,23 @@ KV_REST_API_URL=your-kv-url
 3. Verify domain (optional, uses `onboarding@resend.dev` by default)
 4. Add `RESEND_API_KEY` to environment variables
 
+### 4. Registration Portal Configuration
+
+The standalone registration portal (`registration-portal/`) requires Supabase credentials to function correctly.
+
+**IMPORTANT:** The registration portal must use the same Supabase project as your main app!
+
+```bash
+# From the project root, run the setup script:
+cd registration-portal
+source ../.env
+./setup-registration-portal.sh
+```
+
+This generates `env-config.js` with your correct Supabase credentials. See [registration-portal/REGISTRATION_PORTAL_FIX.md](registration-portal/REGISTRATION_PORTAL_FIX.md) for detailed instructions.
+
+**Note:** Without proper configuration, registrations from the portal will be saved to the wrong database!
+
 ---
 
 ## 💻 Development
