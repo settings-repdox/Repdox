@@ -121,7 +121,7 @@ form.addEventListener("submit", async (e) => {
 
       let tableName = "event_registrations";
       if (latestEvent.slug) {
-        let formattedSlug = latestEvent.slug.toLowerCase().replace(/-/g, "_");
+        let formattedSlug = latestEvent.slug.toLowerCase().replace(/[- ]/g, "_");
         if (formattedSlug === "solveforindia2026") {
           formattedSlug = "solveforindia";
         }

@@ -24,7 +24,7 @@ export function generateRandomString(len = 32, dictionary = "abcdefghijklmnopqrs
 
 export function getRegistrationTableName(event: { slug?: string | null, id?: string | null }) {
   if (event.slug) {
-    let formattedSlug = event.slug.toLowerCase().replace(/-/g, "_");
+    let formattedSlug = event.slug.toLowerCase().replace(/[- ]/g, "_");
     // Prevent 404 errors by mapping the 2026 slug to the actual database table name
     if (formattedSlug === "solveforindia2026") {
       formattedSlug = "solveforindia";
