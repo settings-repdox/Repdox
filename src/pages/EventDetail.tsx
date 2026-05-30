@@ -64,13 +64,6 @@ export default function EventDetail() {
   const navigate = useNavigate();
   const { slug } = useParams();
   const [copied, setCopied] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
-    role: "",
-  });
 
   const {
     data: event,
@@ -453,89 +446,7 @@ export default function EventDetail() {
     (t) => t.members && t.members.length > 0,
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    (async () => {
-      try {
-        // Check registration deadline
-        if (event?.registration_deadline) {
-          const deadline = new Date(event.registration_deadline);
-          if (Date.now() > deadline.getTime()) {
-            toast({
-              title: "Registration closed",
-              description: "Registration for this event is no longer open.",
-              variant: "destructive",
-            });
-            return;
-          }
-        }
 
-        // attempt to attach user if signed in
-        const userResp = await supabase.auth.getUser();
-        const user = userResp.data.user ?? null;
-
-        // Check capacity if role selected
-        if (formData.role) {
-          const allowed = await eventService.canRegister(
-            event.id,
-            formData.role,
-          );
-          if (!allowed) {
-            toast({
-              title: "Registration full",
-              description:
-                "The selected role is full. Please choose another role or contact the organizer.",
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-
-        const params = {
-          event_id: event.id,
-          user_id: user ? user.id : null,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          message: formData.message,
-          role: formData.role || null,
-          tableName: getRegistrationTableName(event),
-        };
-
-        await eventService.registerForEvent(params);
-
-        // Notify success without mentioning verification emails
-        toast({
-          title: "Registration submitted!",
-        });
-        setFormData({ name: "", email: "", phone: "", message: "", role: "" });
-      } catch (err: unknown) {
-        let msg =
-          typeof err === "object" &&
-          err !== null &&
-          "message" in err &&
-          typeof (err as Record<string, unknown>).message === "string"
-            ? ((err as Record<string, unknown>).message as string)
-            : String(err);
-
-        // Map server-side error keys to friendly messages
-        if (msg?.includes("role_full")) {
-          msg =
-            "The selected role is full. Please choose another role or contact the organizer.";
-        } else if (msg?.includes("registration_closed")) {
-          msg = "Registration for this event is closed.";
-        } else if (msg?.includes("already_registered")) {
-          msg = "You are already registered for this event.";
-        }
-
-        toast({
-          title: "Registration failed",
-          description: msg,
-          variant: "destructive",
-        });
-      }
-    })();
-  };
 
   if (isLoading) {
     return (
@@ -986,205 +897,58 @@ export default function EventDetail() {
                       );
                     }
 
-                    const lowerSlug = event.slug?.toLowerCase() || "";
-                    if (
-                      lowerSlug.includes("solveforindia") ||
-                      lowerSlug.includes("solve-for-india")
-                    ) {
-                      return (
-                        <motion.div
-                          id="register"
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          className="relative group mt-8"
-                        >
-                          {/* Iridescent Glow Background */}
-                          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan opacity-25 blur group-hover:opacity-40 transition duration-1000 group-hover:duration-200 rounded-[2rem]" />
-
-                          <div className="relative bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 md:p-12 overflow-hidden shadow-2xl">
-                            {/* Ambient background accent */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[80px] -mr-32 -mt-32 rounded-full pointer-events-none" />
-                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 blur-[80px] -ml-32 -mb-32 rounded-full pointer-events-none" />
-
-                            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                              <div className="flex-1 text-center md:text-left">
-                                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">
-                                  Official Innovation Portal
-                                </span>
-                                <h2 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight">
-                                  {isRegistered ? (
-                                    <>
-                                      Review Your{" "}
-                                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">
-                                        Application
-                                      </span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      Ready to{" "}
-                                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">
-                                        Create Impact?
-                                      </span>
-                                    </>
-                                  )}
-                                </h2>
-                                <p className="text-gray-400 text-lg max-w-xl mx-auto md:mx-0 leading-relaxed">
-                                  {isRegistered
-                                    ? "Your registration is active. Access the portal to review your team and project details."
-                                    : "Join the largest student-driven innovation race in India. Build, transform, and win big."}
-                                </p>
-                              </div>
-
-                              <div className="flex-shrink-0 w-full md:w-auto">
-                                <Link to="/solve-for-india/register">
-                                  <Button className="group/btn relative w-full md:w-[280px] h-20 bg-white text-black hover:text-white rounded-[20px] font-black text-lg overflow-hidden transition-all duration-300 shadow-xl shadow-white/5">
-                                    <span className="relative z-10 flex items-center justify-center gap-2">
-                                      {isRegistered
-                                        ? "Portal Access"
-                                        : "Join Now"}
-                                      <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
-                                    </span>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                                  </Button>
-                                </Link>
-                              </div>
-                            </div>
-
-                            {/* Decorative Grid Pattern */}
-                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.05] pointer-events-none" />
-                          </div>
-                        </motion.div>
-                      );
-                    }
-
                     return (
-                      <Card id="register">
-                        <CardHeader>
-                          <CardTitle>Register Now</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                              <Label htmlFor="name">Name</Label>
-                              <Input
-                                id="name"
-                                value={formData.name}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    name: e.target.value,
-                                  })
-                                }
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="email">Email</Label>
-                              <Input
-                                id="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    email: e.target.value,
-                                  })
-                                }
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="phone">Phone</Label>
-                              <Input
-                                id="phone"
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    phone: e.target.value,
-                                  })
-                                }
-                              />
+                      <motion.div 
+                        id="register"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="relative group mt-8"
+                      >
+                        {/* Iridescent Glow Background */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan opacity-25 blur group-hover:opacity-40 transition duration-1000 group-hover:duration-200 rounded-[2rem]" />
+                        
+                        <div className="relative bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 md:p-12 overflow-hidden shadow-2xl">
+                          {/* Ambient background accent */}
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[80px] -mr-32 -mt-32 rounded-full pointer-events-none" />
+                          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 blur-[80px] -ml-32 -mb-32 rounded-full pointer-events-none" />
+
+                          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                            <div className="flex-1 text-center md:text-left">
+                              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">
+                                Official Registration Portal
+                              </span>
+                              <h2 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight">
+                                {isRegistered ? (
+                                  <>Review Your <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">Application</span></>
+                                ) : (
+                                  <>Ready to <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">Join?</span></>
+                                )}
+                              </h2>
+                              <p className="text-gray-400 text-lg max-w-xl mx-auto md:mx-0 leading-relaxed">
+                                {isRegistered 
+                                  ? "Your registration is active. Access the portal to review your team and project details."
+                                  : `Register now to secure your spot for ${event.title}.`}
+                              </p>
                             </div>
 
-                            {roles &&
-                              Array.isArray(roles) &&
-                              roles.length > 0 && (
-                                <div>
-                                  <Label htmlFor="role">Role</Label>
-                                  <select
-                                    id="role"
-                                    value={formData.role}
-                                    onChange={(e) =>
-                                      setFormData({
-                                        ...formData,
-                                        role: e.target.value,
-                                      })
-                                    }
-                                    className="w-full px-3 py-2 border border-border rounded-lg bg-background"
-                                  >
-                                    <option value="">
-                                      Select a role (optional)
-                                    </option>
-                                    {(roles as unknown[]).map(
-                                      (r: unknown, i: number) => {
-                                        const obj = r as Record<
-                                          string,
-                                          unknown
-                                        >;
-                                        const name =
-                                          typeof r === "string"
-                                            ? (r as string)
-                                            : typeof obj.name === "string"
-                                              ? (obj.name as string)
-                                              : typeof obj.role === "string"
-                                                ? (obj.role as string)
-                                                : `Role ${i + 1}`;
-                                        const capacityNum =
-                                          typeof obj.capacity === "number"
-                                            ? (obj.capacity as number)
-                                            : null;
-                                        let label = name;
-                                        if (capacityNum != null) {
-                                          const used = roleCounts[name] || 0;
-                                          const remaining = capacityNum - used;
-                                          label = `${name} (cap ${capacityNum}${remaining <= 0 ? ", full" : `, ${remaining} remaining`})`;
-                                        }
-                                        return (
-                                          <option key={i} value={name}>
-                                            {label}
-                                          </option>
-                                        );
-                                      },
-                                    )}
-                                  </select>
-                                </div>
-                              )}
-
-                            <div>
-                              <Label htmlFor="message">
-                                Why do you want to attend?
-                              </Label>
-                              <Textarea
-                                id="message"
-                                value={formData.message}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    message: e.target.value,
-                                  })
-                                }
-                                rows={4}
-                              />
+                            <div className="flex-shrink-0 w-full md:w-auto">
+                              <Link to={`/events/${event.slug}/register`}>
+                                <Button className="group/btn relative w-full md:w-[280px] h-20 bg-white text-black hover:text-white rounded-[20px] font-black text-lg overflow-hidden transition-all duration-300 shadow-xl shadow-white/5">
+                                  <span className="relative z-10 flex items-center justify-center gap-2">
+                                    {isRegistered ? "Portal Access" : "Join Now"}
+                                    <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                                  </span>
+                                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                                </Button>
+                              </Link>
                             </div>
-                            <Button type="submit" className="w-full">
-                              Submit Registration
-                            </Button>
-                          </form>
-                        </CardContent>
-                      </Card>
+                          </div>
+
+                          {/* Decorative Grid Pattern */}
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.05] pointer-events-none" />
+                        </div>
+                      </motion.div>
                     );
                   })()}
                 </>

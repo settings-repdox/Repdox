@@ -45,7 +45,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const SolveForIndiaRegister = lazy(() => import("./pages/solveforindia/Register"));
+const EventRegister = lazy(() => import("./pages/EventRegister"));
 const AdminEvents = lazy(() => import("./pages/AdminEvents"));
 const Volunteers = lazy(() => import("./pages/Volunteers"));
 const DiscordLink = lazy(() => import("./pages/DiscordLink"));
@@ -111,7 +111,8 @@ function AppContent() {
             {/* NEW: Email Verification Routes (Public - No Auth Required) */}
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/solve-for-india/register" element={<SolveForIndiaRegister />} />
+            <Route path="/events/:slug/register" element={<EventRegister />} />
+            <Route path="/solve-for-india/register" element={<Navigate to="/events/SolveForIndia2026/register" replace />} />
             <Route path="/auth/discord-link" element={<DiscordLink />} />
 
             {/* Profile Routes - Public Access (own profile requires auth internally) */}
