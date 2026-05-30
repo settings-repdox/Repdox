@@ -202,32 +202,64 @@ export default function EventRegister() {
         }
 
         if (regData) {
-          setExistingReg(regData as RegistrationDataRow);
-          
-          let teamName = "";
-          if (regData.team_id) {
+          // Parse any custom fields stored as JSON inside message
+          let parsedMessage: any = {};
+          if (regData.message) {
+            try {
+              parsedMessage = JSON.parse(regData.message);
+            } catch (e) {
+              console.warn("Failed to parse registration message JSON", e);
+            }
+          }
+
+          let teamName = parsedMessage.teamName || "";
+          const resolvedTeamId = regData.team_id || parsedMessage.team_id || null;
+          if (resolvedTeamId && !teamName) {
             const { data: teamData } = await supabase
               .from("event_teams")
               .select("name")
-              .eq("id", regData.team_id)
+              .eq("id", resolvedTeamId)
               .maybeSingle();
             if (teamData) teamName = teamData.name;
           }
 
+          // Build a normalized registration data object
+          const normalizedReg: RegistrationDataRow = {
+            id: regData.id,
+            name: regData.name || parsedMessage.name || null,
+            email: regData.email || parsedMessage.email || null,
+            phone: regData.phone || parsedMessage.phone || null,
+            school: regData.school || parsedMessage.school || null,
+            year: regData.year || parsedMessage.year || null,
+            stream: regData.stream || parsedMessage.stream || null,
+            participation_mode: regData.participation_mode || parsedMessage.participation_mode || null,
+            expected_members: regData.expected_members !== undefined && regData.expected_members !== null 
+              ? regData.expected_members 
+              : (parsedMessage.expected_members !== undefined ? Number(parsedMessage.expected_members) : null),
+            motivation: regData.motivation || parsedMessage.motivation || null,
+            github: regData.github || parsedMessage.github || null,
+            linkedin: regData.linkedin || parsedMessage.linkedin || null,
+            edit_count: regData.edit_count !== undefined && regData.edit_count !== null
+              ? regData.edit_count
+              : (parsedMessage.edit_count !== undefined ? Number(parsedMessage.edit_count) : 0),
+            team_id: resolvedTeamId,
+          };
+          setExistingReg(normalizedReg);
+
           setFormData({
-            name: regData.name || "",
-            email: regData.email || "",
-            phone: regData.phone || "",
-            school: regData.school || "",
-            year: regData.year || "",
-            stream: regData.stream || "",
-            teamSize: regData.participation_mode || "Solo",
+            name: normalizedReg.name || "",
+            email: normalizedReg.email || "",
+            phone: normalizedReg.phone || "",
+            school: normalizedReg.school || "",
+            year: normalizedReg.year || "",
+            stream: normalizedReg.stream || "",
+            teamSize: normalizedReg.participation_mode || "Solo",
             teamName: teamName,
-            isJoiningExisting: !!regData.team_id,
-            memberCount: regData.expected_members?.toString() || "2",
-            motivation: regData.motivation || "",
-            github: regData.github || "",
-            linkedin: regData.linkedin || ""
+            isJoiningExisting: !!resolvedTeamId,
+            memberCount: normalizedReg.expected_members?.toString() || "2",
+            motivation: normalizedReg.motivation || "",
+            github: normalizedReg.github || "",
+            linkedin: normalizedReg.linkedin || ""
           });
         }
       }
@@ -310,7 +342,9 @@ export default function EventRegister() {
         }
       }
 
-      const registrationData = {
+      const nextEditCount = existingReg ? (existingReg.edit_count || 0) + 1 : 0;
+      
+      const fullRegistrationData = {
         event_id: eventId,
         team_id: teamId,
         user_id: userId,
@@ -326,48 +360,155 @@ export default function EventRegister() {
         linkedin: formData.linkedin,
         participation_mode: formData.teamSize,
         expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
-        message: formData.teamName ? JSON.stringify({ teamName: formData.teamName }) : null,
-        edit_count: existingReg ? (existingReg.edit_count || 0) + 1 : 0
+        message: JSON.stringify({
+          school: formData.school,
+          year: formData.year,
+          stream: formData.stream,
+          motivation: formData.motivation,
+          github: formData.github,
+          linkedin: formData.linkedin,
+          participation_mode: formData.teamSize,
+          expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
+          edit_count: nextEditCount,
+          teamName: formData.teamName,
+          role: "participant",
+          team_id: teamId
+        }),
+        edit_count: nextEditCount
+      };
+
+      const minimalRegistrationData = {
+        event_id: eventId,
+        user_id: userId,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: JSON.stringify({
+          school: formData.school,
+          year: formData.year,
+          stream: formData.stream,
+          motivation: formData.motivation,
+          github: formData.github,
+          linkedin: formData.linkedin,
+          participation_mode: formData.teamSize,
+          expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
+          edit_count: nextEditCount,
+          teamName: formData.teamName,
+          role: "participant",
+          team_id: teamId
+        })
       };
 
       let submitError = null;
+      let successInDynamicTable = false;
+
       if (existingReg) {
-        registrationData.edit_count = (existingReg.edit_count || 0) + 1;
+        // 1. Try full update in dynamic table
         try {
+          console.log(`[EventRegister] Attempting full update in dynamic table '${tableName}'...`);
           const { error } = await supabase
             .from(tableName as any)
-            .update(registrationData as any)
+            .update(fullRegistrationData as any)
             .eq("id", existingReg.id);
-          submitError = error;
+          
+          if (!error) {
+            successInDynamicTable = true;
+          } else {
+            submitError = error;
+            console.warn(`[EventRegister] Full update in dynamic table failed:`, error.message);
+          }
         } catch (e) {
           submitError = e;
+          console.warn(`[EventRegister] Full update in dynamic table exception:`, e);
         }
 
-        if (submitError && tableName !== "event_registrations") {
-          console.warn("Update in dynamic table failed, falling back to central event_registrations");
-          const { error } = await supabase
-            .from("event_registrations")
-            .update(registrationData as any)
-            .eq("id", existingReg.id);
-          submitError = error;
+        // 2. If full update failed, try minimal update in dynamic table
+        if (!successInDynamicTable && tableName !== "event_registrations") {
+          try {
+            console.log(`[EventRegister] Retrying with minimal update in dynamic table '${tableName}'...`);
+            const { error } = await supabase
+              .from(tableName as any)
+              .update(minimalRegistrationData as any)
+              .eq("id", existingReg.id);
+            
+            if (!error) {
+              successInDynamicTable = true;
+              submitError = null;
+            } else {
+              submitError = error;
+              console.warn(`[EventRegister] Minimal update in dynamic table failed:`, error.message);
+            }
+          } catch (e) {
+            submitError = e;
+            console.warn(`[EventRegister] Minimal update in dynamic table exception:`, e);
+          }
         }
+
+        // 3. If both failed, fallback to central event_registrations
+        if (!successInDynamicTable && tableName !== "event_registrations") {
+          console.warn("[EventRegister] Falling back to central event_registrations update");
+          try {
+            const { error } = await supabase
+              .from("event_registrations")
+              .update(fullRegistrationData as any)
+              .eq("id", existingReg.id);
+            submitError = error;
+          } catch (e) {
+            submitError = e;
+          }
+        }
+
       } else {
+        // 1. Try full insert in dynamic table
         try {
+          console.log(`[EventRegister] Attempting full insert in dynamic table '${tableName}'...`);
           const { error } = await supabase
             .from(tableName as any)
-            .insert([registrationData as any]);
-          submitError = error;
+            .insert([fullRegistrationData as any]);
+          
+          if (!error) {
+            successInDynamicTable = true;
+          } else {
+            submitError = error;
+            console.warn(`[EventRegister] Full insert in dynamic table failed:`, error.message);
+          }
         } catch (e) {
           submitError = e;
+          console.warn(`[EventRegister] Full insert in dynamic table exception:`, e);
         }
 
-        if (submitError && tableName !== "event_registrations") {
-          console.error(`🚨 INSERT FAILED for dynamic table '${tableName}'! Error:`, submitError);
-          console.warn("Falling back to central event_registrations");
-          const { error } = await supabase
-            .from("event_registrations")
-            .insert([registrationData as any]);
-          submitError = error;
+        // 2. If full insert failed, try minimal insert in dynamic table
+        if (!successInDynamicTable && tableName !== "event_registrations") {
+          try {
+            console.log(`[EventRegister] Retrying with minimal insert in dynamic table '${tableName}'...`);
+            const { error } = await supabase
+              .from(tableName as any)
+              .insert([minimalRegistrationData as any]);
+            
+            if (!error) {
+              successInDynamicTable = true;
+              submitError = null;
+            } else {
+              submitError = error;
+              console.warn(`[EventRegister] Minimal insert in dynamic table failed:`, error.message);
+            }
+          } catch (e) {
+            submitError = e;
+            console.warn(`[EventRegister] Minimal insert in dynamic table exception:`, e);
+          }
+        }
+
+        // 3. If both failed, fallback to central event_registrations
+        if (!successInDynamicTable && tableName !== "event_registrations") {
+          console.warn("[EventRegister] Falling back to central event_registrations insert");
+          try {
+            const { error } = await supabase
+              .from("event_registrations")
+              .insert([fullRegistrationData as any]);
+            submitError = error;
+          } catch (e) {
+            submitError = e;
+          }
         }
       }
 
