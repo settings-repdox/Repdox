@@ -220,7 +220,9 @@ export default function AddEvent() {
     const checkProfileAndLoad = async () => {
       setLoadingEvent(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) {
           navigate("/signin");
           return;
@@ -238,22 +240,27 @@ export default function AddEvent() {
         } else {
           const fields = [
             { key: "full_name", label: "Full Name", value: profile.full_name },
-            { key: "date_of_birth", label: "Date of Birth", value: profile.date_of_birth },
+            {
+              key: "date_of_birth",
+              label: "Date of Birth",
+              value: profile.date_of_birth,
+            },
             { key: "bio", label: "Bio", value: profile.bio },
-            { key: "avatar_url", label: "Profile Picture", value: profile.avatar_url },
-            { key: "phone", label: "Phone Number", value: profile.phone },
-            { key: "website", label: "Website", value: profile.website },
-            { key: "company", label: "Company", value: profile.company },
+            {
+              key: "avatar_url",
+              label: "Profile Picture",
+              value: profile.avatar_url,
+            },
             { key: "job_title", label: "Job Title", value: profile.job_title },
           ];
 
           const missing = fields.filter(
-            (field) => !field.value || field.value.toString().trim() === ""
+            (field) => !field.value || field.value.toString().trim() === "",
           );
 
           if (missing.length > 0) {
             setProfileComplete(false);
-            setMissingFields(missing.map(f => f.label));
+            setMissingFields(missing.map((f) => f.label));
           } else {
             setProfileComplete(true);
           }
@@ -317,10 +324,18 @@ export default function AddEvent() {
           registration_start_time: "00:00",
           registration_deadline_date: regDeadline.toISOString().split("T")[0],
           registration_deadline_time: regDeadline.toTimeString().slice(0, 5),
-          check_in_start_date: event.check_in_start ? new Date(event.check_in_start).toISOString().split("T")[0] : "",
-          check_in_start_time: event.check_in_start ? new Date(event.check_in_start).toTimeString().slice(0, 5) : "00:00",
-          check_in_end_date: event.check_in_end ? new Date(event.check_in_end).toISOString().split("T")[0] : "",
-          check_in_end_time: event.check_in_end ? new Date(event.check_in_end).toTimeString().slice(0, 5) : "23:59",
+          check_in_start_date: event.check_in_start
+            ? new Date(event.check_in_start).toISOString().split("T")[0]
+            : "",
+          check_in_start_time: event.check_in_start
+            ? new Date(event.check_in_start).toTimeString().slice(0, 5)
+            : "00:00",
+          check_in_end_date: event.check_in_end
+            ? new Date(event.check_in_end).toISOString().split("T")[0]
+            : "",
+          check_in_end_time: event.check_in_end
+            ? new Date(event.check_in_end).toTimeString().slice(0, 5)
+            : "23:59",
           location: event.location || "",
           short_blurb: event.short_blurb || "",
           long_description: event.long_description || "",
@@ -379,7 +394,7 @@ export default function AddEvent() {
         if (schedules && schedules.length > 0) {
           const seen = new Set<string>();
           const scheduleLines: string[] = [];
-          
+
           schedules.forEach((s) => {
             const start = s.start_at
               ? new Date(s.start_at).toISOString().slice(0, 19) + "Z"
@@ -390,7 +405,7 @@ export default function AddEvent() {
               scheduleLines.push(line);
             }
           });
-          
+
           setScheduleText(scheduleLines.join("\n"));
           setSectionOrder((s) => (s.includes("Agenda") ? s : [...s, "Agenda"]));
         }
@@ -404,7 +419,7 @@ export default function AddEvent() {
         if (teams && teams.length > 0) {
           const seen = new Set<string>();
           const teamLines: string[] = [];
-          
+
           teams.forEach((t) => {
             const line = `${t.name} | ${t.description || ""} | ${t.contact_email || ""}`;
             if (!seen.has(line)) {
@@ -412,7 +427,7 @@ export default function AddEvent() {
               teamLines.push(line);
             }
           });
-          
+
           setTeamsText(teamLines.join("\n"));
         }
       } catch (err: unknown) {
@@ -432,7 +447,8 @@ export default function AddEvent() {
     loadEvent();
   }, [isEditMode, slug, navigate]);
 
-  const onChange = (k: keyof typeof form, v: string | string[]) => setForm((s) => ({ ...s, [k]: v }));
+  const onChange = (k: keyof typeof form, v: string | string[]) =>
+    setForm((s) => ({ ...s, [k]: v }));
 
   // keep `draft` in sync with the main form and extras (for preview / autosave)
   useEffect(() => {
@@ -628,7 +644,14 @@ export default function AddEvent() {
 
     if (sched) {
       // Dedup restored schedule lines
-      const uniqueSched = Array.from(new Set(sched.split(/\r?\n/).map(l => l.trim()).filter(Boolean))).join("\n");
+      const uniqueSched = Array.from(
+        new Set(
+          sched
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter(Boolean),
+        ),
+      ).join("\n");
       setScheduleText(uniqueSched);
     }
     if (fqs && fqs.length) {
@@ -934,7 +957,7 @@ export default function AddEvent() {
   if (profileComplete === false) {
     return (
       <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex items-center justify-center p-6">
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="max-w-md w-full bg-card border border-border rounded-3xl p-8 shadow-2xl text-center space-y-6"
@@ -945,22 +968,27 @@ export default function AddEvent() {
           <div>
             <h2 className="text-2xl font-bold mb-2">Complete Your Profile</h2>
             <p className="text-muted-foreground text-sm">
-              To host events on Repdox, you must have a 100% complete profile. 
+              To host events on Repdox, you must have a 100% complete profile.
               This helps build trust in our community.
             </p>
           </div>
           <div className="bg-muted/50 rounded-xl p-4 text-left space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Missing Fields:</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Missing Fields:
+            </p>
             <ul className="text-sm space-y-1">
-              {missingFields.map(field => (
-                <li key={field} className="flex items-center gap-2 text-foreground/80">
+              {missingFields.map((field) => (
+                <li
+                  key={field}
+                  className="flex items-center gap-2 text-foreground/80"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                   {field}
                 </li>
               ))}
             </ul>
           </div>
-          <Button 
+          <Button
             onClick={() => navigate("/profile")}
             className="w-full bg-purple-600 hover:bg-purple-700 h-12 rounded-xl"
           >
@@ -1471,7 +1499,9 @@ export default function AddEvent() {
             <div className="space-y-4">
               <Label>Uploaded Files</Label>
               <FileUpload
-                onFilesChange={(files: Array<{ file: File; name: string; preview?: string }>) => {
+                onFilesChange={(
+                  files: Array<{ file: File; name: string; preview?: string }>,
+                ) => {
                   if (files && files.length > 0) {
                     const latest = files[files.length - 1];
                     if (latest.preview) {
@@ -1572,7 +1602,14 @@ export default function AddEvent() {
             prizeText={prizeText}
             setPrizeText={setPrizeText}
             faqs={faqs}
-            setFaqs={(v) => setFaqs(v.map((f, i) => ({ id: faqs[i]?.id ?? Date.now().toString() + i, ...f })))}
+            setFaqs={(v) =>
+              setFaqs(
+                v.map((f, i) => ({
+                  id: faqs[i]?.id ?? Date.now().toString() + i,
+                  ...f,
+                })),
+              )
+            }
             speakers={speakers}
             setSpeakers={setSpeakers}
             resources={resources}

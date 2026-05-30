@@ -124,9 +124,6 @@ export default function Profile() {
         label: "Profile Picture",
         value: profile.avatar_url,
       },
-      { key: "phone", label: "Phone Number", value: profile.phone },
-      { key: "website", label: "Website", value: profile.website },
-      { key: "company", label: "Company", value: profile.company },
       { key: "job_title", label: "Job Title", value: profile.job_title },
     ];
 
