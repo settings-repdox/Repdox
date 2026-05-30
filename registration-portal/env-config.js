@@ -1,21 +1,20 @@
 /**
  * Environment Configuration for Registration Portal
  *
- * This file should be generated during build/deployment with actual environment variables.
- * In development, you can update these manually.
- * In production (Vercel), use a build script to inject the values from environment variables.
+ * VERCEL: This file is AUTO-GENERATED during the build process from environment variables.
+ *         Do NOT commit your actual credentials. They come from Vercel's environment variables.
  *
- * See: ../../README.md for setup instructions
+ * LOCAL DEV: If running locally, update these with your Supabase credentials:
+ *   - Get URL and Key from: https://supabase.com/dashboard -> Settings -> API
+ *   - Or run: source .env && ./registration-portal/setup-registration-portal.sh
  */
 
 window.REGISTRATION_CONFIG = {
-  // These MUST match VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from your .env file
-  // Get these from: https://supabase.com/dashboard -> Settings -> API
-
+  // Auto-injected by build.sh during Vercel deployment
+  // For local development, update these values
   SUPABASE_URL: "https://your-project.supabase.co",
   SUPABASE_ANON_KEY: "your-anon-key-here",
 
-  // Set to true to enable debug logging
   DEBUG: false,
 };
 
