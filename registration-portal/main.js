@@ -107,18 +107,16 @@ form.addEventListener("submit", async (e) => {
         name: rawData.name,
         email: rawData.email,
         phone: rawData.phone,
-        message: JSON.stringify({
-          school: rawData.school,
-          stream: rawData.stream,
-          grade: rawData.grade,
-          teamSize: rawData.teamSize,
-          teamName: rawData.teamName,
-          motivation: rawData.motivation,
-          links: {
-            github: rawData.github,
-            linkedin: rawData.linkedin,
-          },
-        }),
+        school: rawData.school || null,
+        stream: rawData.stream || null,
+        year: rawData.grade || null, // Map grade to year to match main app
+        participation_mode: rawData.teamSize || 'Solo',
+        message: rawData.teamName ? JSON.stringify({ teamName: rawData.teamName }) : null,
+        motivation: rawData.motivation || null,
+        github: rawData.github || null,
+        linkedin: rawData.linkedin || null,
+        role: "participant",
+        status: "registered"
       };
 
       let tableName = "event_registrations";
