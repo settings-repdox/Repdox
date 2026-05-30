@@ -548,7 +548,7 @@ export default function EventRegister() {
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-400">WhatsApp Number</Label>
-                <Input name="phone" type="tel" value={formData.phone} onChange={handleInputChange} className="bg-black/40 border-white/10 h-14 rounded-xl text-white" />
+                <Input name="phone" type="tel" required value={formData.phone} onChange={handleInputChange} className="bg-black/40 border-white/10 h-14 rounded-xl text-white" />
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-400">School / University</Label>
