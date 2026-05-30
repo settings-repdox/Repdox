@@ -45,8 +45,6 @@ const SFI_ROLE = 'Solve For India';
 
 const commands = [
   new SlashCommandBuilder().setName('link').setDescription('Link your Repdox account & verify'),
-  new SlashCommandBuilder().setName('sync').setDescription('Sync your event roles'),
-  new SlashCommandBuilder().setName('setup-server').setDescription('Set up community server structure').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 ].map((c: any) => c.toJSON());
 
 async function registerCommands(guildId: string) {
@@ -65,32 +63,209 @@ async function ensureRole(guild: any, name: string, color: string, hoist = false
 
 // Grant Verified + event roles based on DB data
 async function grantRolesOnLink(discordId: string) {
-  for (const guild of client.guilds.cache.values()) {
-    try {
-      const member = await guild.members.fetch(discordId).catch(() => null);
-      if (!member) continue;
+  try {
+    const { data: teams } = await supabase.from('event_teams').select('name');
+    const teamNames = new Set((teams || []).map((t: any) => t.name).filter(Boolean));
+    const managedRoles = new Set([VERIFIED_ROLE, SFI_ROLE, ...teamNames]);
 
-      // 1. Always grant Verified
-      const verifiedRole = await ensureRole(guild, VERIFIED_ROLE, 'Green', true);
-      if (!member.roles.cache.has(verifiedRole.id)) await member.roles.add(verifiedRole);
+    const { data: profile } = await supabase.from('user_profiles').select('user_id').eq('discord_id', discordId).maybeSingle();
+    const expected = new Set<string>();
 
-      // 2. Check if registered for Solve For India
-      const { data: profile } = await supabase.from('user_profiles').select('user_id').eq('discord_id', discordId).maybeSingle();
-      if (!profile) continue;
-
+    if (profile) {
+      expected.add(VERIFIED_ROLE);
       const { data: regs, error: regsError } = await supabase.from('event_registrations').select('events!event_registrations_event_id_fkey(title), event_teams(name)').eq('user_id', profile.user_id);
       if (regsError) console.error('[grantRoles] regsError:', regsError);
+      
       for (const reg of ((regs ?? []) as any[])) {
         if (reg.events?.title?.toLowerCase().includes('solve for india')) {
-          const sfiRole = await ensureRole(guild, SFI_ROLE, 'Orange', true);
-          if (!member.roles.cache.has(sfiRole.id)) await member.roles.add(sfiRole);
+          expected.add(SFI_ROLE);
         }
         if (reg.event_teams?.name) {
-          const teamRole = await ensureRole(guild, reg.event_teams.name, 'Blue');
-          if (!member.roles.cache.has(teamRole.id)) await member.roles.add(teamRole);
+          expected.add(reg.event_teams.name);
         }
       }
-    } catch (e) { console.error('[grantRoles]', e); }
+    }
+
+    for (const guild of client.guilds.cache.values()) {
+      try {
+        const member = await guild.members.fetch(discordId).catch(() => null);
+        if (!member) continue;
+
+        const rolesToAdd = [];
+        for (const roleName of expected) {
+          let roleColor = 'Blue';
+          let hoist = false;
+          if (roleName === VERIFIED_ROLE) {
+            roleColor = 'Green';
+            hoist = true;
+          } else if (roleName === SFI_ROLE) {
+            roleColor = 'Orange';
+            hoist = true;
+          }
+          const r = await ensureRole(guild, roleName, roleColor, hoist);
+          if (r && !member.roles.cache.has(r.id)) {
+            rolesToAdd.push(r);
+          }
+        }
+
+        const rolesToRemove = [];
+        for (const role of member.roles.cache.values()) {
+          if (managedRoles.has(role.name) && !expected.has(role.name)) {
+            rolesToRemove.push(role);
+          }
+        }
+
+        if (rolesToAdd.length > 0) await member.roles.add(rolesToAdd);
+        if (rolesToRemove.length > 0) await member.roles.remove(rolesToRemove);
+      } catch (e) {
+        console.error(`Sync error in guild ${guild.name} for member ${discordId}:`, e);
+      }
+    }
+  } catch (e) {
+    console.error("Global sync fetch error:", e);
+  }
+}
+
+async function autoSyncAllGuildMembers() {
+  console.log("⏰ Starting periodic auto-sync...");
+  try {
+    const { data: teams } = await supabase.from('event_teams').select('name');
+    const teamNames = new Set((teams || []).map((t: any) => t.name).filter(Boolean));
+    const managedRoles = new Set([VERIFIED_ROLE, SFI_ROLE, ...teamNames]);
+
+    const { data: profiles } = await supabase.from('user_profiles').select('user_id, discord_id').not('discord_id', 'is', null);
+    const linkedProfiles = profiles || [];
+    const userIdToDiscordId = new Map<string, string>();
+    const expectedRolesByDiscordId = new Map<string, Set<string>>();
+
+    for (const p of linkedProfiles) {
+      userIdToDiscordId.set(p.user_id, p.discord_id);
+      expectedRolesByDiscordId.set(p.discord_id, new Set([VERIFIED_ROLE]));
+    }
+
+    const { data: regs } = await supabase.from('event_registrations').select('user_id, events!event_registrations_event_id_fkey(title), event_teams(name)');
+    for (const reg of ((regs ?? []) as any[])) {
+      const discordId = userIdToDiscordId.get(reg.user_id);
+      if (discordId) {
+        const rolesSet = expectedRolesByDiscordId.get(discordId);
+        if (rolesSet) {
+          if (reg.events?.title?.toLowerCase().includes('solve for india')) {
+            rolesSet.add(SFI_ROLE);
+          }
+          if (reg.event_teams?.name) {
+            rolesSet.add(reg.event_teams.name);
+          }
+        }
+      }
+    }
+
+    for (const guild of client.guilds.cache.values()) {
+      try {
+        const members = await guild.members.fetch();
+        for (const member of members.values()) {
+          if (member.user.bot) continue;
+
+          const expected = expectedRolesByDiscordId.get(member.id) || new Set<string>();
+          
+          const rolesToAdd = [];
+          for (const roleName of expected) {
+            let roleColor = 'Blue';
+            let hoist = false;
+            if (roleName === VERIFIED_ROLE) {
+              roleColor = 'Green';
+              hoist = true;
+            } else if (roleName === SFI_ROLE) {
+              roleColor = 'Orange';
+              hoist = true;
+            }
+            
+            const r = await ensureRole(guild, roleName, roleColor, hoist);
+            if (r && !member.roles.cache.has(r.id)) {
+              rolesToAdd.push(r);
+            }
+          }
+
+          const rolesToRemove = [];
+          for (const role of member.roles.cache.values()) {
+            if (managedRoles.has(role.name) && !expected.has(role.name)) {
+              rolesToRemove.push(role);
+            }
+          }
+
+          if (rolesToAdd.length > 0) {
+            await member.roles.add(rolesToAdd);
+            console.log(`+ Added roles to ${member.user.tag}: ${rolesToAdd.map(r => r.name).join(', ')}`);
+          }
+          if (rolesToRemove.length > 0) {
+            await member.roles.remove(rolesToRemove);
+            console.log(`- Removed roles from ${member.user.tag}: ${rolesToRemove.map(r => r.name).join(', ')}`);
+          }
+        }
+      } catch (e) {
+        console.error(`Error syncing guild ${guild.name}:`, e);
+      }
+    }
+  } catch (e) {
+    console.error("Global auto-sync error:", e);
+  }
+  console.log("⏰ Periodic auto-sync complete!");
+}
+
+const announcedEvents = new Set<string>();
+
+async function announceEvent(event: any) {
+  if (announcedEvents.has(event.id)) return;
+  announcedEvents.add(event.id);
+  setTimeout(() => announcedEvents.delete(event.id), 600000);
+
+  console.log(`📢 Announcing new active event: ${event.title}`);
+  
+  const title = event.title || 'New Event';
+  const description = event.short_blurb || event.description || 'No description provided.';
+  const location = event.location || 'Online';
+  const startAt = event.start_at ? new Date(event.start_at).toLocaleString() : 'TBD';
+  const eventUrl = `${REPDOX_URL}/events/${event.id}`;
+  
+  const announcementEmbed: any = {
+    title: `📢 New Event: ${title}`,
+    description: description,
+    color: 0x7c3aed,
+    fields: [
+      { name: '📍 Location', value: location, inline: true },
+      { name: '⏰ Date & Time', value: startAt, inline: true }
+    ],
+    url: eventUrl,
+    footer: { text: 'Repdox — Think. Build. Transform.' },
+    timestamp: new Date().toISOString()
+  };
+
+  if (event.image_url) {
+    announcementEmbed.image = { url: event.image_url };
+  }
+
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setLabel('View Event & Register')
+      .setURL(eventUrl)
+      .setStyle(ButtonStyle.Link)
+  );
+
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      const channel = guild.channels.cache.find((c: any) => 
+        c.name.toLowerCase() === 'announcements' && 
+        c.type === ChannelType.GuildText
+      );
+
+      if (channel) {
+        await (channel as any).send({ embeds: [announcementEmbed], components: [row] });
+        console.log(`Sent announcement to ${guild.name} in #${channel.name}`);
+      } else {
+        console.warn(`No 'announcements' text channel found in guild ${guild.name}`);
+      }
+    } catch (e) {
+      console.error(`Error sending event announcement to guild ${guild.name}:`, e);
+    }
   }
 }
 
@@ -104,6 +279,18 @@ client.once(Events.ClientReady, (c: any) => {
   supabase.channel('linked-users').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_profiles' }, async (p: any) => {
     if (p.new.discord_id) await grantRolesOnLink(p.new.discord_id);
   }).subscribe();
+
+  // Real-time: auto-announce new approved events
+  supabase.channel('events-announce').on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, async (payload: any) => {
+    const isNewActive = payload.new && payload.new.is_active && (!payload.old || !payload.old.is_active);
+    if (isNewActive) {
+      await announceEvent(payload.new);
+    }
+  }).subscribe();
+
+  // Setup background auto-sync
+  setTimeout(() => autoSyncAllGuildMembers(), 5000);
+  setInterval(() => autoSyncAllGuildMembers(), 15 * 60 * 1000);
 });
 
 // ── Anti-Spam & Auto-Mod ──
@@ -147,82 +334,6 @@ client.on(Events.InteractionCreate, async (i: any) => {
       new ButtonBuilder().setLabel('📝 Create Account').setURL(`${REPDOX_URL}/signup`).setStyle(ButtonStyle.Link)
     );
     await i.editReply({ content: '🔐 **Verify your identity** to access the server.\n\n> Already have a Repdox account? Click **Verify & Link**.\n> New here? Click **Create Account** first, then come back and run `/link` again.', components: [row] });
-
-  // ── /sync ──
-  } else if (i.commandName === 'sync') {
-    await i.deferReply({ ephemeral: true });
-    const guild = i.guild; if (!guild) return;
-    try {
-      const { data: p, error: profileError } = await supabase.from('user_profiles').select('user_id').eq('discord_id', i.user.id).maybeSingle();
-      if (profileError) throw profileError;
-      if (!p) return i.editReply('❌ Your Discord is not linked yet. Use `/link` first.');
-
-      await grantRolesOnLink(i.user.id);
-      await i.editReply('✅ Roles synced! Check your profile — any event roles have been added.');
-    } catch (e) { console.error('[sync]', e); await i.editReply('❌ Sync failed.'); }
-
-  // ── /setup-server ──
-  } else if (i.commandName === 'setup-server') {
-    await i.deferReply({ ephemeral: true });
-    const guild = i.guild; if (!guild) return;
-    try {
-      const ev = guild.roles.everyone;
-      const verifiedRole = await ensureRole(guild, VERIFIED_ROLE, 'Green', true);
-      const sfiRole = await ensureRole(guild, SFI_ROLE, 'Orange', true);
-
-      // ── Create category: SOLVE FOR INDIA (only SFI role can see) ──
-      let sfiCategory = guild.channels.cache.find((c: any) => c.name === '── Solve For India ──' && c.type === ChannelType.GuildCategory);
-      if (!sfiCategory) {
-        sfiCategory = await guild.channels.create({
-          name: '── Solve For India ──', type: ChannelType.GuildCategory,
-          permissionOverwrites: [
-            { id: ev.id, deny: [PermissionFlagsBits.ViewChannel] },
-            { id: sfiRole.id, allow: [PermissionFlagsBits.ViewChannel] }
-          ]
-        });
-        // Create SFI-specific channels
-        for (const name of ['sfi-announcements', 'sfi-general', 'sfi-teams', 'sfi-submissions']) {
-          await guild.channels.create({ name, type: ChannelType.GuildText, parent: sfiCategory.id });
-        }
-        await guild.channels.create({ name: 'SFI Voice', type: ChannelType.GuildVoice, parent: sfiCategory.id });
-      }
-
-      // ── Lock all existing channels for @everyone, open for Verified ──
-      const channels = await guild.channels.fetch();
-      const verifyChannelName = 'verify-here';
-
-      for (const c of channels.values()) {
-        if (!c) continue;
-        try {
-          if (c.name === verifyChannelName) continue; // skip verify channel
-          if (c.name?.startsWith('sfi-') || c.name === 'SFI Voice' || c.name === '── Solve For India ──') continue; // skip SFI channels
-          if (c.type === ChannelType.GuildText || c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildCategory) {
-            await (c as any).permissionOverwrites.edit(ev, { ViewChannel: false });
-            await (c as any).permissionOverwrites.edit(verifiedRole, { ViewChannel: true });
-          }
-        } catch (e) { console.warn(`Skipping ${c.name}`); }
-      }
-
-      // ── Create #verify-here ──
-      let info = guild.channels.cache.find((c: any) => c.name === verifyChannelName);
-      if (!info) {
-        info = await guild.channels.create({
-          name: verifyChannelName, type: ChannelType.GuildText,
-          permissionOverwrites: [
-            { id: ev.id, allow: [PermissionFlagsBits.ViewChannel], deny: [PermissionFlagsBits.SendMessages] },
-            { id: verifiedRole.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
-          ]
-        });
-      }
-      await (info as any).send({ embeds: [{
-        title: '🔐 Welcome to the Repdox Community',
-        description: '**This server requires verification.**\n\nTo unlock all channels:\n1. Type `/link`\n2. Click **Verify & Link** and sign in to your Repdox account\n3. You will automatically receive the **Verified** role ✅\n\n🏆 **Registered for Solve For India?**\nYour hackathon channels will unlock automatically after verification!',
-        color: 0x7c3aed,
-        footer: { text: 'Repdox — Think. Build. Transform.' }
-      }] });
-
-      await i.editReply('✅ Community server setup complete!\n• **Verified** role created (unlocks general channels)\n• **Solve For India** category + channels created (unlocks for registered participants)\n• **#verify-here** gate active');
-    } catch (e) { console.error('[setup]', e); await i.editReply('❌ Setup failed.'); }
   }
 });
 
