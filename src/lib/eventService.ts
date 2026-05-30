@@ -766,19 +766,41 @@ export async function fetchEventRegistrations(
     .eq("event_id", eventId)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    // If dynamic table fails (e.g. not created yet), fall back to central table
-    if (tableName !== "event_registrations") {
-      const { data: centralData, error: centralError } = await supabase
-        .from("event_registrations")
-        .select("*")
-        .eq("event_id", eventId)
-        .order("created_at", { ascending: false });
-      if (!centralError) return (centralData as RegistrationRow[]) || [];
+  let allRegistrations: RegistrationRow[] = [];
+
+  if (!error && data) {
+    allRegistrations = [...(data as RegistrationRow[])];
+  }
+
+  // Always check the central table as well to catch legacy/portal registrations
+  // that were inserted there before dynamic tables were enforced.
+  if (tableName !== "event_registrations") {
+    const { data: centralData, error: centralError } = await supabase
+      .from("event_registrations")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: false });
+      
+    if (!centralError && centralData) {
+      allRegistrations = [...allRegistrations, ...(centralData as RegistrationRow[])];
     }
+  }
+
+  if (error && tableName === "event_registrations") {
     throw error;
   }
-  return (data as RegistrationRow[]) || [];
+
+  // Sort combined results by created_at
+  allRegistrations.sort((a, b) => {
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  // Deduplicate by ID just in case
+  const uniqueRegistrations = Array.from(
+    new Map(allRegistrations.map((item) => [item.id, item])).values()
+  );
+
+  return uniqueRegistrations;
 }
 
 export async function countRegistrationsByRole(
