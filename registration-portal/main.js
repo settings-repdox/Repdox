@@ -6,10 +6,9 @@ const submitBtn = document.getElementById("submit-btn");
 const teamNameGroup = document.getElementById("team-name-group");
 const teamSizeRadios = document.querySelectorAll('input[name="teamSize"]');
 
-// Get Supabase credentials from config (injected by env-config.js)
-// This ensures the registration portal uses the same Supabase project as the main app
-const SUPABASE_URL = window.REGISTRATION_CONFIG?.SUPABASE_URL;
-const SUPABASE_KEY = window.REGISTRATION_CONFIG?.SUPABASE_ANON_KEY;
+// Get Supabase credentials directly from Vite environment variables
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Validate configuration
 if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_URL.includes("your-project")) {
