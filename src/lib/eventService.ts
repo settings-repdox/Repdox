@@ -787,27 +787,30 @@ export async function countRegistrationsByRole(
 ) {
   const tableName = getRegistrationTableName({ id: eventId, slug: eventSlug });
 
-  // Only select the role column to minimize data transfer
+  // Select all data; schema varies by table so we can't be selective
   const { data, error } = await supabase
     .from(tableName as any)
-    .select("role")
+    .select("*")
     .eq("event_id", eventId);
 
-  let registrations = data || [];
+  let registrations = (data as Array<{ role?: string | null }>) || [];
 
   // If dynamic table fails or is different from central table, also check central table
   if (error || tableName !== "event_registrations") {
     const { data: centralData } = await supabase
       .from("event_registrations")
-      .select("role")
+      .select("*")
       .eq("event_id", eventId);
     if (centralData) {
-      registrations = [...registrations, ...centralData];
+      registrations = [
+        ...registrations,
+        ...(centralData as Array<{ role?: string | null }>),
+      ];
     }
   }
 
   const counts: Record<string, number> = {};
-  registrations.forEach((r: any) => {
+  registrations.forEach((r) => {
     const key = r.role || "__no_role__";
     counts[key] = (counts[key] || 0) + 1;
   });
