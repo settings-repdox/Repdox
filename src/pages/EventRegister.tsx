@@ -344,6 +344,7 @@ export default function EventRegister() {
 
       const nextEditCount = existingReg ? (existingReg.edit_count || 0) + 1 : 0;
       
+      // 1. Full Payload (succeeds on solveforindia and central registrations tables)
       const fullRegistrationData = {
         event_id: eventId,
         team_id: teamId,
@@ -360,23 +361,34 @@ export default function EventRegister() {
         linkedin: formData.linkedin,
         participation_mode: formData.teamSize,
         expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
+        message: formData.teamName ? JSON.stringify({ teamName: formData.teamName }) : null,
+        edit_count: nextEditCount
+      };
+
+      // 2. Semi-Clean Payload (succeeds on dynamic tables with school, year, etc. but no role/team_id)
+      const semiCleanRegistrationData = {
+        event_id: eventId,
+        user_id: userId,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        school: formData.school,
+        year: formData.year,
+        stream: formData.stream,
+        motivation: formData.motivation,
+        github: formData.github,
+        linkedin: formData.linkedin,
+        participation_mode: formData.teamSize,
+        expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
         message: JSON.stringify({
-          school: formData.school,
-          year: formData.year,
-          stream: formData.stream,
-          motivation: formData.motivation,
-          github: formData.github,
-          linkedin: formData.linkedin,
-          participation_mode: formData.teamSize,
-          expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
-          edit_count: nextEditCount,
           teamName: formData.teamName,
-          role: "participant",
+          role: "role" in fullRegistrationData ? "participant" : undefined,
           team_id: teamId
         }),
         edit_count: nextEditCount
       };
 
+      // 3. Minimal Payload (fallback for dynamic tables with no custom columns at all)
       const minimalRegistrationData = {
         event_id: eventId,
         user_id: userId,
@@ -403,6 +415,7 @@ export default function EventRegister() {
       let successInDynamicTable = false;
 
       if (existingReg) {
+        // --- UPDATE FLOW ---
         // 1. Try full update in dynamic table
         try {
           console.log(`[EventRegister] Attempting full update in dynamic table '${tableName}'...`);
@@ -422,7 +435,29 @@ export default function EventRegister() {
           console.warn(`[EventRegister] Full update in dynamic table exception:`, e);
         }
 
-        // 2. If full update failed, try minimal update in dynamic table
+        // 2. Try semi-clean update in dynamic table (no role/team_id)
+        if (!successInDynamicTable && tableName !== "event_registrations") {
+          try {
+            console.log(`[EventRegister] Retrying with semi-clean update in dynamic table '${tableName}'...`);
+            const { error } = await supabase
+              .from(tableName as any)
+              .update(semiCleanRegistrationData as any)
+              .eq("id", existingReg.id);
+            
+            if (!error) {
+              successInDynamicTable = true;
+              submitError = null;
+            } else {
+              submitError = error;
+              console.warn(`[EventRegister] Semi-clean update in dynamic table failed:`, error.message);
+            }
+          } catch (e) {
+            submitError = e;
+            console.warn(`[EventRegister] Semi-clean update exception:`, e);
+          }
+        }
+
+        // 3. Try minimal update in dynamic table (all in message)
         if (!successInDynamicTable && tableName !== "event_registrations") {
           try {
             console.log(`[EventRegister] Retrying with minimal update in dynamic table '${tableName}'...`);
@@ -440,11 +475,11 @@ export default function EventRegister() {
             }
           } catch (e) {
             submitError = e;
-            console.warn(`[EventRegister] Minimal update in dynamic table exception:`, e);
+            console.warn(`[EventRegister] Minimal update exception:`, e);
           }
         }
 
-        // 3. If both failed, fallback to central event_registrations
+        // 4. Fallback to central event_registrations
         if (!successInDynamicTable && tableName !== "event_registrations") {
           console.warn("[EventRegister] Falling back to central event_registrations update");
           try {
@@ -459,6 +494,7 @@ export default function EventRegister() {
         }
 
       } else {
+        // --- INSERT FLOW ---
         // 1. Try full insert in dynamic table
         try {
           console.log(`[EventRegister] Attempting full insert in dynamic table '${tableName}'...`);
@@ -477,7 +513,28 @@ export default function EventRegister() {
           console.warn(`[EventRegister] Full insert in dynamic table exception:`, e);
         }
 
-        // 2. If full insert failed, try minimal insert in dynamic table
+        // 2. Try semi-clean insert in dynamic table (no role/team_id)
+        if (!successInDynamicTable && tableName !== "event_registrations") {
+          try {
+            console.log(`[EventRegister] Retrying with semi-clean insert in dynamic table '${tableName}'...`);
+            const { error } = await supabase
+              .from(tableName as any)
+              .insert([semiCleanRegistrationData as any]);
+            
+            if (!error) {
+              successInDynamicTable = true;
+              submitError = null;
+            } else {
+              submitError = error;
+              console.warn(`[EventRegister] Semi-clean insert in dynamic table failed:`, error.message);
+            }
+          } catch (e) {
+            submitError = e;
+            console.warn(`[EventRegister] Semi-clean insert exception:`, e);
+          }
+        }
+
+        // 3. Try minimal insert in dynamic table (all in message)
         if (!successInDynamicTable && tableName !== "event_registrations") {
           try {
             console.log(`[EventRegister] Retrying with minimal insert in dynamic table '${tableName}'...`);
@@ -494,11 +551,11 @@ export default function EventRegister() {
             }
           } catch (e) {
             submitError = e;
-            console.warn(`[EventRegister] Minimal insert in dynamic table exception:`, e);
+            console.warn(`[EventRegister] Minimal insert exception:`, e);
           }
         }
 
-        // 3. If both failed, fallback to central event_registrations
+        // 4. Fallback to central event_registrations
         if (!successInDynamicTable && tableName !== "event_registrations") {
           console.warn("[EventRegister] Falling back to central event_registrations insert");
           try {
