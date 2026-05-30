@@ -854,22 +854,42 @@ export async function registerForEvent(params: {
 }) {
   // If a dynamic table name is provided, use it directly instead of the central RPC
   if (params.tableName && params.tableName !== "event_registrations") {
-    const { data, error } = await supabase
+    // Build insert object with only core fields that should exist in any registration table
+    const insertData: Record<string, any> = {
+      event_id: params.event_id,
+      status: "registered",
+    };
+
+    // Add optional fields only if they have values
+    if (params.user_id) insertData.user_id = params.user_id;
+    if (params.name) insertData.name = params.name;
+    if (params.email) insertData.email = params.email;
+    if (params.phone) insertData.phone = params.phone;
+    if (params.message) insertData.message = params.message;
+    if (params.role) insertData.role = params.role;
+
+    let { data, error } = await supabase
       .from(params.tableName as any)
-      .insert([
-        {
-          event_id: params.event_id,
-          user_id: params.user_id,
-          name: params.name,
-          email: params.email,
-          phone: params.phone,
-          message: params.message,
-          role: params.role,
-          status: "registered",
-        },
-      ])
+      .insert([insertData])
       .select()
       .single();
+
+    // If error is about missing column, retry without that field
+    if (error && error.message?.includes("Could not find")) {
+      const fieldMatch = error.message.match(
+        /Could not find the '(\w+)' column/,
+      );
+      if (fieldMatch) {
+        const missingField = fieldMatch[1];
+        delete insertData[missingField];
+
+        ({ data, error } = await supabase
+          .from(params.tableName as any)
+          .insert([insertData])
+          .select()
+          .single());
+      }
+    }
 
     if (error) {
       if (error.code === "23505") throw new Error("already_registered");
