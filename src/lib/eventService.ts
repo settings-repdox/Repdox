@@ -1,7 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { User } from "@supabase/supabase-js";
-import { slugify, generateRandomString, getRegistrationTableName } from "@/lib/utils";
+import {
+  slugify,
+  generateRandomString,
+  getRegistrationTableName,
+} from "@/lib/utils";
 import { deleteFile } from "@/lib/storageService"; // ADDED: Import deleteFile
 
 type UploadedFile = { file: File; name: string };
@@ -144,11 +148,15 @@ export async function createEvent(payload: CreateEventPayload) {
     registration_deadline: registrationDeadline.toISOString(),
     check_in_start:
       form.check_in_start_date && form.check_in_start_time
-        ? new Date(`${form.check_in_start_date}T${form.check_in_start_time}`).toISOString()
+        ? new Date(
+            `${form.check_in_start_date}T${form.check_in_start_time}`,
+          ).toISOString()
         : null,
     check_in_end:
       form.check_in_end_date && form.check_in_end_time
-        ? new Date(`${form.check_in_end_date}T${form.check_in_end_time}`).toISOString()
+        ? new Date(
+            `${form.check_in_end_date}T${form.check_in_end_time}`,
+          ).toISOString()
         : null,
     location: form.location,
     short_blurb: form.short_blurb ?? "",
@@ -177,7 +185,9 @@ export async function createEvent(payload: CreateEventPayload) {
     rsvp_type: form.rsvp_type ?? "opt-in",
     rsvp_start_date:
       form.rsvp_enabled && form.rsvp_start_date && form.rsvp_start_time
-        ? new Date(`${form.rsvp_start_date}T${form.rsvp_start_time}`).toISOString()
+        ? new Date(
+            `${form.rsvp_start_date}T${form.rsvp_start_time}`,
+          ).toISOString()
         : null,
     rsvp_end_date:
       form.rsvp_enabled && form.rsvp_end_date && form.rsvp_end_time
@@ -325,7 +335,7 @@ export async function createEvent(payload: CreateEventPayload) {
     if (scheduleInserts.length > 0) {
       // Deduplicate in memory before insert just in case
       const seen = new Set<string>();
-      const uniqueScheduleInserts = scheduleInserts.filter(item => {
+      const uniqueScheduleInserts = scheduleInserts.filter((item) => {
         const key = `${item.start_at ?? ""}-${item.title ?? ""}-${item.description ?? ""}`;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -358,8 +368,8 @@ export async function createEvent(payload: CreateEventPayload) {
     });
 
     // Deduplicate teams by name (case-insensitive)
-    const uniqueTeamsMap = new Map<string, typeof teamInserts[0]>();
-    teamInserts.forEach(t => {
+    const uniqueTeamsMap = new Map<string, (typeof teamInserts)[0]>();
+    teamInserts.forEach((t) => {
       const lowerName = t.name.toLowerCase();
       if (!uniqueTeamsMap.has(lowerName)) {
         uniqueTeamsMap.set(lowerName, t);
@@ -450,11 +460,15 @@ export async function updateEvent(
     registration_deadline: registrationDeadline.toISOString(),
     check_in_start:
       form.check_in_start_date && form.check_in_start_time
-        ? new Date(`${form.check_in_start_date}T${form.check_in_start_time}`).toISOString()
+        ? new Date(
+            `${form.check_in_start_date}T${form.check_in_start_time}`,
+          ).toISOString()
         : null,
     check_in_end:
       form.check_in_end_date && form.check_in_end_time
-        ? new Date(`${form.check_in_end_date}T${form.check_in_end_time}`).toISOString()
+        ? new Date(
+            `${form.check_in_end_date}T${form.check_in_end_time}`,
+          ).toISOString()
         : null,
     location: form.location,
     short_blurb: form.short_blurb ?? "",
@@ -599,15 +613,15 @@ export async function updateEvent(
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
     // Deduplicate teams by name (case-insensitive)
-    const uniqueTeamsMap = new Map<string, typeof teamInserts[0]>();
-    teamInserts.forEach(t => {
+    const uniqueTeamsMap = new Map<string, (typeof teamInserts)[0]>();
+    teamInserts.forEach((t) => {
       const lowerName = t.name.toLowerCase();
       if (!uniqueTeamsMap.has(lowerName)) {
         uniqueTeamsMap.set(lowerName, t);
       }
     });
     const uniqueTeams = Array.from(uniqueTeamsMap.values());
-    
+
     if (uniqueTeams.length > 0) {
       await supabase.from("event_teams").insert(uniqueTeams);
     }
@@ -740,15 +754,18 @@ export type RegistrationRow = {
   edit_count?: number | null;
 };
 
-export async function fetchEventRegistrations(eventId: string, eventSlug?: string | null) {
+export async function fetchEventRegistrations(
+  eventId: string,
+  eventSlug?: string | null,
+) {
   const tableName = getRegistrationTableName({ id: eventId, slug: eventSlug });
-  
+
   const { data, error } = await supabase
     .from(tableName as any)
     .select("*")
     .eq("event_id", eventId)
     .order("created_at", { ascending: false });
-    
+
   if (error) {
     // If dynamic table fails (e.g. not created yet), fall back to central table
     if (tableName !== "event_registrations") {
@@ -764,10 +781,33 @@ export async function fetchEventRegistrations(eventId: string, eventSlug?: strin
   return (data as RegistrationRow[]) || [];
 }
 
-export async function countRegistrationsByRole(eventId: string, eventSlug?: string | null) {
-  const regs = await fetchEventRegistrations(eventId, eventSlug);
+export async function countRegistrationsByRole(
+  eventId: string,
+  eventSlug?: string | null,
+) {
+  const tableName = getRegistrationTableName({ id: eventId, slug: eventSlug });
+
+  // Only select the role column to minimize data transfer
+  const { data, error } = await supabase
+    .from(tableName as any)
+    .select("role")
+    .eq("event_id", eventId);
+
+  let registrations = data || [];
+
+  // If dynamic table fails or is different from central table, also check central table
+  if (error || tableName !== "event_registrations") {
+    const { data: centralData } = await supabase
+      .from("event_registrations")
+      .select("role")
+      .eq("event_id", eventId);
+    if (centralData) {
+      registrations = [...registrations, ...centralData];
+    }
+  }
+
   const counts: Record<string, number> = {};
-  regs.forEach((r) => {
+  registrations.forEach((r: any) => {
     const key = r.role || "__no_role__";
     counts[key] = (counts[key] || 0) + 1;
   });
@@ -777,10 +817,12 @@ export async function countRegistrationsByRole(eventId: string, eventSlug?: stri
 export async function canRegister(eventId: string, roleName?: string | null) {
   const { data: evt, error: evtErr } = await supabase
     .from("events")
-    .select("roles")
+    .select("roles, slug")
+    .eq("id", eventId)
     .single();
   if (evtErr) throw evtErr;
-  const roles = (evt as Database["public"]["Tables"]["events"]["Row"])?.roles as Role[] | undefined;
+  const roles = (evt as Database["public"]["Tables"]["events"]["Row"])
+    ?.roles as Role[] | undefined;
 
   if (!roleName) return true;
 
@@ -789,7 +831,10 @@ export async function canRegister(eventId: string, roleName?: string | null) {
   const target = roles.find((r) => r.name === roleName);
   if (!target || target.capacity == null) return true;
 
-  const counts = await countRegistrationsByRole(eventId, (evt as Database["public"]["Tables"]["events"]["Row"])?.slug);
+  const counts = await countRegistrationsByRole(
+    eventId,
+    (evt as Database["public"]["Tables"]["events"]["Row"])?.slug,
+  );
   const current = counts[roleName] || 0;
   return current < (target.capacity ?? Infinity);
 }
@@ -808,21 +853,23 @@ export async function registerForEvent(params: {
   if (params.tableName && params.tableName !== "event_registrations") {
     const { data, error } = await supabase
       .from(params.tableName as any)
-      .insert([{
-        event_id: params.event_id,
-        user_id: params.user_id,
-        name: params.name,
-        email: params.email,
-        phone: params.phone,
-        message: params.message,
-        role: params.role,
-        status: "registered"
-      }])
+      .insert([
+        {
+          event_id: params.event_id,
+          user_id: params.user_id,
+          name: params.name,
+          email: params.email,
+          phone: params.phone,
+          message: params.message,
+          role: params.role,
+          status: "registered",
+        },
+      ])
       .select()
       .single();
-    
+
     if (error) {
-      if (error.code === '23505') throw new Error("already_registered");
+      if (error.code === "23505") throw new Error("already_registered");
       throw error;
     }
     return data;
@@ -890,9 +937,7 @@ export function registrationsToMarkdown(rows: RegistrationRow[]) {
     "| " + headers.map(() => "---").join(" | ") + " |",
   ];
   for (const r of rows) {
-    table.push(
-      "| " + headers.map((h) => r[h] ?? "").join(" | ") + " |",
-    );
+    table.push("| " + headers.map((h) => r[h] ?? "").join(" | ") + " |");
   }
   return table.join("\n");
 }
@@ -901,7 +946,9 @@ export async function exportRegistrationsXLSX(eventId: string) {
   // include auth header so the edge function can verify the caller
   const sessionRes = await supabase.auth.getSession();
   const token = sessionRes?.data?.session?.access_token ?? null;
-  const invokeOptions: { body: string; headers?: Record<string, string> } = { body: JSON.stringify({ eventId }) };
+  const invokeOptions: { body: string; headers?: Record<string, string> } = {
+    body: JSON.stringify({ eventId }),
+  };
   if (token) invokeOptions.headers = { Authorization: `Bearer ${token}` };
   const fnRes = await supabase.functions.invoke(
     "export-registrations-xlsx",
@@ -967,7 +1014,9 @@ export async function registrationsToXLSX(rows: RegistrationRow[]) {
 /**
  * Submit an RSVP response for an event
  */
-export async function submitRSVP(rsvp: RSVPSubmission): Promise<RSVPResponseData> {
+export async function submitRSVP(
+  rsvp: RSVPSubmission,
+): Promise<RSVPResponseData> {
   const sessionRes = await supabase.auth.getSession();
   const token = sessionRes?.data?.session?.access_token;
 
@@ -991,7 +1040,9 @@ export async function submitRSVP(rsvp: RSVPSubmission): Promise<RSVPResponseData
 /**
  * Fetch RSVP responses for an event (organizers/admins only)
  */
-export async function fetchRSVPResponses(eventId: string): Promise<RSVPResponseData[]> {
+export async function fetchRSVPResponses(
+  eventId: string,
+): Promise<RSVPResponseData[]> {
   const { data, error } = await supabase
     .from("event_rsvp_responses")
     .select("*")
@@ -1062,7 +1113,7 @@ export async function sendRSVPEmails(eventId: string): Promise<{
  */
 export async function getUserRSVPResponse(
   eventId: string,
-  email: string
+  email: string,
 ): Promise<RSVPResponseData | null> {
   const { data, error } = await supabase
     .from("event_rsvp_responses")
@@ -1088,7 +1139,9 @@ export async function isRSVPWindowOpen(eventId: string): Promise<boolean> {
   if (!event || !event.rsvp_enabled) return false;
 
   const now = new Date();
-  const startDate = event.rsvp_start_date ? new Date(event.rsvp_start_date) : null;
+  const startDate = event.rsvp_start_date
+    ? new Date(event.rsvp_start_date)
+    : null;
   const endDate = event.rsvp_end_date ? new Date(event.rsvp_end_date) : null;
 
   if (startDate && startDate > now) return false; // Not started yet
