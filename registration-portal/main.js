@@ -92,7 +92,8 @@ form.addEventListener("submit", async (e) => {
       // 1. Automatically fetch the latest event from your database
       const { data: latestEvent, error: eventError } = await supabaseClient
         .from("events")
-        .select("id")
+        .select("id, slug")
+        .order("created_at", { ascending: false })
         .limit(1)
         .single();
 
@@ -121,9 +122,20 @@ form.addEventListener("submit", async (e) => {
         }),
       };
 
+      let tableName = "event_registrations";
+      if (latestEvent.slug) {
+        let formattedSlug = latestEvent.slug.toLowerCase().replace(/-/g, "_");
+        if (formattedSlug === "solveforindia2026") {
+          formattedSlug = "solveforindia";
+        }
+        tableName = `event_reg_${formattedSlug}`;
+      } else if (latestEvent.id) {
+        tableName = `event_reg_${latestEvent.id.replace(/-/g, "_")}`;
+      }
+
       // 3. Insert
       const { error: insertError } = await supabaseClient
-        .from("event_registrations")
+        .from(tableName)
         .insert([registration]);
 
       if (insertError) {
