@@ -124,7 +124,7 @@ export default function EventDetail() {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
       setUser(currentUser);
-      
+
       if (currentUser && event?.id) {
         const tableName = getRegistrationTableName(event);
         const { data: reg } = await supabase
@@ -133,7 +133,7 @@ export default function EventDetail() {
           .eq("event_id", event.id)
           .eq("user_id", currentUser.id)
           .maybeSingle();
-        
+
         if (reg) {
           setIsRegistered(true);
         } else if (tableName !== "event_registrations") {
@@ -159,7 +159,10 @@ export default function EventDetail() {
     (async () => {
       try {
         if (event?.id) {
-          const counts = await eventService.countRegistrationsByRole(event.id, event.slug);
+          const counts = await eventService.countRegistrationsByRole(
+            event.id,
+            event.slug,
+          );
           if (mounted) setRoleCounts(counts);
         }
       } catch (e) {
@@ -207,7 +210,10 @@ export default function EventDetail() {
     }
   };
   const rawTab = searchParams.get("tab") || "details";
-  const activeTab = (rawTab === "registrations" || rawTab === "teams") && !isOwner ? "details" : rawTab;
+  const activeTab =
+    (rawTab === "registrations" || rawTab === "teams") && !isOwner
+      ? "details"
+      : rawTab;
 
   const setTab = (tab: string) => {
     const p = new URLSearchParams(searchParams);
@@ -343,10 +349,7 @@ export default function EventDetail() {
 
   const schedules = Array.from(
     new Map(
-      rawSchedules.map((s) => [
-        `${s.start_at}-${s.title}-${s.description}`,
-        s,
-      ]),
+      rawSchedules.map((s) => [`${s.start_at}-${s.title}-${s.description}`, s]),
     ).values(),
   );
 
@@ -378,15 +381,15 @@ export default function EventDetail() {
         team_id: string | null;
       }
       let allData: Registration[] = [];
-      
+
       // Try fetching from the dynamic table
       const { data, error } = await supabase
         .from(tableName as "event_registrations")
         .select("id, name, email, user_id, message, team_id")
         .eq("event_id", event.id);
-        
+
       if (!error && data) {
-        allData = (data as Registration[]).map(r => r);
+        allData = (data as Registration[]).map((r) => r);
       }
 
       // If dynamic table is different from the central one, check the central one too
@@ -399,7 +402,7 @@ export default function EventDetail() {
           allData = [...allData, ...(fallbackData as Registration[])];
         }
       }
-      
+
       return allData;
     },
     enabled: !!event?.id && activeTab === "teams",
@@ -407,16 +410,17 @@ export default function EventDetail() {
 
   // Group teams by name to handle duplicates gracefully in the UI
   const groupedTeamsMap = new Map<string, any>();
-  
-  rawTeams.forEach(team => {
+
+  rawTeams.forEach((team) => {
     const lowerName = team.name.toLowerCase();
-    const members = registrations.filter(r => {
+    const members = registrations.filter((r) => {
       // 1. Try matching by relational team_id
       if (r.team_id && r.team_id === team.id) return true;
 
       // 2. Try matching by string name in message
       try {
-        const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
+        const msg =
+          typeof r.message === "string" ? JSON.parse(r.message) : r.message;
         const teamName = msg?.participation?.teamName || msg?.teamName;
         return teamName && teamName.toLowerCase() === lowerName;
       } catch (e) {
@@ -428,16 +432,26 @@ export default function EventDetail() {
       const existing = groupedTeamsMap.get(lowerName);
       // Combine members and ensure uniqueness by user_id or email
       const allMembers = [...existing.members, ...members];
-      existing.members = Array.from(new Map(allMembers.map(m => [m.user_id || m.email || m.id, m])).values());
+      existing.members = Array.from(
+        new Map(
+          allMembers.map((m) => [m.user_id || m.email || m.id, m]),
+        ).values(),
+      );
     } else {
-      groupedTeamsMap.set(lowerName, { 
-        ...team, 
-        members: Array.from(new Map(members.map(m => [m.user_id || m.email || m.id, m])).values())
+      groupedTeamsMap.set(lowerName, {
+        ...team,
+        members: Array.from(
+          new Map(
+            members.map((m) => [m.user_id || m.email || m.id, m]),
+          ).values(),
+        ),
       });
     }
   });
 
-  const teams = Array.from(groupedTeamsMap.values()).filter(t => t.members && t.members.length > 0);
+  const teams = Array.from(groupedTeamsMap.values()).filter(
+    (t) => t.members && t.members.length > 0,
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -621,13 +635,21 @@ export default function EventDetail() {
               {isOwner && (
                 <div className="flex flex-wrap gap-2">
                   <Link to={`/events/${event.slug}/registrations`}>
-                    <Button variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-none">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/10 hover:bg-white/20 text-white border-none"
+                    >
                       <Users className="mr-2 h-4 w-4" />
                       Registrations
                     </Button>
                   </Link>
                   <Link to={`/events/${event.slug}/teams`}>
-                    <Button variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-none">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/10 hover:bg-white/20 text-white border-none"
+                    >
                       <Users className="mr-2 h-4 w-4" />
                       Teams
                     </Button>
@@ -678,7 +700,7 @@ export default function EventDetail() {
             </motion.h1>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -686,7 +708,9 @@ export default function EventDetail() {
               >
                 <Clock className="h-5 w-5 text-purple-400 animate-pulse" />
                 {countdown.isExpired ? (
-                  <span className="font-bold text-green-400">Event has started</span>
+                  <span className="font-bold text-green-400">
+                    Event has started
+                  </span>
                 ) : (
                   <span className="font-medium">
                     Starts in{" "}
@@ -698,7 +722,7 @@ export default function EventDetail() {
               </motion.div>
 
               {event.registration_deadline && !regCountdown.isExpired && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -804,8 +828,6 @@ export default function EventDetail() {
                   </CardContent>
                 </Card>
               )}
-
-
 
               {activeTab === "details" && (
                 <>
@@ -920,26 +942,42 @@ export default function EventDetail() {
                     }
 
                     if (event.registration_link) {
-                      const isExternal = /^https?:\/\//i.test(event.registration_link);
+                      const isExternal = /^https?:\/\//i.test(
+                        event.registration_link,
+                      );
                       return (
-                        <Card id="register" className="border-accent/50 bg-accent/5 shadow-lg shadow-accent/10">
+                        <Card
+                          id="register"
+                          className="border-accent/50 bg-accent/5 shadow-lg shadow-accent/10"
+                        >
                           <CardHeader>
                             <CardTitle>Register Now</CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-6">
                             <p className="text-muted-foreground leading-relaxed">
-                              Registration for this event is managed through an official portal. Click the button below to secure your spot.
+                              Registration for this event is managed through an
+                              official portal. Click the button below to secure
+                              your spot.
                             </p>
                             {isExternal ? (
-                              <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-6 rounded-xl">
-                                <a href={event.registration_link} target="_blank" rel="noopener noreferrer">
-                                  Go to Registration Portal <ChevronRight className="ml-2 h-4 w-4" />
+                              <Button
+                                asChild
+                                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-6 rounded-xl"
+                              >
+                                <a
+                                  href={event.registration_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Go to Registration Portal{" "}
+                                  <ChevronRight className="ml-2 h-4 w-4" />
                                 </a>
                               </Button>
                             ) : (
                               <Link to={event.registration_link}>
                                 <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-6 rounded-xl">
-                                  Go to Registration Portal <ChevronRight className="ml-2 h-4 w-4" />
+                                  Go to Registration Portal{" "}
+                                  <ChevronRight className="ml-2 h-4 w-4" />
                                 </Button>
                               </Link>
                             )}
@@ -949,9 +987,12 @@ export default function EventDetail() {
                     }
 
                     const lowerSlug = event.slug?.toLowerCase() || "";
-                    if (lowerSlug.includes("solveforindia") || lowerSlug.includes("solve-for-india")) {
+                    if (
+                      lowerSlug.includes("solveforindia") ||
+                      lowerSlug.includes("solve-for-india")
+                    ) {
                       return (
-                        <motion.div 
+                        <motion.div
                           id="register"
                           initial={{ opacity: 0, y: 20 }}
                           whileInView={{ opacity: 1, y: 0 }}
@@ -960,7 +1001,7 @@ export default function EventDetail() {
                         >
                           {/* Iridescent Glow Background */}
                           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan opacity-25 blur group-hover:opacity-40 transition duration-1000 group-hover:duration-200 rounded-[2rem]" />
-                          
+
                           <div className="relative bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 md:p-12 overflow-hidden shadow-2xl">
                             {/* Ambient background accent */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[80px] -mr-32 -mt-32 rounded-full pointer-events-none" />
@@ -973,13 +1014,23 @@ export default function EventDetail() {
                                 </span>
                                 <h2 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight">
                                   {isRegistered ? (
-                                    <>Review Your <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">Application</span></>
+                                    <>
+                                      Review Your{" "}
+                                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">
+                                        Application
+                                      </span>
+                                    </>
                                   ) : (
-                                    <>Ready to <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">Create Impact?</span></>
+                                    <>
+                                      Ready to{" "}
+                                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">
+                                        Create Impact?
+                                      </span>
+                                    </>
                                   )}
                                 </h2>
                                 <p className="text-gray-400 text-lg max-w-xl mx-auto md:mx-0 leading-relaxed">
-                                  {isRegistered 
+                                  {isRegistered
                                     ? "Your registration is active. Access the portal to review your team and project details."
                                     : "Join the largest student-driven innovation race in India. Build, transform, and win big."}
                                 </p>
@@ -989,7 +1040,9 @@ export default function EventDetail() {
                                 <Link to="/solve-for-india/register">
                                   <Button className="group/btn relative w-full md:w-[280px] h-20 bg-white text-black hover:text-white rounded-[20px] font-black text-lg overflow-hidden transition-all duration-300 shadow-xl shadow-white/5">
                                     <span className="relative z-10 flex items-center justify-center gap-2">
-                                      {isRegistered ? "Portal Access" : "Join Now"}
+                                      {isRegistered
+                                        ? "Portal Access"
+                                        : "Join Now"}
                                       <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
                                     </span>
                                     <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
@@ -1053,7 +1106,6 @@ export default function EventDetail() {
                                     phone: e.target.value,
                                   })
                                 }
-                                required
                               />
                             </div>
 
@@ -1186,14 +1238,19 @@ export default function EventDetail() {
                     <div className="flex items-start gap-3">
                       <Clock className="h-5 w-5 text-orange-500 mt-0.5" />
                       <div>
-                        <p className="font-medium text-orange-500">Registration Deadline</p>
+                        <p className="font-medium text-orange-500">
+                          Registration Deadline
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {formatDateWithOptions(event.registration_deadline, {
                             weekday: true,
                           })}
                         </p>
                         <p className="text-xs text-muted-foreground/80">
-                          Ends at {new Date(event.registration_deadline).toLocaleTimeString("en-IN", {
+                          Ends at{" "}
+                          {new Date(
+                            event.registration_deadline,
+                          ).toLocaleTimeString("en-IN", {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
