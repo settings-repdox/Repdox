@@ -85,7 +85,7 @@ serve(async (req: Request) => {
 
     const { data: regs, error: regsErr } = await supabase
       .from('event_registrations')
-      .select('id, created_at, name, email, phone, role, status, message')
+      .select('created_at, name, email, phone, role, status, message')
       .eq('event_id', eventId)
       .order('created_at', { ascending: false });
 
@@ -95,7 +95,6 @@ serve(async (req: Request) => {
     }
 
     const rows = (regs || []).map((r) => ({
-      id: r.id,
       created_at: r.created_at,
       name: r.name || '',
       email: r.email || '',

@@ -122,7 +122,7 @@ export default function FAQ() {
               Connect with the community and get real-time help.
             </p>
             <Button asChild variant="outline" className="rounded-xl border-blue-500/50 hover:bg-blue-500/10">
-              <a href="https://discord.gg/TbAqDgy4cw" target="_blank" rel="noopener noreferrer">
+              <a href="https://discord.gg/y9kRMNn49K" target="_blank" rel="noopener noreferrer">
                 Launch Discord <ExternalLink className="w-3 h-3 ml-2" />
               </a>
             </Button>

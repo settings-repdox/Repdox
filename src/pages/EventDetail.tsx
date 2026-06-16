@@ -18,6 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ADMIN_EMAILS } from "@/lib/adminService";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -79,19 +80,20 @@ export default function EventDetail() {
       const now = new Date();
       const isExpired = new Date(data.end_at) < now;
 
-      // Check if the current user is the owner
+      // Check if the current user is the owner or admin
       const {
         data: { user },
       } = await supabase.auth.getUser();
       const isOwner = user && data.created_by === user.id;
+      const isAdminUser = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
 
-      // If expired and NOT the owner, block access
-      if (isExpired && !isOwner) {
+      // If expired and NOT the owner/admin, block access
+      if (isExpired && !isOwner && !isAdminUser) {
         throw new Error("This event has ended and is no longer public.");
       }
 
-      // Block inactive events for non-owners (keep your existing logic)
-      if (!data.is_active && !isOwner) {
+      // Block inactive events for non-owners/non-admins
+      if (!data.is_active && !isOwner && !isAdminUser) {
         throw new Error("Event not found");
       }
       return data;
@@ -145,6 +147,8 @@ export default function EventDetail() {
   }, [event?.id, event?.slug]);
 
   const isOwner = user && event?.created_by === user.id;
+  const isAdminUser = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+  const canManage = isOwner || isAdminUser;
 
   // Fetch per-role registration counts to show remaining capacity
   useEffect(() => {
@@ -543,7 +547,7 @@ export default function EventDetail() {
                 </Button>
               </Link>
 
-              {isOwner && (
+              {canManage && (
                 <div className="flex flex-wrap gap-2">
                   <Link to={`/events/${event.slug}/registrations`}>
                     <Button
@@ -680,7 +684,7 @@ export default function EventDetail() {
                 Event Schedule
               </button>
 
-              {isOwner && (
+              {canManage && (
                 <>
                   <Link
                     to={`/events/${event.slug}/registrations`}

@@ -64,7 +64,7 @@ export default function Footer() {
               {/* Social Links */}
               <div className="flex gap-3">
                 {[
-                  { icon: FaDiscord, href: "https://discord.gg/TbAqDgy4cw", label: "Discord", color: "from-indigo-500 to-blue-500", glow: "rgba(79, 70, 229, 0.5)" },
+                  { icon: FaDiscord, href: "https://discord.gg/y9kRMNn49K", label: "Discord", color: "from-indigo-500 to-blue-500", glow: "rgba(79, 70, 229, 0.5)" },
                   { icon: FaInstagram, href: "https://www.instagram.com/repdox.official", label: "Instagram", color: "from-pink-500 to-rose-500", glow: "rgba(236, 72, 153, 0.5)" },
                   { icon: FaWhatsapp, href: "https://chat.whatsapp.com/HhJfHtq7gE411KEYa6qpQP", label: "WhatsApp", color: "from-green-500 to-emerald-500", glow: "rgba(16, 185, 129, 0.5)" },
                 ].map((social, index) => {

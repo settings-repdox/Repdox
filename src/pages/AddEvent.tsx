@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ADMIN_EMAILS } from "@/lib/adminService";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -289,11 +290,12 @@ export default function AddEvent() {
 
         if (error) throw error;
 
-        // Check if user owns this event
+        // Check if user owns this event or is admin
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (event.created_by !== user?.id) {
+        const isAdminUser = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+        if (event.created_by !== user?.id && !isAdminUser) {
           toast({
             title: "Permission Denied",
             description: "You don't have permission to edit this event",

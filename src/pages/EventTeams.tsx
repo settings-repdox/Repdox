@@ -6,6 +6,7 @@ import { ArrowLeft, Users } from "lucide-react";
 import OrganizerTeams from "@/components/OrganizerTeams";
 import eventService from "@/lib/eventService";
 import { motion } from "framer-motion";
+import { ADMIN_EMAILS } from "@/lib/adminService";
 
 export default function EventTeams() {
   const { slug } = useParams();
@@ -19,8 +20,9 @@ export default function EventTeams() {
 
       const { data: { user } } = await supabase.auth.getUser();
       const isOwner = user && data.created_by === user.id;
+      const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
 
-      if (!isOwner) {
+      if (!isOwner && !isAdmin) {
         throw new Error("Unauthorized");
       }
       return data;

@@ -104,7 +104,7 @@ export default function OrganizerRegistrations({
       let payload = "";
       if (format === "csv")
         payload = eventService.registrationsToCSV(registrations);
-      else payload = eventService.registrationsToMarkdown(registrations);
+      else payload = eventService.registrationsToMarkdown(registrations, teamMap);
 
       const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
@@ -146,7 +146,7 @@ export default function OrganizerRegistrations({
               size="sm"
               onClick={async () => {
                 try {
-                  const text = eventService.registrationsToCSV(registrations);
+                  const text = eventService.registrationsToCSV(registrations, teamMap);
                   await navigator.clipboard.writeText(text);
                   toast({
                     title: "Copied",
@@ -169,8 +169,22 @@ export default function OrganizerRegistrations({
               onClick={async () => {
                 try {
                   const text =
-                    eventService.registrationsToMarkdown(registrations);
-                  await navigator.clipboard.writeText(text);
+                    eventService.registrationsToMarkdown(registrations, teamMap);
+                  
+                  if (navigator.clipboard && (window as any).ClipboardItem) {
+                    const html = eventService.registrationsToHTML(registrations, teamMap);
+                    const blobText = new Blob([text], { type: "text/plain" });
+                    const blobHTML = new Blob([html], { type: "text/html" });
+                    await navigator.clipboard.write([
+                      new (window as any).ClipboardItem({
+                        "text/plain": blobText,
+                        "text/html": blobHTML,
+                      })
+                    ]);
+                  } else {
+                    await navigator.clipboard.writeText(text);
+                  }
+                  
                   toast({
                     title: "Copied",
                     description: "Markdown table copied to clipboard",

@@ -7,6 +7,8 @@ import {
   getRegistrationTableName,
 } from "@/lib/utils";
 import { deleteFile } from "@/lib/storageService"; // ADDED: Import deleteFile
+import { formatDateTime } from "@/lib/timeUtils";
+import { ADMIN_EMAILS } from "@/lib/adminService";
 
 type UploadedFile = { file: File; name: string };
 type FAQ = { question: string; answer: string };
@@ -417,7 +419,8 @@ export async function updateEvent(
     .eq("id", eventId)
     .single();
 
-  if (existingEvent?.created_by !== user.id) {
+  const isAdminUser = user.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+  if (existingEvent?.created_by !== user.id && !isAdminUser) {
     throw new Error("You don't have permission to edit this event");
   }
 
@@ -937,54 +940,102 @@ export async function registerForEvent(params: {
   return data;
 }
 
-export function registrationsToCSV(rows: RegistrationRow[]) {
+export function registrationsToCSV(rows: RegistrationRow[], teamMap: Record<string, string> = {}) {
   if (!rows || rows.length === 0) return "";
-  const headers: (keyof RegistrationRow)[] = [
-    "id",
-    "created_at",
-    "event_id",
-    "user_id",
-    "name",
-    "email",
-    "phone",
-    "role",
-    "status",
-    "message",
+  const headers = [
+    "Time",
+    "Name",
+    "Team",
+    "Email",
+    "Phone",
+    "Role",
+    "Status",
+    "Message",
   ];
   const csv = [headers.join(",")];
   for (const r of rows) {
-    const line = headers
-      .map((h) => {
-        const val = r[h] ?? "";
-        if (typeof val === "string")
-          return `"${String(val).replace(/"/g, '""')}"`;
-        return `"${String(val ?? "")}"`;
-      })
+    const timeVal = r.created_at ? formatDateTime(r.created_at) : "";
+    const nameVal = r.name ?? "";
+    const teamVal = getTeamName(r, teamMap);
+    const emailVal = r.email ?? "";
+    const phoneVal = r.phone ?? "";
+    const roleVal = r.role ?? "";
+    const statusVal = r.status ?? "";
+    const messageVal = r.message ?? "";
+
+    const values = [timeVal, nameVal, teamVal, emailVal, phoneVal, roleVal, statusVal, messageVal];
+    const line = values
+      .map((val) => `"${String(val).replace(/"/g, '""')}"`)
       .join(",");
     csv.push(line);
   }
   return csv.join("\n");
 }
 
-export function registrationsToMarkdown(rows: RegistrationRow[]) {
+export function getTeamName(r: RegistrationRow, teamMap: Record<string, string> = {}) {
+  if (r.team_id && teamMap[r.team_id]) return teamMap[r.team_id];
+  try {
+    if (!r.message) return "-";
+    const msg = typeof r.message === "string" ? JSON.parse(r.message) : r.message;
+    return msg?.participation?.teamName || msg?.teamName || "-";
+  } catch (e) {
+    return "-";
+  }
+}
+
+export function registrationsToMarkdown(rows: RegistrationRow[], teamMap: Record<string, string> = {}) {
   if (!rows || rows.length === 0) return "";
-  const headers: (keyof RegistrationRow)[] = [
-    "id",
-    "created_at",
-    "name",
-    "email",
-    "phone",
-    "role",
-    "status",
-  ];
+  const headers = ["Time", "Name", "Team", "Email", "Phone", "Role", "Status"];
   const table = [
     "| " + headers.join(" | ") + " |",
     "| " + headers.map(() => "---").join(" | ") + " |",
   ];
   for (const r of rows) {
-    table.push("| " + headers.map((h) => r[h] ?? "").join(" | ") + " |");
+    const timeVal = r.created_at ? formatDateTime(r.created_at) : "";
+    const nameVal = r.name ?? "";
+    const teamVal = getTeamName(r, teamMap);
+    const emailVal = r.email ?? "";
+    const phoneVal = r.phone ?? "";
+    const roleVal = r.role ?? "";
+    const statusVal = r.status ?? "";
+    table.push(`| ${timeVal} | ${nameVal} | ${teamVal} | ${emailVal} | ${phoneVal} | ${roleVal} | ${statusVal} |`);
   }
   return table.join("\n");
+}
+
+export function registrationsToHTML(rows: RegistrationRow[], teamMap: Record<string, string> = {}) {
+  if (!rows || rows.length === 0) return "";
+  const headers = ["Time", "Name", "Team", "Email", "Phone", "Role", "Status"];
+  let html = `<table style="border-collapse: collapse; width: 100%; font-family: sans-serif; font-size: 13px; color: #333;">`;
+  html += `<thead><tr style="background-color: #f3f4f6; border-bottom: 2px solid #e5e7eb;">`;
+  for (const h of headers) {
+    html += `<th style="border: 1px solid #e5e7eb; text-align: left; padding: 10px; font-weight: bold;">${h}</th>`;
+  }
+  html += `</tr></thead><tbody>`;
+  for (const r of rows) {
+    const timeVal = r.created_at ? formatDateTime(r.created_at) : "";
+    const nameVal = r.name ?? "";
+    const teamVal = getTeamName(r, teamMap);
+    const emailVal = r.email ?? "";
+    const phoneVal = r.phone ?? "";
+    const roleVal = r.role ?? "";
+    const statusVal = r.status ?? "";
+    
+    const isReg = statusVal.toLowerCase() === "registered";
+    const badgeStyle = `background-color: ${isReg ? '#dcfce7' : '#fef9c3'}; color: ${isReg ? '#166534' : '#854d0e'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase;`;
+    
+    html += `<tr style="border-bottom: 1px solid #f3f4f6;">`;
+    html += `<td style="border: 1px solid #e5e7eb; padding: 8px;">${timeVal}</td>`;
+    html += `<td style="border: 1px solid #e5e7eb; padding: 8px; font-weight: bold;">${nameVal}</td>`;
+    html += `<td style="border: 1px solid #e5e7eb; padding: 8px;">${teamVal}</td>`;
+    html += `<td style="border: 1px solid #e5e7eb; padding: 8px;">${emailVal}</td>`;
+    html += `<td style="border: 1px solid #e5e7eb; padding: 8px;">${phoneVal}</td>`;
+    html += `<td style="border: 1px solid #e5e7eb; padding: 8px; text-transform: capitalize;">${roleVal}</td>`;
+    html += `<td style="border: 1px solid #e5e7eb; padding: 8px;"><span style="${badgeStyle}">${statusVal}</span></td>`;
+    html += `</tr>`;
+  }
+  html += `</tbody></table>`;
+  return html;
 }
 
 export async function exportRegistrationsXLSX(eventId: string) {
@@ -1037,10 +1088,21 @@ export async function exportRegistrationsXLSX(eventId: string) {
   return { filename, blob };
 }
 
-export async function registrationsToXLSX(rows: RegistrationRow[]) {
+export async function registrationsToXLSX(rows: RegistrationRow[], teamMap: Record<string, string> = {}) {
   try {
+    const cleanRows = rows.map((r) => ({
+      "Time": r.created_at ? formatDateTime(r.created_at) : "",
+      "Name": r.name ?? "",
+      "Team": getTeamName(r, teamMap),
+      "Email": r.email ?? "",
+      "Phone": r.phone ?? "",
+      "Role": r.role ?? "",
+      "Status": r.status ?? "",
+      "Message": r.message ?? "",
+    }));
+
     const xlsx = await import(/* @vite-ignore */ "xlsx");
-    const ws = xlsx.utils.json_to_sheet(rows);
+    const ws = xlsx.utils.json_to_sheet(cleanRows);
     const wb = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(wb, ws, "registrations");
     const wbout = xlsx.write(wb, { bookType: "xlsx", type: "array" });
@@ -1208,6 +1270,7 @@ export default {
   exportRegistrationsXLSX,
   registrationsToCSV,
   registrationsToMarkdown,
+  registrationsToHTML,
   submitRSVP,
   fetchRSVPResponses,
   getRSVPSummary,

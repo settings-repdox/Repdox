@@ -252,7 +252,7 @@ export default function Contact() {
                 collaborate.
               </p>
               <a
-                href="https://discord.gg/TbAqDgy4cw"
+                href="https://discord.gg/y9kRMNn49K"
                 target="_blank"
                 rel="noopener noreferrer"
               >
