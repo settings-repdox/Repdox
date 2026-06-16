@@ -22,6 +22,7 @@ interface EventCardProps {
     slug: string;
     type: string | string[];
     start_at: string;
+    end_at: string;
     location: string | null;
     format: string | string[];
     short_blurb: string | null;
@@ -33,6 +34,7 @@ interface EventCardProps {
 
 export default function EventCard({ event, compact = false }: EventCardProps) {
   const countdown = useCountdown(event.start_at);
+  const isEnded = new Date() > new Date(event.end_at);
   const [imgSrc, setImgSrc] = useState<string | undefined>(
     () => getEventImage(event.image_url) || event.image_url || undefined,
   );
@@ -75,6 +77,13 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
               alt={event.title}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             />
+            {isEnded && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+                <span className="text-white border-4 border-red-500 text-red-500 font-black tracking-widest text-2xl uppercase px-3 py-1.5 rounded-lg transform -rotate-12 select-none shadow-2xl">
+                  Ended
+                </span>
+              </div>
+            )}
             <Badge
               variant="secondary"
               className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm border-primary/30"
@@ -119,9 +128,11 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
               </div>
             )}
             <div className="flex items-center gap-2 text-xs">
-              <Clock className="h-3 w-3 text-primary" />
-              <span className="text-primary font-mono">
-                {countdown.isExpired
+              <Clock className={`h-3 w-3 ${isEnded ? "text-red-500" : "text-primary"}`} />
+              <span className={`font-mono ${isEnded ? "text-red-500 font-bold" : "text-primary"}`}>
+                {isEnded
+                  ? "Ended"
+                  : countdown.isExpired
                   ? "Started"
                   : `Starts in ${countdown.compactFormatted}`}
               </span>
@@ -148,6 +159,13 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
           alt={event.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
+        {isEnded && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+            <span className="text-white border-4 border-red-500 text-red-500 font-black tracking-widest text-3xl uppercase px-4 py-2 rounded-lg transform -rotate-12 select-none shadow-2xl">
+              Ended
+            </span>
+          </div>
+        )}
         <Badge
           variant="secondary"
           className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border-primary/30"
@@ -168,9 +186,11 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
           )}
         </Badge>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-          <div className="flex items-center gap-2 text-sm text-primary font-mono">
+          <div className={`flex items-center gap-2 text-sm font-mono ${isEnded ? "text-red-400" : "text-primary"}`}>
             <Clock className="h-4 w-4" />
-            {countdown.isExpired
+            {isEnded
+              ? "Event Ended"
+              : countdown.isExpired
               ? "Event Started"
               : `Starts in ${countdown.formatted}`}
           </div>
@@ -226,10 +246,14 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
         <Button
           variant="outline"
           className="flex-1 border-primary/30 hover:bg-primary/10"
-          asChild
+          disabled={isEnded}
+          asChild={!isEnded}
         >
-          {/* This will navigate to the page AND scroll to the register ID section */}
-          <Link to={`/events/${event.slug}#register`}>Register</Link>
+          {isEnded ? (
+            <span>Ended</span>
+          ) : (
+            <Link to={`/events/${event.slug}#register`}>Register</Link>
+          )}
         </Button>
       </CardFooter>
     </Card>

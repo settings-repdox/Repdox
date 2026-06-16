@@ -24,15 +24,24 @@ export default function EventsList() {
         .from('events')
         .select('*')
         .eq('is_active', true)
-        .gte('end_at', new Date().toISOString())
         .order('start_at', { ascending: true });
       
       if (error) throw error;
-      return (data || []).map(event => ({
+      
+      const parsedEvents = (data || []).map(event => ({
         ...event,
         type: event.type as string | string[],
         format: event.format as string | string[],
       }));
+
+      const now = new Date();
+      const futureEvents = parsedEvents.filter(e => new Date(e.end_at) >= now);
+      const pastEvents = parsedEvents.filter(e => new Date(e.end_at) < now);
+
+      futureEvents.sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
+      pastEvents.sort((a, b) => new Date(b.end_at).getTime() - new Date(a.end_at).getTime());
+
+      return [...futureEvents, ...pastEvents];
     },
   });
 
