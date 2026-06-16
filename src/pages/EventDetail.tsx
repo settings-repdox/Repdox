@@ -102,6 +102,7 @@ export default function EventDetail() {
   });
 
   const countdown = useCountdown(event?.start_at || "");
+  const endCountdown = useCountdown(event?.end_at || "");
   const regCountdown = useCountdown(event?.registration_deadline || "");
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -149,7 +150,7 @@ export default function EventDetail() {
   const isOwner = user && event?.created_by === user.id;
   const isAdminUser = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
   const canManage = isOwner || isAdminUser;
-  const isEnded = event?.end_at ? new Date() > new Date(event.end_at) : false;
+  const isEnded = endCountdown.isExpired;
 
   // Fetch per-role registration counts to show remaining capacity
   useEffect(() => {
