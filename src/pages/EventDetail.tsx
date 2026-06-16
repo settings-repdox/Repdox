@@ -149,6 +149,7 @@ export default function EventDetail() {
   const isOwner = user && event?.created_by === user.id;
   const isAdminUser = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
   const canManage = isOwner || isAdminUser;
+  const isEnded = event?.end_at ? new Date() > new Date(event.end_at) : false;
 
   // Fetch per-role registration counts to show remaining capacity
   useEffect(() => {
@@ -621,8 +622,12 @@ export default function EventDetail() {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-4 text-white bg-black/40 backdrop-blur-md w-fit px-6 py-3 rounded-2xl border border-white/10 font-mono text-lg shadow-xl"
               >
-                <Clock className="h-5 w-5 text-purple-400 animate-pulse" />
-                {countdown.isExpired ? (
+                <Clock className={`h-5 w-5 ${isEnded ? "text-red-400" : "text-purple-400 animate-pulse"}`} />
+                {isEnded ? (
+                  <span className="font-bold text-red-400">
+                    Event has ended
+                  </span>
+                ) : countdown.isExpired ? (
                   <span className="font-bold text-green-400">
                     Event has started
                   </span>
