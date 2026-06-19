@@ -124,7 +124,9 @@
                   type="tel"
                   id="phone"
                   name="phone"
-                  placeholder="+91 ..."
+                  placeholder="10-digit number"
+                  maxlength="10"
+                  pattern="[0-9]{10}"
                   required
                 />
               </div>
@@ -274,20 +276,29 @@
         </form>
 
         <!-- Success State -->
-        <div id="success-screen" class="success-card hidden">
+        <div id="success-screen" class="success-card hidden" style="text-align: center; max-width: 400px; margin: 0 auto;">
           <div class="success-icon pulsate">🚀</div>
           <h2>Registration Successful!</h2>
           <p>
-            Welcome to the movement. We've received your application and will
-            contact you on WhatsApp soon.
+            Welcome to the movement. We've received your application. Please complete the step below to unlock the portal.
           </p>
-          <div
-            class="redirect-notice"
-            style="margin-top: 20px; font-size: 0.9rem; opacity: 0.8"
-          >
-            Redirecting to Repdox.com in
-            <span id="countdown">5</span> seconds...
+          
+          <div style="margin: 20px 0; padding: 15px; border: 1px solid rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.05); border-radius: 16px;">
+            <h4 style="font-weight: bold; color: #a78bfa; margin-bottom: 8px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Step 1: Join Community</h4>
+            <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 15px;">
+              Join our official Discord server to get event announcements, find teammates, and complete your setup.
+            </p>
+            <a href="https://discord.gg/dNjHbpQEBT" target="_blank" id="discord-btn" style="display: block; padding: 12px; background: #5865f2; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 0.85rem; transition: background 0.2s;">
+              Join Repdox Discord
+            </a>
           </div>
+
+          <button id="continue-btn" class="btn btn-submit" style="width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; transition: opacity 0.2s; opacity: 0.5; cursor: not-allowed;" disabled>
+            🔒 Join Discord to Unlock Continue
+          </button>
+          <p id="continue-help" style="font-size: 0.65rem; color: #64748b; margin-top: 8px;">
+            You must click "Join Repdox Discord" above to proceed.
+          </p>
         </div>
       </section>
     </main>

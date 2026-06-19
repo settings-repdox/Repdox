@@ -177,18 +177,27 @@ form.addEventListener("submit", async (e) => {
       document.querySelector(".header").classList.add("hidden");
     successScreen.classList.remove("hidden");
 
-    // 5 Second Redirect
-    let timeLeft = 5;
-    const countdownEl = document.getElementById("countdown");
-    if (countdownEl) {
-      const timer = setInterval(() => {
-        timeLeft--;
-        countdownEl.textContent = timeLeft;
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          window.location.href = "https://repdox.com";
+    // Manage Discord redirect restriction
+    const discordBtn = document.getElementById("discord-btn");
+    const continueBtn = document.getElementById("continue-btn");
+    const continueHelp = document.getElementById("continue-help");
+
+    if (discordBtn && continueBtn) {
+      discordBtn.addEventListener("click", () => {
+        // Unlock continue button
+        continueBtn.disabled = false;
+        continueBtn.style.opacity = "1";
+        continueBtn.style.cursor = "pointer";
+        continueBtn.textContent = "Continue to Repdox.com";
+        if (continueHelp) {
+          continueHelp.textContent = "Click above to continue to the main site.";
+          continueHelp.style.color = "#10b981"; // green text on unlock
         }
-      }, 1000);
+      });
+
+      continueBtn.addEventListener("click", () => {
+        window.location.href = "https://repdox.com";
+      });
     }
   } catch (error) {
     console.error("Submission error:", error);

@@ -30,6 +30,8 @@ export default function EventRegister() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [tableName, setTableName] = useState<string | null>(null);
+  const [discordInvite, setDiscordInvite] = useState<string | null>(null);
+  const [hasJoinedDiscord, setHasJoinedDiscord] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -137,28 +139,30 @@ export default function EventRegister() {
     const fetchEventAndRegistration = async () => {
       if (!slug) return;
 
-      // Fetch Event ID, Slug, and Title
+      // Fetch Event ID, Slug, Title, and Discord Invite
       const { data: eventData } = await supabase
         .from("events")
-        .select("id, slug, title")
+        .select("id, slug, title, discord_invite")
         .eq("slug", slug)
         .maybeSingle();
       
       let currentEventId = null;
       let currentEventSlug = null;
-
+ 
       if (eventData) {
         currentEventId = eventData.id;
         currentEventSlug = eventData.slug;
         setEventId(eventData.id);
         setEventTitle(eventData.title);
+        setDiscordInvite(eventData.discord_invite);
       } else {
-        const { data: latest } = await supabase.from("events").select("id, slug, title").limit(1).single();
+        const { data: latest } = await supabase.from("events").select("id, slug, title, discord_invite").limit(1).single();
         if (latest) {
           currentEventId = latest.id;
           currentEventSlug = latest.slug;
           setEventId(latest.id);
           setEventTitle(latest.title);
+          setDiscordInvite(latest.discord_invite);
         }
       }
 
@@ -591,13 +595,9 @@ export default function EventRegister() {
       setIsSuccess(true);
       toast({
         title: existingReg ? "Registration Updated!" : "Registration Successful!",
-        description: "Redirecting in 5 seconds...",
+        description: "Complete the next steps on the screen to proceed.",
       });
-
-      setTimeout(() => {
-        if (eventId) localStorage.removeItem(`event_draft_${eventId}`);
-        window.location.href = "https://repdox.com";
-      }, 5000);
+      if (eventId) localStorage.removeItem(`event_draft_${eventId}`);
 
     } catch (err) {
       const error = err as Error;
@@ -622,21 +622,49 @@ export default function EventRegister() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative z-10 max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-10 text-center shadow-2xl"
+          className="relative z-10 max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-10 text-center shadow-2xl space-y-6"
         >
-          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-10 h-10 text-green-500" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Registration Complete!</h2>
-          <p className="text-gray-400 mb-8">
-            Welcome to {eventTitle}. Redirecting you to our main site in a few seconds...
-          </p>
-          <Button 
-            onClick={() => window.location.href = "https://repdox.com"}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-6 rounded-xl font-bold"
-          >
-            Go to Repdox.com
-          </Button>
+          
+          <div>
+            <h2 className="text-3xl font-bold text-white mb-2">Registration Complete!</h2>
+            <p className="text-gray-400 text-sm">
+              Welcome to {eventTitle}. Please complete the step below to unlock the portal.
+            </p>
+          </div>
+
+          <div className="border border-purple-500/30 bg-purple-500/5 rounded-2xl p-5 space-y-4">
+            <h4 className="font-bold text-purple-400 text-sm uppercase tracking-wider">Step 1: Join Community</h4>
+            <p className="text-xs text-gray-400">
+              Join our official Discord server to get event announcements, find teammates, and complete your setup.
+            </p>
+            <Button 
+              onClick={() => {
+                setHasJoinedDiscord(true);
+                window.open(discordInvite || "https://discord.gg/dNjHbpQEBT", "_blank");
+              }}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2"
+            >
+              <span>Join Repdox Discord</span>
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            <Button 
+              disabled={!hasJoinedDiscord}
+              onClick={() => window.location.href = "https://repdox.com"}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-6 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {hasJoinedDiscord ? "Continue to Repdox.com" : "🔒 Join Discord to Unlock Continue"}
+            </Button>
+            {!hasJoinedDiscord && (
+              <p className="text-[10px] text-gray-500">
+                You must click "Join Repdox Discord" above to proceed.
+              </p>
+            )}
+          </div>
         </motion.div>
       </div>
     );
