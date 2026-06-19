@@ -270,7 +270,12 @@ export default function EventRegister() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const type = 'type' in e.target ? (e.target as any).type : undefined;
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    let val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    
+    if (name === "phone" && typeof val === "string") {
+      val = val.replace(/\D/g, "").slice(0, 10);
+    }
+    
     setFormData(prev => ({ ...prev, [name]: val }));
   };
 
@@ -344,14 +349,18 @@ export default function EventRegister() {
 
       const nextEditCount = existingReg ? (existingReg.edit_count || 0) + 1 : 0;
       
+      const cleanName = formData.name.trim();
+      const cleanEmail = formData.email.trim();
+      const cleanPhone = formData.phone.replace(/[`'"]/g, '').trim();
+
       // 1. Full Payload (succeeds on solveforindia and central registrations tables)
       const fullRegistrationData = {
         event_id: eventId,
         team_id: teamId,
         user_id: userId,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
         role: "participant",
         school: formData.school,
         year: formData.year,
@@ -369,9 +378,9 @@ export default function EventRegister() {
       const semiCleanRegistrationData = {
         event_id: eventId,
         user_id: userId,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
         school: formData.school,
         year: formData.year,
         stream: formData.stream,
@@ -392,9 +401,9 @@ export default function EventRegister() {
       const minimalRegistrationData = {
         event_id: eventId,
         user_id: userId,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
         message: JSON.stringify({
           school: formData.school,
           year: formData.year,
@@ -747,7 +756,7 @@ export default function EventRegister() {
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-400">WhatsApp Number</Label>
-                <Input name="phone" type="tel" required value={formData.phone} onChange={handleInputChange} className="bg-black/40 border-white/10 h-14 rounded-xl text-white" />
+                <Input name="phone" type="tel" required maxLength={10} pattern="[0-9]{10}" placeholder="10-digit number" value={formData.phone} onChange={handleInputChange} className="bg-black/40 border-white/10 h-14 rounded-xl text-white" />
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-400">School / University</Label>

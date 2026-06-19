@@ -5,6 +5,8 @@ import eventService, { RegistrationRow } from "@/lib/eventService";
 import { toast } from "@/hooks/use-toast";
 import { formatDateTime } from "@/lib/timeUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { getRegistrationTableName } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
 
 export default function OrganizerRegistrations({
   eventId,
@@ -50,6 +52,41 @@ export default function OrganizerRegistrations({
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (registrationId: string) => {
+    if (!confirm("Are you sure you want to delete this registration?")) return;
+    
+    try {
+      const tableName = getRegistrationTableName({ id: eventId, slug: eventSlug });
+      
+      const { error: dynamicError } = await supabase
+        .from(tableName as any)
+        .delete()
+        .eq("id", registrationId);
+        
+      if (dynamicError) throw dynamicError;
+      
+      if (tableName !== "event_registrations") {
+        await supabase
+          .from("event_registrations")
+          .delete()
+          .eq("id", registrationId);
+      }
+      
+      toast({
+        title: "Registration deleted",
+        description: "The registration has been removed successfully.",
+      });
+      
+      load();
+    } catch (err: any) {
+      toast({
+        title: "Failed to delete registration",
+        description: err.message || String(err),
+        variant: "destructive",
+      });
     }
   };
 
@@ -273,6 +310,7 @@ export default function OrganizerRegistrations({
                 <th className="text-left pb-3">Phone</th>
                 <th className="text-left pb-3">Role</th>
                 <th className="text-left pb-3">Status</th>
+                <th className="text-right pb-3 pr-4">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -286,9 +324,13 @@ export default function OrganizerRegistrations({
                   </td>
                   <td className="py-3 font-medium">{r.name}</td>
                   <td className="py-3">
-                    <span className="inline-block px-3 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-sm font-bold border border-purple-500/20 whitespace-nowrap uppercase tracking-tight">
-                      {getTeamName(r)}
-                    </span>
+                    {getTeamName(r) !== "-" ? (
+                      <span className="inline-block px-3 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-sm font-bold border border-purple-500/20 whitespace-nowrap uppercase tracking-tight">
+                        {getTeamName(r)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </td>
                   <td className="py-3 text-sm text-muted-foreground">{r.email}</td>
                   <td className="py-3 text-sm text-muted-foreground">{r.phone}</td>
@@ -301,6 +343,16 @@ export default function OrganizerRegistrations({
                     }`}>
                       {r.status || "-"}
                     </span>
+                  </td>
+                  <td className="py-3 text-right pr-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(r.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </td>
                 </tr>
               ))}

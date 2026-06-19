@@ -72,6 +72,14 @@ teamSizeRadios.forEach((radio) => {
   });
 });
 
+// Enforce exactly 10 digits in phone input
+const phoneInput = document.getElementById("phone");
+if (phoneInput) {
+  phoneInput.addEventListener("input", (e) => {
+    e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
+  });
+}
+
 // Form Submission
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -101,24 +109,6 @@ form.addEventListener("submit", async (e) => {
           "No events found in your database. Please create an event first!",
         );
 
-      // 2. Prepare Registration Data
-      const registration = {
-        event_id: latestEvent.id,
-        name: rawData.name,
-        email: rawData.email,
-        phone: rawData.phone,
-        school: rawData.school || null,
-        stream: rawData.stream || null,
-        year: rawData.grade || null, // Map grade to year to match main app
-        participation_mode: rawData.teamSize || 'Solo',
-        message: rawData.teamName ? JSON.stringify({ teamName: rawData.teamName }) : null,
-        motivation: rawData.motivation || null,
-        github: rawData.github || null,
-        linkedin: rawData.linkedin || null,
-        role: "participant",
-        status: "registered"
-      };
-
       let tableName = "event_registrations";
       if (latestEvent.slug) {
         let formattedSlug = latestEvent.slug.toLowerCase().replace(/[- ]/g, "_");
@@ -129,6 +119,39 @@ form.addEventListener("submit", async (e) => {
       } else if (latestEvent.id) {
         tableName = `event_reg_${latestEvent.id.replace(/-/g, "_")}`;
       }
+
+      const cleanName = String(rawData.name || '').trim();
+      const cleanEmail = String(rawData.email || '').trim();
+      const cleanPhone = String(rawData.phone || '').replace(/[`'"]/g, '').trim();
+
+      // Check if email already registered for this event to prevent duplicates
+      const { data: existingReg, error: checkError } = await supabaseClient
+        .from(tableName)
+        .select('id')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (existingReg) {
+        throw new Error("You have already registered with this email address!");
+      }
+
+      // 2. Prepare Registration Data
+      const registration = {
+        event_id: latestEvent.id,
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        school: rawData.school || null,
+        stream: rawData.stream || null,
+        year: rawData.grade || null, // Map grade to year to match main app
+        participation_mode: rawData.teamSize || 'Solo',
+        message: rawData.teamName ? JSON.stringify({ teamName: String(rawData.teamName).trim() }) : null,
+        motivation: rawData.motivation || null,
+        github: rawData.github || null,
+        linkedin: rawData.linkedin || null,
+        role: "participant",
+        status: "registered"
+      };
 
       // 3. Insert
       const { error: insertError } = await supabaseClient
