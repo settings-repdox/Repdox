@@ -15,7 +15,7 @@ export default function OrganizerRegistrations({
 }) {
   const [registrations, setRegistrations] = useState<RegistrationRow[]>([]);
   const [teamMap, setTeamMap] = useState<Record<string, string>>({});
-  const [counts, setCounts] = useState<Record<string, number>>({});
+
   const [loading, setLoading] = useState(false);
 
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'team', direction: 'asc' });
@@ -25,7 +25,7 @@ export default function OrganizerRegistrations({
     try {
       const regs = await eventService.fetchEventRegistrations(eventId, eventSlug);
       setRegistrations(regs);
-      setCounts(await eventService.countRegistrationsByRole(eventId, eventSlug));
+
 
       // Fetch team names for registrations with team_id
       const teamIds = Array.from(new Set(regs.map(r => r.team_id).filter(Boolean))) as string[];
@@ -244,20 +244,7 @@ export default function OrganizerRegistrations({
           </div>
         </div>
 
-        {Object.keys(counts).length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
-            {Object.entries(counts).map(([k, v]) => (
-              <div key={k} className="border rounded p-2">
-                <div className="font-medium">
-                  {k === "__no_role__" ? "Unspecified" : k}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {v} registrations
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+
 
         <div className="overflow-x-auto">
           <table className="w-full table-auto border-separate border-spacing-0">
