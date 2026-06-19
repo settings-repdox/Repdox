@@ -361,7 +361,7 @@ export default function EventRegister() {
         linkedin: formData.linkedin,
         participation_mode: formData.teamSize,
         expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
-        message: formData.teamName ? JSON.stringify({ teamName: formData.teamName }) : null,
+        message: formData.teamName ? JSON.stringify({ teamName: formData.teamName.trim() }) : null,
         edit_count: nextEditCount
       };
 
@@ -381,7 +381,7 @@ export default function EventRegister() {
         participation_mode: formData.teamSize,
         expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
         message: JSON.stringify({
-          teamName: formData.teamName,
+          teamName: formData.teamName.trim(),
           role: "role" in fullRegistrationData ? "participant" : undefined,
           team_id: teamId
         }),
@@ -405,7 +405,7 @@ export default function EventRegister() {
           participation_mode: formData.teamSize,
           expected_members: formData.teamSize === "Team" && !formData.isJoiningExisting ? parseInt(formData.memberCount) : null,
           edit_count: nextEditCount,
-          teamName: formData.teamName,
+          teamName: formData.teamName.trim(),
           role: "participant",
           team_id: teamId
         })
