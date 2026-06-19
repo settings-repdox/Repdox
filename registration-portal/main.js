@@ -177,24 +177,8 @@ form.addEventListener("submit", async (e) => {
       document.querySelector(".header").classList.add("hidden");
     successScreen.classList.remove("hidden");
 
-    // Manage Discord redirect restriction
-    const discordBtn = document.getElementById("discord-btn");
     const continueBtn = document.getElementById("continue-btn");
-    const continueHelp = document.getElementById("continue-help");
-
-    if (discordBtn && continueBtn) {
-      discordBtn.addEventListener("click", () => {
-        // Unlock continue button
-        continueBtn.disabled = false;
-        continueBtn.style.opacity = "1";
-        continueBtn.style.cursor = "pointer";
-        continueBtn.textContent = "Continue to Repdox.com";
-        if (continueHelp) {
-          continueHelp.textContent = "Click above to continue to the main site.";
-          continueHelp.style.color = "#10b981"; // green text on unlock
-        }
-      });
-
+    if (continueBtn) {
       continueBtn.addEventListener("click", () => {
         window.location.href = "https://repdox.com";
       });

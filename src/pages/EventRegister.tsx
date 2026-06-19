@@ -31,7 +31,6 @@ export default function EventRegister() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [tableName, setTableName] = useState<string | null>(null);
   const [discordInvite, setDiscordInvite] = useState<string | null>(null);
-  const [hasJoinedDiscord, setHasJoinedDiscord] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -642,7 +641,6 @@ export default function EventRegister() {
             </p>
             <Button 
               onClick={() => {
-                setHasJoinedDiscord(true);
                 window.open(discordInvite || "https://discord.gg/dNjHbpQEBT", "_blank");
               }}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2"
@@ -653,17 +651,11 @@ export default function EventRegister() {
 
           <div className="space-y-2">
             <Button 
-              disabled={!hasJoinedDiscord}
               onClick={() => window.location.href = "https://repdox.com"}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-6 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-6 rounded-xl font-bold"
             >
-              {hasJoinedDiscord ? "Continue to Repdox.com" : "🔒 Join Discord to Unlock Continue"}
+              Continue to Repdox.com
             </Button>
-            {!hasJoinedDiscord && (
-              <p className="text-[10px] text-gray-500">
-                You must click "Join Repdox Discord" above to proceed.
-              </p>
-            )}
           </div>
         </motion.div>
       </div>
