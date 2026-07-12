@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Repdox Scoreboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div
+      class="scoreboard-shell"
+      role="application"
+      aria-label="Scoreboard overlay"
+    >
+      <div class="scoreboard-top">
+        <div class="match-tag">MAP <span id="mapNumber">1</span></div>
+        <div class="match-status" id="matchStatus">PENDING</div>
+      </div>
+      <div class="team-row team-a">
+        <div class="team-badge">
+          <span class="team-label">TEAM A</span>
+        </div>
+        <div class="team-score" id="teamAScore">0</div>
+      </div>
+      <div class="center-panel">
+        <div class="round-label">ROUND</div>
+        <div class="round-number" id="roundNumber">0</div>
+      </div>
+      <div class="team-row team-b">
+        <div class="team-badge">
+          <span class="team-label">TEAM B</span>
+        </div>
+        <div class="team-score" id="teamBScore">0</div>
+      </div>
+      <div class="series-panel">
+        <div class="series-block">
+          <span class="series-title">SERIES</span>
+          <span class="series-score" id="seriesScoreA">0</span>
+        </div>
+        <div class="series-block">
+          <span class="series-title">SERIES</span>
+          <span class="series-score" id="seriesScoreB">0</span>
+        </div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

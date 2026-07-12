@@ -85,6 +85,37 @@ export interface TournamentMapRecord {
   map_status?: string | null;
 }
 
+export interface MatchCentreData {
+  match: TournamentMatchRecord;
+  tournament: TournamentRecord | null;
+  teamA: TournamentTeamRecord | null;
+  teamB: TournamentTeamRecord | null;
+  maps: TournamentMapRecord[];
+  playersA: Array<{
+    id: string;
+    player_name: string;
+    role?: string | null;
+    riot_id?: string | null;
+  }>;
+  playersB: Array<{
+    id: string;
+    player_name: string;
+    role?: string | null;
+    riot_id?: string | null;
+  }>;
+  stats: Array<{
+    id: string;
+    player_name?: string | null;
+    role?: string | null;
+    acs?: number | null;
+    kills?: number | null;
+    deaths?: number | null;
+    assists?: number | null;
+    adr?: number | null;
+    hs_percentage?: number | null;
+  }>;
+}
+
 export function isGamingEvent(
   event:
     | { type?: string | string[] | null; category?: string | null }

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Repdox Admin</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <p class="brand">Repdox</p>
+          <p class="subtitle">Live broadcast control</p>
+        </div>
+        <div class="status-pill" id="connectionState">Offline</div>
+      </header>
+
+      <section class="admin-grid">
+        <div class="card control-card">
+          <h2>Score</h2>
+          <div class="score-control">
+            <div>
+              <label>Team A</label>
+              <div class="score-row">
+                <button data-action="decrement" data-team="A">-</button>
+                <span id="scoreA">0</span>
+                <button data-action="increment" data-team="A">+</button>
+              </div>
+            </div>
+            <div>
+              <label>Team B</label>
+              <div class="score-row">
+                <button data-action="decrement" data-team="B">-</button>
+                <span id="scoreB">0</span>
+                <button data-action="increment" data-team="B">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card control-card">
+          <h2>Timer</h2>
+          <div class="timer-control">
+            <input
+              type="number"
+              id="timerInput"
+              min="0"
+              placeholder="Seconds"
+            />
+            <div class="button-row">
+              <button id="timerSet">Set</button>
+              <button id="timerReset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card control-card">
+          <h2>Scene / Camera</h2>
+          <div class="scene-grid">
+            <button data-scene="Game" class="scene-btn">Game</button>
+            <button data-scene="Replay" class="scene-btn">Replay</button>
+            <button data-camera="Cam1" class="scene-btn">Cam 1</button>
+            <button data-camera="Cam2" class="scene-btn">Cam 2</button>
+          </div>
+        </div>
+
+        <div class="card control-card">
+          <h2>Sponsors</h2>
+          <textarea
+            id="sponsorInput"
+            rows="4"
+            placeholder="sponsor1,sponsor2"
+          ></textarea>
+          <button id="updateSponsors">Update rotation</button>
+        </div>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>

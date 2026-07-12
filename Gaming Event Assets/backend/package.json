@@ -1,0 +1,17 @@
+{
+  "name": "repdox-control-plane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.4",
+    "ioredis": "^5.3.3",
+    "obs-websocket-js": "^5.0.8",
+    "@supabase/supabase-js": "^2.91.1",
+    "ws": "^8.13.0"
+  }
+}

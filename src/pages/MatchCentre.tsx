@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -75,6 +75,13 @@ export default function MatchCentre() {
   const [mapScoreA, setMapScoreA] = useState("");
   const [mapScoreB, setMapScoreB] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [liveMatchData, setLiveMatchData] = useState<MatchCentreData | null>(
+    null,
+  );
+  const [realtimeStatus, setRealtimeStatus] = useState<
+    "connecting" | "connected" | "disconnected" | "unknown"
+  >("unknown");
+  const hasRealtimeSubscribed = useRef(false);
 
   const { data: event, isLoading: eventLoading } = useQuery({
     queryKey: ["event", slug],
@@ -99,6 +106,12 @@ export default function MatchCentre() {
     enabled: !!matchId,
     retry: false,
   });
+
+  useEffect(() => {
+    if (realtimeStatus === "connected" && matchData) {
+      setLiveMatchData(matchData);
+    }
+  }, [matchData, realtimeStatus]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -127,21 +140,161 @@ export default function MatchCentre() {
     }
   }, [matchData]);
 
+  useEffect(() => {
+    if (!matchId) return;
+
+    const channel = supabase.channel(`match-centre-${matchId}`);
+
+    const applyChange = (payload: any) => {
+      if (!payload?.table) return;
+      setLiveMatchData((current) => {
+        if (!current) return current;
+        const eventType = payload.eventType || payload.event;
+        const rawRow = payload.new || payload.record || null;
+        const rawOld = payload.old || payload.old_record || null;
+
+        if (payload.table === "esports_tournament_matches") {
+          if (!rawRow || rawRow.id !== current.match.id) return current;
+
+          const nextMatch = {
+            ...current.match,
+            ...rawRow,
+            team_a_score:
+              rawRow.team_a_score === null || rawRow.team_a_score === undefined
+                ? null
+                : Number(rawRow.team_a_score),
+            team_b_score:
+              rawRow.team_b_score === null || rawRow.team_b_score === undefined
+                ? null
+                : Number(rawRow.team_b_score),
+          };
+
+          if (
+            rawRow.team_a_id !== current.match.team_a_id ||
+            rawRow.team_b_id !== current.match.team_b_id
+          ) {
+            refetch();
+            return current;
+          }
+
+          return {
+            ...current,
+            match: nextMatch,
+          };
+        }
+
+        if (payload.table === "esports_tournament_maps") {
+          const row = rawRow;
+          if (!row || row.match_id !== current.match.id) return current;
+
+          const mapIndex = current.maps.findIndex((map) => map.id === row.id);
+          const normalizedMap = {
+            ...(current.maps[mapIndex] ?? {
+              id: row.id,
+              match_id: row.match_id,
+            }),
+            ...row,
+            team_a_score:
+              row.team_a_score === null || row.team_a_score === undefined
+                ? null
+                : Number(row.team_a_score),
+            team_b_score:
+              row.team_b_score === null || row.team_b_score === undefined
+                ? null
+                : Number(row.team_b_score),
+            map_order:
+              row.map_order === null || row.map_order === undefined
+                ? null
+                : Number(row.map_order),
+          };
+
+          const maps = [...current.maps];
+          if (eventType === "DELETE" || eventType === "DELETE") {
+            return {
+              ...current,
+              maps: maps.filter((map) => map.id !== row.id),
+            };
+          }
+
+          if (mapIndex >= 0) {
+            maps[mapIndex] = normalizedMap;
+          } else {
+            maps.push(normalizedMap);
+          }
+          return {
+            ...current,
+            maps,
+          };
+        }
+
+        return current;
+      });
+    };
+
+    channel
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "esports_tournament_matches",
+          filter: `id=eq.${matchId}`,
+        },
+        applyChange,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "esports_tournament_maps",
+          filter: `match_id=eq.${matchId}`,
+        },
+        applyChange,
+      )
+      .subscribe((status: string) => {
+        if (status === "SUBSCRIBED") {
+          setRealtimeStatus("connected");
+          refetch();
+          setLiveMatchData(null);
+          return;
+        }
+        if (
+          status === "TIMED_OUT" ||
+          status === "CHANNEL_ERROR" ||
+          status === "CLOSED"
+        ) {
+          setRealtimeStatus("disconnected");
+        }
+        if (status === "ERROR") {
+          setRealtimeStatus("disconnected");
+        }
+      });
+
+    return () => {
+      setRealtimeStatus("disconnected");
+      void supabase.removeChannel(channel);
+    };
+  }, [matchId, refetch]);
+
+  const isRealtimeConnected = realtimeStatus === "connected";
+  const currentMatchData = liveMatchData || matchData;
+
   const isOwner = Boolean(user && event?.created_by === user.id);
   const isAdminUser = Boolean(
     user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()),
   );
   const canManage = isOwner || isAdminUser;
-  const match = matchData?.match;
-  const teamA = matchData?.teamA;
-  const teamB = matchData?.teamB;
+  const match = currentMatchData?.match;
+  const teamA = currentMatchData?.teamA;
+  const teamB = currentMatchData?.teamB;
   const embedSrc = buildEmbedUrl(streamPlatform, streamUrl, embedUrl);
   const statsRows = useMemo(() => {
-    const rows = [...(matchData?.stats || [])].sort(
+    const rows = [...(currentMatchData?.stats || [])].sort(
       (a, b) => (Number(b.acs) || 0) - (Number(a.acs) || 0),
     );
     return rows;
-  }, [matchData?.stats]);
+  }, [currentMatchData?.stats]);
 
   const handleSaveMatch = async (event: FormEvent) => {
     event.preventDefault();
@@ -177,11 +330,11 @@ export default function MatchCentre() {
   };
 
   const handleSaveMap = async () => {
-    if (!matchData?.maps?.[0]?.id) return;
+    if (!currentMatchData?.maps?.[0]?.id) return;
     setSubmitting(true);
     try {
-      await updateMatchMap(matchData.maps[0].id, {
-        map_name: mapName || matchData.maps[0].map_name || "Ascent",
+      await updateMatchMap(currentMatchData.maps[0].id, {
+        map_name: mapName || currentMatchData.maps[0].map_name || "Ascent",
         team_a_score: Number(mapScoreA || 0),
         team_b_score: Number(mapScoreB || 0),
         map_status: "completed",
@@ -237,10 +390,10 @@ export default function MatchCentre() {
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-                {matchData?.tournament?.game_name || "Esports Match"}
+                {currentMatchData?.tournament?.game_name || "Esports Match"}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {matchData?.tournament?.tournament_type || "Single Elimination"}{" "}
+                {currentMatchData?.tournament?.tournament_type || "Single Elimination"}{" "}
                 • {event.title}
               </p>
             </div>
@@ -267,7 +420,7 @@ export default function MatchCentre() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <div className="text-sm uppercase tracking-[0.25em] text-muted-foreground">
-                {matchData?.tournament?.title || "Tournament"}
+                {currentMatchData?.tournament?.title || "Tournament"}
               </div>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
                 {match.stage_label || "Upper Final"}
@@ -421,7 +574,7 @@ export default function MatchCentre() {
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <div className="rounded-xl border border-border/60 p-3">
                 <div className="font-semibold text-foreground">Tournament</div>
-                <div>{matchData?.tournament?.game_name || "Valorant"}</div>
+                <div>{currentMatchData?.tournament?.game_name || "Valorant"}</div>
               </div>
               <div className="rounded-xl border border-border/60 p-3">
                 <div className="font-semibold text-foreground">Stage</div>
@@ -467,7 +620,7 @@ export default function MatchCentre() {
                   {teamA?.team_name || "Team A"}
                 </div>
                 <div className="mt-3 space-y-2">
-                  {(matchData?.playersA || []).map((player) => (
+                  {(currentMatchData?.playersA || []).map((player) => (
                     <div
                       key={player.id}
                       className="rounded-xl border border-border/60 p-2 text-sm"
@@ -485,7 +638,7 @@ export default function MatchCentre() {
                   {teamB?.team_name || "Team B"}
                 </div>
                 <div className="mt-3 space-y-2">
-                  {(matchData?.playersB || []).map((player) => (
+                  {(currentMatchData?.playersB || []).map((player) => (
                     <div
                       key={player.id}
                       className="rounded-xl border border-border/60 p-2 text-sm"
@@ -527,7 +680,7 @@ export default function MatchCentre() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {(matchData?.maps || []).map((map) => (
+            {(currentMatchData?.maps || []).map((map) => (
               <div
                 key={map.id}
                 className="rounded-2xl border border-border/60 p-4"
@@ -653,6 +806,11 @@ export default function MatchCentre() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSaveMatch} className="space-y-4">
+                {match?.match_status === "live" ? (
+                  <div className="rounded-2xl border border-orange-400/20 bg-orange-400/10 p-4 text-sm text-orange-700">
+                    Live score editing is locked while the match is live. Use the broadcast admin dashboard for live updates or wait until the match is completed.
+                  </div>
+                ) : null}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="stage">Stage</Label>
@@ -728,14 +886,15 @@ export default function MatchCentre() {
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="submit" disabled={submitting}>
+                  <Button type="submit" disabled={submitting || match?.match_status === "live"}>
                     Save Match Details
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
+                    disabled={!match || match.match_status === "live"}
                     onClick={() =>
-                      updateTournamentMatch(match.id, {
+                      updateTournamentMatch(match!.id, {
                         match_status: "live" as any,
                       }).then(() => refetch())
                     }
@@ -745,8 +904,9 @@ export default function MatchCentre() {
                   <Button
                     type="button"
                     variant="outline"
+                    disabled={!match || match.match_status === "live"}
                     onClick={() =>
-                      updateTournamentMatch(match.id, {
+                      updateTournamentMatch(match!.id, {
                         match_status: "completed" as any,
                       }).then(() => refetch())
                     }
@@ -756,6 +916,7 @@ export default function MatchCentre() {
                   <Button
                     type="button"
                     variant="outline"
+                    disabled={!match || match.match_status === "live"}
                     onClick={handleSaveMap}
                   >
                     Update Map
