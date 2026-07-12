@@ -144,6 +144,7 @@ export default function MatchCentre() {
     if (!matchId) return;
 
     const channel = supabase.channel(`match-centre-${matchId}`);
+    setRealtimeStatus("connecting");
 
     const applyChange = (payload: any) => {
       if (!payload?.table) return;
@@ -393,7 +394,8 @@ export default function MatchCentre() {
                 {currentMatchData?.tournament?.game_name || "Esports Match"}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {currentMatchData?.tournament?.tournament_type || "Single Elimination"}{" "}
+                {currentMatchData?.tournament?.tournament_type ||
+                  "Single Elimination"}{" "}
                 • {event.title}
               </p>
             </div>
@@ -406,19 +408,19 @@ export default function MatchCentre() {
                   realtimeStatus === "connected"
                     ? "bg-emerald-500/10 text-emerald-600"
                     : realtimeStatus === "connecting"
-                    ? "bg-sky-500/10 text-sky-600"
-                    : realtimeStatus === "disconnected"
-                    ? "bg-red-500/10 text-red-600"
-                    : "bg-muted/10 text-muted-foreground"
+                      ? "bg-sky-500/10 text-sky-600"
+                      : realtimeStatus === "disconnected"
+                        ? "bg-red-500/10 text-red-600"
+                        : "bg-muted/10 text-muted-foreground"
                 }`}
               >
                 {realtimeStatus === "connected"
                   ? "Realtime connected"
                   : realtimeStatus === "connecting"
-                  ? "Realtime connecting"
-                  : realtimeStatus === "disconnected"
-                  ? "Realtime disconnected"
-                  : "Realtime unknown"}
+                    ? "Realtime connecting"
+                    : realtimeStatus === "disconnected"
+                      ? "Realtime disconnected"
+                      : "Realtime unknown"}
               </Badge>
               {match.streamed_match ? (
                 <Badge className="bg-accent/10 text-accent">
@@ -593,7 +595,9 @@ export default function MatchCentre() {
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <div className="rounded-xl border border-border/60 p-3">
                 <div className="font-semibold text-foreground">Tournament</div>
-                <div>{currentMatchData?.tournament?.game_name || "Valorant"}</div>
+                <div>
+                  {currentMatchData?.tournament?.game_name || "Valorant"}
+                </div>
               </div>
               <div className="rounded-xl border border-border/60 p-3">
                 <div className="font-semibold text-foreground">Stage</div>
@@ -827,7 +831,9 @@ export default function MatchCentre() {
               <form onSubmit={handleSaveMatch} className="space-y-4">
                 {match?.match_status === "live" ? (
                   <div className="rounded-2xl border border-orange-400/20 bg-orange-400/10 p-4 text-sm text-orange-700">
-                    Live score editing is locked while the match is live. Use the broadcast admin dashboard for live updates or wait until the match is completed.
+                    Live score editing is locked while the match is live. Use
+                    the broadcast admin dashboard for live updates or wait until
+                    the match is completed.
                   </div>
                 ) : null}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -905,7 +911,10 @@ export default function MatchCentre() {
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="submit" disabled={submitting || match?.match_status === "live"}>
+                  <Button
+                    type="submit"
+                    disabled={submitting || match?.match_status === "live"}
+                  >
                     Save Match Details
                   </Button>
                   <Button
