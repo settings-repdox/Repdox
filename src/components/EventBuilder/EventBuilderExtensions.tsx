@@ -19,13 +19,11 @@ import {
 } from "lucide-react";
 
 interface Props {
-  eventType?: string;
+  eventType?: string | string[];
   scheduleText: string;
   setScheduleText: (v: string) => void;
   teamsText: string;
   setTeamsText: (v: string) => void;
-  committeesText?: string;
-  setCommitteesText?: (v: string) => void;
   prizeText?: string;
   setPrizeText?: (v: string) => void;
   rolesText?: string;
@@ -50,8 +48,6 @@ export default function EventBuilderExtensions({
   setScheduleText,
   teamsText,
   setTeamsText,
-  committeesText,
-  setCommitteesText,
   prizeText,
   setPrizeText,
   rolesText,
@@ -63,9 +59,10 @@ export default function EventBuilderExtensions({
   resources,
   setResources,
 }: Props) {
-  const isHackathon = eventType === "Hackathon";
-  const isMUN = eventType === "MUN";
-  const isWorkshop = eventType === "Workshop";
+  const selectedEventType = Array.isArray(eventType) ? eventType[0] : eventType;
+  const isHackathon = selectedEventType === "Hackathon";
+  const isWorkshop = selectedEventType === "Workshop";
+  const isGaming = selectedEventType === "Gaming";
 
   // Generic helper for adding/removing items from lists
   const removeItem = <T,>(
@@ -120,7 +117,7 @@ export default function EventBuilderExtensions({
         </CardContent>
       </Card>
 
-      {/* Teams & Roles (Hidden for Hackathons if requested, but shown generally. For MUNs adding Committees) */}
+      {/* Teams & Roles (Hidden for Hackathons if requested) */}
       <Card>
         <CardContent className="pt-6 space-y-6">
           <div className="flex items-center gap-2 border-b border-border pb-2">
@@ -133,32 +130,21 @@ export default function EventBuilderExtensions({
           <div className="grid md:grid-cols-2 gap-6">
             {!isHackathon && (
               <div className="space-y-3">
-                <Label>Event Teams</Label>
+                <Label>{isGaming ? "Teams / Roster" : "Event Teams"}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Format: Name | Description | Email
+                  {isGaming
+                    ? "Format: Team Name | Roster Details | Contact Email"
+                    : "Format: Name | Description | Email"}
                 </p>
                 <Textarea
                   value={teamsText}
                   onChange={(e) => setTeamsText(e.target.value)}
                   rows={4}
-                  placeholder="Organizers | Main event team | contact@example.com"
-                  className="font-mono text-sm bg-card/50"
-                />
-              </div>
-            )}
-
-            {/* MUN: Committees */}
-            {isMUN && committeesText !== undefined && setCommitteesText && (
-              <div className="space-y-3">
-                <Label>Committees</Label>
-                <p className="text-xs text-muted-foreground">
-                  Format: Committee Name | Agenda | Difficulty
-                </p>
-                <Textarea
-                  value={committeesText}
-                  onChange={(e) => setCommitteesText(e.target.value)}
-                  rows={4}
-                  placeholder="UNSC | Cyberwarfare | High&#10;DISEC | Small Arms | Medium"
+                  placeholder={
+                    isGaming
+                      ? "Dragons | 5-player roster with substitute | captain@example.com"
+                      : "Organizers | Main event team | contact@example.com"
+                  }
                   className="font-mono text-sm bg-card/50"
                 />
               </div>

@@ -17,8 +17,8 @@ interface EventFiltersProps {
   onTypeChange: (value: string) => void;
   selectedFormat: string;
   onFormatChange: (value: string) => void;
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
+  viewMode: "grid" | "list";
+  onViewModeChange: (mode: "grid" | "list") => void;
   activeFiltersCount: number;
   onClearFilters: () => void;
 }
@@ -59,7 +59,6 @@ export default function EventFilters({
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="Hackathon">Hackathon</SelectItem>
             <SelectItem value="Workshop">Workshop</SelectItem>
-            <SelectItem value="MUN">MUN</SelectItem>
             <SelectItem value="Gaming">Gaming</SelectItem>
           </SelectContent>
         </Select>
@@ -80,17 +79,17 @@ export default function EventFilters({
         {/* View Mode Toggle */}
         <div className="flex gap-2">
           <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            variant={viewMode === "grid" ? "default" : "outline"}
             size="icon"
-            onClick={() => onViewModeChange('grid')}
+            onClick={() => onViewModeChange("grid")}
             aria-label="Grid view"
           >
             <Grid className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
+            variant={viewMode === "list" ? "default" : "outline"}
             size="icon"
-            onClick={() => onViewModeChange('list')}
+            onClick={() => onViewModeChange("list")}
             aria-label="List view"
           >
             <List className="h-4 w-4" />
@@ -103,7 +102,7 @@ export default function EventFilters({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-muted-foreground">Active filters:</span>
           <Badge variant="secondary" className="gap-1">
-            {activeFiltersCount} filter{activeFiltersCount > 1 ? 's' : ''}
+            {activeFiltersCount} filter{activeFiltersCount > 1 ? "s" : ""}
           </Badge>
           <Button
             variant="ghost"

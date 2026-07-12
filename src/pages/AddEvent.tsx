@@ -31,6 +31,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import eventService from "@/lib/eventService";
+import { ensureTournamentForEvent } from "@/lib/tournamentService";
 import FileUpload from "@/components/ui/File_upload";
 
 import EventBuilderExtensions from "@/components/EventBuilder/EventBuilderExtensions";
@@ -95,6 +96,9 @@ export default function AddEvent() {
     slug: "",
     type: "Hackathon",
     format: "Offline",
+    game_name: "",
+    tournament_type: "Single Elimination",
+    max_teams: "16",
     start_date: "",
     start_time: "09:00",
     end_date: "",
@@ -120,7 +124,6 @@ export default function AddEvent() {
   const [scheduleText, setScheduleText] = useState("");
   const [teamsText, setTeamsText] = useState("");
   const [prizeText, setPrizeText] = useState("");
-  const [committeesText, setCommitteesText] = useState("");
 
   // FAQ state management (start empty; user can opt-in)
   const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -294,7 +297,9 @@ export default function AddEvent() {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        const isAdminUser = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+        const isAdminUser = user?.email
+          ? ADMIN_EMAILS.includes(user.email.toLowerCase())
+          : false;
         if (event.created_by !== user?.id && !isAdminUser) {
           toast({
             title: "Permission Denied",
@@ -452,6 +457,8 @@ export default function AddEvent() {
   const onChange = (k: keyof typeof form, v: string | string[]) =>
     setForm((s) => ({ ...s, [k]: v }));
 
+  const selectedEventType = Array.isArray(form.type) ? form.type[0] : form.type;
+
   // keep `draft` in sync with the main form and extras (for preview / autosave)
   useEffect(() => {
     // Construct sections dynamically based on content
@@ -471,20 +478,36 @@ export default function AddEvent() {
         title: "Speakers",
         content: JSON.stringify(speakers),
       });
-    if (teamsText && form.type !== "Hackathon")
+    if (teamsText && selectedEventType !== "Hackathon")
       secs.push({
         id: "teams",
         type: "Teams",
         title: "Teams",
         content: teamsText,
       });
-    if (committeesText && form.type === "MUN")
-      secs.push({
-        id: "committees",
-        type: "Committees",
-        title: "Committees",
-        content: committeesText,
-      });
+    if (selectedEventType === "Gaming") {
+      const gameName = form.game_name?.trim();
+      const tournamentType = form.tournament_type?.trim();
+      const maxTeams = form.max_teams?.trim();
+      if (gameName || tournamentType || maxTeams) {
+        const lines = [
+          gameName ? `Game: ${gameName}` : null,
+          tournamentType ? `Tournament Type: ${tournamentType}` : null,
+          maxTeams ? `Max Teams: ${maxTeams}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n");
+
+        if (lines) {
+          secs.push({
+            id: "tournament_info",
+            type: "Tournament Info",
+            title: "Tournament Info",
+            content: lines,
+          });
+        }
+      }
+    }
     if (prizeText)
       secs.push({
         id: "prizes",
@@ -554,7 +577,6 @@ export default function AddEvent() {
     teamsText,
     prizeText,
     rolesText,
-    committeesText,
     eventId,
     coverUrl,
   ]);
@@ -865,6 +887,17 @@ export default function AddEvent() {
       if (isEditMode && eventId) {
         // Update existing event
         const updated = await eventService.updateEvent(eventId, payload);
+        if (selectedEventType === "Gaming") {
+          await ensureTournamentForEvent(eventId, {
+            game_name: form.game_name?.trim() || "Valorant",
+            tournament_type:
+              form.tournament_type?.trim() || "Single Elimination",
+            max_teams:
+              form.max_teams && Number(form.max_teams) > 0
+                ? Number(form.max_teams)
+                : 16,
+          });
+        }
         toast({
           title: "Success",
           description: "Event updated successfully!",
@@ -882,6 +915,17 @@ export default function AddEvent() {
       } else {
         // Create new event
         const created = await eventService.createEvent(payload);
+        if (created?.id && selectedEventType === "Gaming") {
+          await ensureTournamentForEvent(created.id, {
+            game_name: form.game_name?.trim() || "Valorant",
+            tournament_type:
+              form.tournament_type?.trim() || "Single Elimination",
+            max_teams:
+              form.max_teams && Number(form.max_teams) > 0
+                ? Number(form.max_teams)
+                : 16,
+          });
+        }
         toast({
           title: "Success",
           description: "Event created successfully!",
@@ -1197,7 +1241,7 @@ export default function AddEvent() {
                 <div className="space-y-2">
                   <Label>Event Type (Select one)</Label>
                   <div className="flex flex-wrap gap-2 p-2 rounded-lg bg-card/30 border border-border/50">
-                    {["Hackathon", "Workshop"].map((t) => {
+                    {["Hackathon", "Workshop", "Gaming"].map((t) => {
                       const isSelected = Array.isArray(form.type)
                         ? form.type.includes(t)
                         : form.type === t;
@@ -1242,6 +1286,51 @@ export default function AddEvent() {
               </div>
 
               {/* Slug */}
+              {selectedEventType === "Gaming" && (
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Game Title</Label>
+                    <Input
+                      value={form.game_name}
+                      onChange={(e) => onChange("game_name", e.target.value)}
+                      placeholder="e.g. Valorant, CS2, Rocket League"
+                      className="bg-card/50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Tournament Type</Label>
+                    <select
+                      value={form.tournament_type}
+                      onChange={(e) =>
+                        onChange("tournament_type", e.target.value)
+                      }
+                      className="h-12 w-full rounded-xl border border-border/70 bg-card/50 px-3 text-sm text-foreground"
+                    >
+                      <option value="Single Elimination">
+                        Single Elimination
+                      </option>
+                      <option value="Double Elimination">
+                        Double Elimination
+                      </option>
+                      <option value="Round Robin">Round Robin</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Max Teams</Label>
+                    <Input
+                      type="number"
+                      min={2}
+                      step={1}
+                      value={form.max_teams}
+                      onChange={(e) => onChange("max_teams", e.target.value)}
+                      className="bg-card/50"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>URL Slug</Label>
                 <div className="relative">
@@ -1599,8 +1688,6 @@ export default function AddEvent() {
             setScheduleText={setScheduleText}
             teamsText={teamsText}
             setTeamsText={setTeamsText}
-            committeesText={committeesText}
-            setCommitteesText={setCommitteesText}
             prizeText={prizeText}
             setPrizeText={setPrizeText}
             faqs={faqs}
