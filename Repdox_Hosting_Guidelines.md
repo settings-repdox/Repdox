@@ -21,7 +21,7 @@ This document outlines the standard framework for external institutions and orga
 ### 2. Roles & Responsibilities
 *   **Client (Host):** Responsible for venue allocation, permissions, administrative approvals, and final decision authority.
 *   **Repdox:** Responsible for planning, execution strategy, vendor coordination, and technical infrastructure.
-*   **Shared Responsibilities:** On-ground volunteer management, branding alignment, and overall participant experience.
+*   **Shared Responsibilities:** On-ground volunteer management, branding alignment, and overall participant experience
 
 ---
 
