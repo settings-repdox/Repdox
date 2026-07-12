@@ -209,7 +209,7 @@ export default function MatchCentre() {
           };
 
           const maps = [...current.maps];
-          if (eventType === "DELETE" || eventType === "DELETE") {
+          if (eventType === "DELETE" || eventType === "delete") {
             return {
               ...current,
               maps: maps.filter((map) => map.id !== row.id),
@@ -400,6 +400,25 @@ export default function MatchCentre() {
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="border-accent/30 text-accent">
                 {match.match_status?.toUpperCase() || "UPCOMING"}
+              </Badge>
+              <Badge
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  realtimeStatus === "connected"
+                    ? "bg-emerald-500/10 text-emerald-600"
+                    : realtimeStatus === "connecting"
+                    ? "bg-sky-500/10 text-sky-600"
+                    : realtimeStatus === "disconnected"
+                    ? "bg-red-500/10 text-red-600"
+                    : "bg-muted/10 text-muted-foreground"
+                }`}
+              >
+                {realtimeStatus === "connected"
+                  ? "Realtime connected"
+                  : realtimeStatus === "connecting"
+                  ? "Realtime connecting"
+                  : realtimeStatus === "disconnected"
+                  ? "Realtime disconnected"
+                  : "Realtime unknown"}
               </Badge>
               {match.streamed_match ? (
                 <Badge className="bg-accent/10 text-accent">
@@ -894,7 +913,8 @@ export default function MatchCentre() {
                     variant="outline"
                     disabled={!match || match.match_status === "live"}
                     onClick={() =>
-                      updateTournamentMatch(match!.id, {
+                      match?.id &&
+                      updateTournamentMatch(match.id, {
                         match_status: "live" as any,
                       }).then(() => refetch())
                     }
@@ -906,7 +926,8 @@ export default function MatchCentre() {
                     variant="outline"
                     disabled={!match || match.match_status === "live"}
                     onClick={() =>
-                      updateTournamentMatch(match!.id, {
+                      match?.id &&
+                      updateTournamentMatch(match.id, {
                         match_status: "completed" as any,
                       }).then(() => refetch())
                     }
