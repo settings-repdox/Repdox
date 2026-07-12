@@ -60,6 +60,7 @@ import { toast } from "@/hooks/use-toast";
 import AddToCalendar from "@/components/AddToCalendar";
 import RecentlyViewedEvents from "@/components/RecentlyViewedEvents";
 import { getRegistrationTableName } from "@/lib/utils";
+import { isGamingEvent } from "@/lib/tournamentService";
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -85,7 +86,9 @@ export default function EventDetail() {
         data: { user },
       } = await supabase.auth.getUser();
       const isOwner = user && data.created_by === user.id;
-      const isAdminUser = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+      const isAdminUser = user?.email
+        ? ADMIN_EMAILS.includes(user.email.toLowerCase())
+        : false;
 
       // If expired and NOT the owner/admin, block access
       if (isExpired && !isOwner && !isAdminUser) {
@@ -148,9 +151,12 @@ export default function EventDetail() {
   }, [event?.id, event?.slug]);
 
   const isOwner = user && event?.created_by === user.id;
-  const isAdminUser = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+  const isAdminUser = user?.email
+    ? ADMIN_EMAILS.includes(user.email.toLowerCase())
+    : false;
   const canManage = isOwner || isAdminUser;
   const isEnded = endCountdown.isExpired;
+  const isGaming = Boolean(event && isGamingEvent(event as any));
 
   // Fetch per-role registration counts to show remaining capacity
   useEffect(() => {
@@ -452,8 +458,6 @@ export default function EventDetail() {
     (t) => t.members && t.members.length > 0,
   );
 
-
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -623,7 +627,9 @@ export default function EventDetail() {
                 transition={{ delay: 0.2 }}
                 className="flex items-center gap-4 text-white bg-black/40 backdrop-blur-md w-fit px-6 py-3 rounded-2xl border border-white/10 font-mono text-lg shadow-xl"
               >
-                <Clock className={`h-5 w-5 ${isEnded ? "text-red-400" : "text-purple-400 animate-pulse"}`} />
+                <Clock
+                  className={`h-5 w-5 ${isEnded ? "text-red-400" : "text-purple-400 animate-pulse"}`}
+                />
                 {isEnded ? (
                   <span className="font-bold text-red-400">
                     Event has ended
@@ -690,6 +696,19 @@ export default function EventDetail() {
                 Event Schedule
               </button>
 
+              {isGaming && (
+                <button
+                  onClick={() => setTab("tournament")}
+                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+                    activeTab === "tournament"
+                      ? "border-accent text-accent"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Tournament
+                </button>
+              )}
+
               {canManage && (
                 <>
                   <Link
@@ -746,6 +765,26 @@ export default function EventDetail() {
                         )}
                       </ul>
                     )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === "tournament" && isGaming && (
+                <Card className="border-accent/20 bg-gradient-to-br from-accent/10 via-background to-background">
+                  <CardHeader>
+                    <CardTitle>Esports Tournament</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-muted-foreground leading-relaxed">
+                      This gaming event includes a Valorant-style bracket system
+                      with team registration, bracket generation, live scoring,
+                      and match updates.
+                    </p>
+                    <Link to={`/events/${event.slug}/tournament`}>
+                      <Button className="w-full bg-accent text-accent-foreground">
+                        Open Tournament Dashboard
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               )}
@@ -908,7 +947,7 @@ export default function EventDetail() {
                     }
 
                     return (
-                      <motion.div 
+                      <motion.div
                         id="register"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -917,7 +956,7 @@ export default function EventDetail() {
                       >
                         {/* Iridescent Glow Background */}
                         <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan opacity-25 blur group-hover:opacity-40 transition duration-1000 group-hover:duration-200 rounded-[2rem]" />
-                        
+
                         <div className="relative bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 md:p-12 overflow-hidden shadow-2xl">
                           {/* Ambient background accent */}
                           <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[80px] -mr-32 -mt-32 rounded-full pointer-events-none" />
@@ -930,13 +969,23 @@ export default function EventDetail() {
                               </span>
                               <h2 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight">
                                 {isRegistered ? (
-                                  <>Review Your <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">Application</span></>
+                                  <>
+                                    Review Your{" "}
+                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">
+                                      Application
+                                    </span>
+                                  </>
                                 ) : (
-                                  <>Ready to <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">Join?</span></>
+                                  <>
+                                    Ready to{" "}
+                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan">
+                                      Join?
+                                    </span>
+                                  </>
                                 )}
                               </h2>
                               <p className="text-gray-400 text-lg max-w-xl mx-auto md:mx-0 leading-relaxed">
-                                {isRegistered 
+                                {isRegistered
                                   ? "Your registration is active. Access the portal to review your team and project details."
                                   : `Register now to secure your spot for ${event.title}.`}
                               </p>
@@ -946,7 +995,9 @@ export default function EventDetail() {
                               <Link to={`/events/${event.slug}/register`}>
                                 <Button className="group/btn relative w-full md:w-[280px] h-20 bg-white text-black hover:text-white rounded-[20px] font-black text-lg overflow-hidden transition-all duration-300 shadow-xl shadow-white/5">
                                   <span className="relative z-10 flex items-center justify-center gap-2">
-                                    {isRegistered ? "Portal Access" : "Join Now"}
+                                    {isRegistered
+                                      ? "Portal Access"
+                                      : "Join Now"}
                                     <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
                                   </span>
                                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />

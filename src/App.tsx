@@ -13,7 +13,9 @@ import IntroLoader from "@/components/IntroLoader";
 import Nav from "@/components/Nav";
 import CommandPalette from "@/components/CommandPalette";
 // import LightPillarBackground from "@/components/BackgroundSystem/LightPillarBackground";
-const LightPillarBackground = lazy(() => import("@/components/BackgroundSystem/LightPillarBackground"));
+const LightPillarBackground = lazy(
+  () => import("@/components/BackgroundSystem/LightPillarBackground"),
+);
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import PageLoader from "@/components/PageLoader";
@@ -27,6 +29,8 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 const Index = lazy(() => import("./pages/Index"));
 const EventsList = lazy(() => import("./pages/EventsList"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
+const EventTournament = lazy(() => import("./pages/EventTournament"));
+const MatchCentre = lazy(() => import("./pages/MatchCentre"));
 const EventRegistrations = lazy(() => import("./pages/EventRegistrations"));
 const EventTeams = lazy(() => import("./pages/EventTeams"));
 const AddEvent = lazy(() => import("./pages/AddEvent"));
@@ -65,14 +69,21 @@ const LoadingFallback = () => null;
 function AppContent() {
   const location = useLocation();
   const { user, loading, isProfileComplete } = useAuth();
-  
-  console.log("AppContent Render State:", { user, loading, isProfileComplete, pathname: location.pathname });
-  
+
+  console.log("AppContent Render State:", {
+    user,
+    loading,
+    isProfileComplete,
+    pathname: location.pathname,
+  });
+
   const hideFooterRoutes = ["/signin", "/signup"];
   const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
 
   // Define routes that are allowed without being signed in (auth pages)
-  const isAuthRoute = ["/signin", "/signup", "/auth/callback"].includes(location.pathname);
+  const isAuthRoute = ["/signin", "/signup", "/auth/callback"].includes(
+    location.pathname,
+  );
 
   // Show nothing while loading auth state to prevent flash of loading screen
   if (loading) {
@@ -84,8 +95,16 @@ function AppContent() {
     // 1. If authenticated, but email is not verified, they must be on /verify-email (or callback/signin)
     const isVerified = !!user.email_confirmed_at;
     if (!isVerified) {
-      if (location.pathname !== "/verify-email" && location.pathname !== "/auth/callback") {
-        return <Navigate to={`/verify-email?email=${encodeURIComponent(user.email || "")}`} replace />;
+      if (
+        location.pathname !== "/verify-email" &&
+        location.pathname !== "/auth/callback"
+      ) {
+        return (
+          <Navigate
+            to={`/verify-email?email=${encodeURIComponent(user.email || "")}`}
+            replace
+          />
+        );
       }
     }
   }
@@ -112,7 +131,20 @@ function AppContent() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/events/:slug/register" element={<EventRegister />} />
-            <Route path="/solve-for-india/register" element={<Navigate to="/events/SolveForIndia2026/register" replace />} />
+            <Route
+              path="/events/:slug/tournament"
+              element={<EventTournament />}
+            />
+            <Route
+              path="/events/:slug/matches/:matchId"
+              element={<MatchCentre />}
+            />
+            <Route
+              path="/solve-for-india/register"
+              element={
+                <Navigate to="/events/SolveForIndia2026/register" replace />
+              }
+            />
             <Route path="/auth/discord-link" element={<DiscordLink />} />
 
             {/* Profile Routes - Public Access (own profile requires auth internally) */}
@@ -222,7 +254,10 @@ const App = () => {
       } else if (lastActivityStr) {
         // Check if idle for more than 30 minutes (30 * 60 * 1000 ms)
         const lastActivity = parseInt(lastActivityStr, 10);
-        if (!isNaN(lastActivity) && Date.now() - lastActivity > 30 * 60 * 1000) {
+        if (
+          !isNaN(lastActivity) &&
+          Date.now() - lastActivity > 30 * 60 * 1000
+        ) {
           shouldShow = true;
         }
       }
@@ -238,15 +273,19 @@ const App = () => {
   // Track user activity in localStorage (throttled to save writes)
   useEffect(() => {
     let lastWriteTime = 0;
-    
+
     const updateActivity = () => {
       const now = Date.now();
-      if (now - lastWriteTime > 10000) { // 10 seconds throttle
+      if (now - lastWriteTime > 10000) {
+        // 10 seconds throttle
         lastWriteTime = now;
         try {
           localStorage.setItem("lastActivity", now.toString());
         } catch (e) {
-          console.debug("[App] Failed to write lastActivity to localStorage:", e);
+          console.debug(
+            "[App] Failed to write lastActivity to localStorage:",
+            e,
+          );
         }
       }
     };
@@ -254,13 +293,19 @@ const App = () => {
     // Record initial activity on mount
     updateActivity();
 
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
-    events.forEach(name => {
+    const events = [
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "scroll",
+      "touchstart",
+    ];
+    events.forEach((name) => {
       window.addEventListener(name, updateActivity, { passive: true });
     });
 
     return () => {
-      events.forEach(name => {
+      events.forEach((name) => {
         window.removeEventListener(name, updateActivity);
       });
     };
