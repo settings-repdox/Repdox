@@ -32,6 +32,8 @@ async function syncMatchStateToSupabase(matchId, state) {
     match_status: normalizeString(state.status) || undefined,
     team_a_score: toNumberOrNull(state.seriesScoreA),
     team_b_score: toNumberOrNull(state.seriesScoreB),
+    active_scene: normalizeString(state.activeScene) || undefined,
+    active_camera: normalizeString(state.activeCamera) || undefined,
     updated_at: new Date().toISOString(),
   };
 
@@ -92,7 +94,23 @@ async function syncMatchScoreToSupabase(matchId, score) {
   }
 }
 
+async function checkSupabaseHealth() {
+  if (!supabase) {
+    throw new Error("Supabase client not configured");
+  }
+
+  const { error } = await supabase
+    .from("esports_tournament_matches")
+    .select("id", { head: true, count: "exact" })
+    .limit(1);
+
+  if (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   syncMatchStateToSupabase,
   syncMatchScoreToSupabase,
+  checkSupabaseHealth,
 };

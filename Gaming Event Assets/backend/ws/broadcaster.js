@@ -65,7 +65,13 @@ function createWebSocketServer(server) {
     } catch (error) {
       payload = { raw: rawPayload };
     }
-    const frame = { type: "update", channel, data: payload };
+
+    const frame = {
+      channel,
+      timestamp: Date.now(),
+      data: payload,
+      matchId: payload.matchId || payload.match_id || null,
+    };
 
     wss.clients.forEach((socket) => {
       if (socket.readyState !== WebSocket.OPEN) {
