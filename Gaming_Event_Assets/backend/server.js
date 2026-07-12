@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const http = require("http");
 const path = require("path");
-const bodyParser = require("body-parser");
 const routes = require("./routes");
 const { createWebSocketServer } = require("./ws/broadcaster");
 const obsClient = require("./obs/obsClient");
@@ -11,7 +10,8 @@ const { client } = require("./redis");
 const PORT = process.env.PORT || 4000;
 
 const app = express();
-app.use(bodyParser.json());
+// Use Express's built-in JSON body parser instead of the body-parser package
+app.use(express.json());
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -26,14 +26,7 @@ app.use("/api", routes);
 app.use("/overlays", express.static(path.join(__dirname, "../overlays")));
 app.use("/admin", express.static(path.join(__dirname, "../admin")));
 
-app.get("/health", async (req, res) => {
-  try {
-    await client.ping();
-    res.json({ status: "ok" });
-  } catch (error) {
-    res.status(500).json({ status: "error", message: "Redis unreachable" });
-  }
-});
+// Note: single authoritative health endpoint lives at /api/health
 
 const server = http.createServer(app);
 createWebSocketServer(server);

@@ -63,14 +63,9 @@ async function syncMatchStateToSupabase(matchId, state) {
 
 async function syncMatchScoreToSupabase(matchId, score) {
   if (!supabase) return;
-
-  const matchPayload = {
-    id: matchId,
-    team_a_score: toNumberOrNull(score.teamAScore),
-    team_b_score: toNumberOrNull(score.teamBScore),
-    updated_at: new Date().toISOString(),
-  };
-
+  // Only sync map-level round scores to the maps table. Do NOT touch
+  // the match-level team_a_score / team_b_score fields here — those
+  // are owned by syncMatchStateToSupabase (series score).
   const mapPayload = {
     match_id: matchId,
     map_order: toNumberOrNull(score.roundNumber) || 1,
@@ -81,16 +76,15 @@ async function syncMatchScoreToSupabase(matchId, score) {
   };
 
   try {
-    await Promise.all([
-      supabase
-        .from("esports_tournament_matches")
-        .upsert(matchPayload, { onConflict: ["id"] }),
-      supabase.from("esports_tournament_maps").upsert(mapPayload, {
-        onConflict: ["match_id", "map_order"],
-      }),
-    ]);
+    await supabase
+      .from("esports_tournament_maps")
+      .upsert(mapPayload, { onConflict: ["match_id", "map_order"] });
   } catch (error) {
-    console.error("[Supabase Sync] Failed to sync score for", matchId, error);
+    console.error(
+      "[Supabase Sync] Failed to sync map score for",
+      matchId,
+      error,
+    );
   }
 }
 
