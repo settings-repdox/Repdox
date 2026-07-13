@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Repdox Admin</title>
+    <title>Repdox Broadcast Control</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -11,69 +11,304 @@
       <header class="admin-header">
         <div>
           <p class="brand">Repdox</p>
-          <p class="subtitle">Live broadcast control</p>
+          <p class="subtitle">Broadcast admin control</p>
         </div>
-        <div class="status-pill" id="connectionState">Offline</div>
+        <div class="status-group">
+          <span class="status-pill disconnected" id="wsStatus"
+            >WS: disconnected</span
+          >
+          <span class="status-pill unset" id="tokenStatus">Token: unset</span>
+        </div>
       </header>
 
+      <section class="card token-card">
+        <div class="token-row">
+          <label class="field-label" for="tokenInput">Bearer token</label>
+          <input
+            id="tokenInput"
+            type="password"
+            autocomplete="off"
+            placeholder="Paste admin bearer token"
+          />
+        </div>
+        <div class="button-row button-row--compact">
+          <button id="saveToken">Save token</button>
+          <button id="clearToken" type="button" class="secondary">Clear</button>
+        </div>
+        <p class="field-note">
+          Stored in this browser tab only. Not persisted beyond the session.
+        </p>
+        <div class="field-error" id="tokenError"></div>
+      </section>
+
+      <section class="card meta-card">
+        <div class="meta-grid">
+          <div>
+            <div class="meta-label">Match</div>
+            <div class="meta-value" id="matchLabel">default</div>
+          </div>
+          <div>
+            <div class="meta-label">Tournament</div>
+            <div class="meta-value" id="tournamentLabel">none</div>
+          </div>
+          <div>
+            <div class="meta-label">Last confirmed</div>
+            <div class="meta-value" id="updatedAt">—</div>
+          </div>
+        </div>
+      </section>
+
       <section class="admin-grid">
-        <div class="card control-card">
-          <h2>Score</h2>
-          <div class="score-control">
+        <section class="card control-card" id="scorePanel">
+          <div class="card-heading">
             <div>
-              <label>Team A</label>
-              <div class="score-row">
-                <button data-action="decrement" data-team="A">-</button>
-                <span id="scoreA">0</span>
-                <button data-action="increment" data-team="A">+</button>
+              <h2>Score control</h2>
+              <p class="panel-note">
+                Team score, round, and series score are separate controls.
+              </p>
+            </div>
+            <span class="panel-label" id="scorePending">Live state synced</span>
+          </div>
+
+          <div class="score-layout">
+            <div class="score-card team-card team-a">
+              <div class="team-name" id="teamAName">Team A</div>
+              <div class="score-value" id="scoreA">0</div>
+              <div class="score-buttons">
+                <button data-action="decrement" data-field="teamAScore">
+                  -
+                </button>
+                <button data-action="increment" data-field="teamAScore">
+                  +
+                </button>
               </div>
             </div>
-            <div>
-              <label>Team B</label>
-              <div class="score-row">
-                <button data-action="decrement" data-team="B">-</button>
-                <span id="scoreB">0</span>
-                <button data-action="increment" data-team="B">+</button>
+
+            <div class="score-card team-card team-b">
+              <div class="team-name" id="teamBName">Team B</div>
+              <div class="score-value" id="scoreB">0</div>
+              <div class="score-buttons">
+                <button data-action="decrement" data-field="teamBScore">
+                  -
+                </button>
+                <button data-action="increment" data-field="teamBScore">
+                  +
+                </button>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="card control-card">
-          <h2>Timer</h2>
-          <div class="timer-control">
+          <div class="split-row">
+            <div>
+              <div class="field-label">Round</div>
+              <div class="inline-control">
+                <button data-action="decrement" data-field="roundNumber">
+                  -
+                </button>
+                <span class="inline-value" id="roundNumber">0</span>
+                <button data-action="increment" data-field="roundNumber">
+                  +
+                </button>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Series</div>
+              <div class="series-grid">
+                <div class="series-item">
+                  <div class="series-label">A</div>
+                  <div class="inline-control">
+                    <button data-action="decrement" data-field="seriesScoreA">
+                      -
+                    </button>
+                    <span class="inline-value" id="seriesScoreA">0</span>
+                    <button data-action="increment" data-field="seriesScoreA">
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div class="series-item">
+                  <div class="series-label">B</div>
+                  <div class="inline-control">
+                    <button data-action="decrement" data-field="seriesScoreB">
+                      -
+                    </button>
+                    <span class="inline-value" id="seriesScoreB">0</span>
+                    <button data-action="increment" data-field="seriesScoreB">
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="confirm-strip hidden" id="seriesConfirm">
+            <div>
+              <strong>Confirm series update</strong>
+              <p id="seriesConfirmText">Update series score?</p>
+            </div>
+            <div class="button-row button-row--compact">
+              <button id="confirmSeries">Confirm</button>
+              <button id="cancelSeries" type="button" class="secondary">
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          <div class="field-error" id="scoreError"></div>
+        </section>
+
+        <section class="card control-card" id="timerPanel">
+          <div class="card-heading">
+            <h2>Timer</h2>
+            <span class="panel-label" id="timerPending">Live state synced</span>
+          </div>
+          <div class="timer-display">
+            <div class="timer-value" id="timerDisplay">00:00</div>
+            <div class="timer-state" id="timerState">Paused</div>
+          </div>
+          <div class="field-label">Manual correction</div>
+          <div class="inline-control">
             <input
-              type="number"
               id="timerInput"
+              type="number"
               min="0"
               placeholder="Seconds"
             />
-            <div class="button-row">
-              <button id="timerSet">Set</button>
-              <button id="timerReset">Reset</button>
+            <button id="timerSet">Set</button>
+          </div>
+          <div class="button-row">
+            <button id="timerStart">Start</button>
+            <button id="timerPause">Pause</button>
+            <button id="timerReset">Reset</button>
+          </div>
+          <div class="field-error" id="timerError"></div>
+        </section>
+
+        <section class="card control-card" id="scenePanel">
+          <div class="card-heading">
+            <h2>Scene / Camera</h2>
+            <span class="panel-label" id="scenePending">Live state synced</span>
+          </div>
+          <div class="panel-note">
+            Current active button is the live scene or camera.
+          </div>
+          <div class="scene-group">
+            <div class="scene-section">
+              <div class="field-label">Scenes</div>
+              <div class="button-grid" id="sceneButtons">
+                <button data-scene="Game">Game</button>
+                <button data-scene="Replay">Replay</button>
+                <button data-scene="LowerThird">Lower third</button>
+                <button data-scene="Sponsor">Sponsor</button>
+              </div>
+            </div>
+            <div class="scene-section">
+              <div class="field-label">Cameras</div>
+              <div class="button-grid" id="cameraButtons">
+                <button data-camera="Cam1">Cam 1</button>
+                <button data-camera="Cam2">Cam 2</button>
+                <button data-camera="Cam3">Cam 3</button>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div class="card control-card">
-          <h2>Scene / Camera</h2>
-          <div class="scene-grid">
-            <button data-scene="Game" class="scene-btn">Game</button>
-            <button data-scene="Replay" class="scene-btn">Replay</button>
-            <button data-camera="Cam1" class="scene-btn">Cam 1</button>
-            <button data-camera="Cam2" class="scene-btn">Cam 2</button>
+          <div class="live-summary">
+            <div><span>Scene</span><strong id="activeScene">—</strong></div>
+            <div><span>Camera</span><strong id="activeCamera">—</strong></div>
           </div>
-        </div>
+          <div class="field-error" id="sceneError"></div>
+        </section>
 
-        <div class="card control-card">
-          <h2>Sponsors</h2>
+        <section class="card control-card" id="statusPanel">
+          <div class="card-heading">
+            <h2>Match status</h2>
+            <span class="panel-label" id="statusPending"
+              >Live state synced</span
+            >
+          </div>
+          <div class="button-grid status-grid" id="statusButtons">
+            <button data-status="upcoming">Upcoming</button>
+            <button data-status="live">Live</button>
+            <button data-status="halftime">Halftime</button>
+            <button data-status="paused">Paused</button>
+            <button data-status="completed">Completed</button>
+          </div>
+          <div class="confirm-strip hidden" id="statusConfirm">
+            <div>
+              <strong>Confirm end match</strong>
+              <p>Mark this match as completed? This is a final state.</p>
+            </div>
+            <div class="button-row button-row--compact">
+              <button id="confirmStatus">Confirm</button>
+              <button id="cancelStatus" type="button" class="secondary">
+                Cancel
+              </button>
+            </div>
+          </div>
+          <div class="field-error" id="statusError"></div>
+        </section>
+
+        <section class="card control-card" id="bracketPanel">
+          <div class="card-heading">
+            <h2>Bracket JSON</h2>
+            <span class="panel-label" id="bracketPending"
+              >Live state synced</span
+            >
+          </div>
+          <div class="panel-note">
+            JSON is validated before submit. Provide
+            <strong>?tournamentId=...</strong> to enable bracket updates.
+          </div>
           <textarea
-            id="sponsorInput"
-            rows="4"
-            placeholder="sponsor1,sponsor2"
+            id="bracketJson"
+            rows="12"
+            placeholder="Bracket JSON"
           ></textarea>
-          <button id="updateSponsors">Update rotation</button>
-        </div>
+          <div class="button-row">
+            <button id="validateBracket">Validate</button>
+            <button id="submitBracket">Submit update</button>
+            <button id="clearBracket" type="button" class="secondary">
+              Reset bracket
+            </button>
+          </div>
+          <div class="confirm-strip hidden" id="bracketConfirm">
+            <div>
+              <strong>Confirm reset</strong>
+              <p>
+                Clear the bracket for this tournament? This cannot be undone
+                from the dashboard.
+              </p>
+            </div>
+            <div class="button-row button-row--compact">
+              <button id="confirmBracketClear">Clear</button>
+              <button id="cancelBracketClear" type="button" class="secondary">
+                Cancel
+              </button>
+            </div>
+          </div>
+          <div class="field-error" id="bracketError"></div>
+        </section>
+
+        <section class="card control-card" id="sponsorsPanel">
+          <div class="card-heading">
+            <h2>Sponsor rotation</h2>
+            <span class="panel-label" id="sponsorsPending"
+              >Live state synced</span
+            >
+          </div>
+          <div class="panel-note">
+            Add, remove, or reorder sponsor asset IDs.
+          </div>
+          <div class="sponsor-editor">
+            <div class="add-row">
+              <input id="sponsorAdd" placeholder="New sponsor ID or URL" />
+              <button id="addSponsor">Add</button>
+            </div>
+            <ul class="sponsor-list" id="sponsorList"></ul>
+            <button id="submitSponsors">Update rotation</button>
+          </div>
+          <div class="field-error" id="sponsorsError"></div>
+        </section>
       </section>
     </main>
     <script src="script.js"></script>
