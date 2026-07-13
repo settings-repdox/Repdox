@@ -566,18 +566,16 @@ export default function EventDetail() {
               </Link>
 
               <div className="flex flex-wrap gap-2">
-                {!canManage && (
-                  <Link to={`/events/${event.slug}/register`}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="bg-white/10 hover:bg-white/20 text-white border-none"
-                    >
-                      <Users className="mr-2 h-4 w-4" />
-                      Register
-                    </Button>
-                  </Link>
-                )}
+                <Link to={`/events/${event.slug}/register`}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white/10 hover:bg-white/20 text-white border-none"
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Register
+                  </Button>
+                </Link>
 
                 {canManage && (
                   <>
