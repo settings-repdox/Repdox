@@ -290,6 +290,29 @@ export default function MatchCentre() {
   const teamA = currentMatchData?.teamA;
   const teamB = currentMatchData?.teamB;
   const embedSrc = buildEmbedUrl(streamPlatform, streamUrl, embedUrl);
+  const streamLinks = useMemo(() => {
+    const links: Array<{ label: string; href: string }> = [];
+    const addLink = (href: string, label: string) => {
+      if (href?.trim()) {
+        links.push({ label, href: href.trim() });
+      }
+    };
+
+    const platform = match?.stream_platform?.toLowerCase() || "";
+    const url = match?.stream_url?.trim() || "";
+
+    if (platform === "youtube" || /youtube/i.test(url)) {
+      addLink(url || "https://www.youtube.com", "YouTube");
+    }
+    if (platform === "twitch" || /twitch/i.test(url)) {
+      addLink(url || "https://www.twitch.tv", "Twitch");
+    }
+    if (!platform && url) {
+      addLink(url, "Stream");
+    }
+
+    return links;
+  }, [match?.stream_platform, match?.stream_url]);
   const statsRows = useMemo(() => {
     const rows = [...(currentMatchData?.stats || [])].sort(
       (a, b) => (Number(b.acs) || 0) - (Number(a.acs) || 0),
@@ -456,6 +479,22 @@ export default function MatchCentre() {
                     : "TBD"}
                 </span>
               </div>
+              {streamLinks.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {streamLinks.map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-sm font-medium text-accent"
+                    >
+                      <Video className="h-4 w-4" />
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="flex items-center gap-3">
               <div className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-center min-w-[110px]">
@@ -552,37 +591,40 @@ export default function MatchCentre() {
                   Stream will appear when the match goes live.
                 </div>
               )}
-              <div className="rounded-2xl border border-border/60 p-4">
-                <div className="font-semibold">Available Streams</div>
-                <div className="mt-2 space-y-2 text-sm text-muted-foreground">
-                  {match.stream_platform && match.stream_url ? (
-                    <div className="rounded-xl border border-border/60 p-2">
-                      Official: {match.stream_platform} •{" "}
-                      <a
-                        className="text-accent"
-                        href={match.stream_url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Watch
-                      </a>
-                    </div>
-                  ) : null}
-                  {match.creator_name ? (
-                    <div className="rounded-xl border border-border/60 p-2">
-                      Creator Co-stream: {match.creator_name} •{" "}
-                      <a
-                        className="text-accent"
-                        href={match.stream_link || "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Watch
-                      </a>
-                    </div>
-                  ) : null}
+              {(match.stream_platform && match.stream_url) ||
+              match.creator_name ? (
+                <div className="rounded-2xl border border-border/60 p-4">
+                  <div className="font-semibold">Available Streams</div>
+                  <div className="mt-2 space-y-2 text-sm text-muted-foreground">
+                    {match.stream_platform && match.stream_url ? (
+                      <div className="rounded-xl border border-border/60 p-2">
+                        Official: {match.stream_platform} •{" "}
+                        <a
+                          className="text-accent"
+                          href={match.stream_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Watch
+                        </a>
+                      </div>
+                    ) : null}
+                    {match.creator_name ? (
+                      <div className="rounded-xl border border-border/60 p-2">
+                        Creator Co-stream: {match.creator_name} •{" "}
+                        <a
+                          className="text-accent"
+                          href={match.stream_link || "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Watch
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </CardContent>
           </Card>
 

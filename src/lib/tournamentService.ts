@@ -18,8 +18,8 @@ export interface TournamentRecord {
   id: string;
   event_id: string;
   game_name: string;
-  tournament_type: TournamentType;
-  max_teams: number | null;
+  tournament_type?: TournamentType | null;
+  max_teams?: number | null;
   current_teams: number | null;
   status: TournamentStatus;
   created_at?: string;
@@ -166,8 +166,6 @@ export async function ensureTournamentForEvent(
     .insert({
       event_id: eventId,
       game_name: payload?.game_name ?? "Valorant",
-      tournament_type: payload?.tournament_type ?? "Single Elimination",
-      max_teams: payload?.max_teams ?? 16,
       current_teams: 0,
       status: "registration_open",
     })

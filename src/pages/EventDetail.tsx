@@ -555,26 +555,42 @@ export default function EventDetail() {
 
               {canManage && (
                 <div className="flex flex-wrap gap-2">
-                  <Link to={`/events/${event.slug}/registrations`}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="bg-white/10 hover:bg-white/20 text-white border-none"
-                    >
-                      <Users className="mr-2 h-4 w-4" />
-                      Registrations
-                    </Button>
-                  </Link>
-                  <Link to={`/events/${event.slug}/teams`}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="bg-white/10 hover:bg-white/20 text-white border-none"
-                    >
-                      <Users className="mr-2 h-4 w-4" />
-                      Teams
-                    </Button>
-                  </Link>
+                  {!isGaming && (
+                    <>
+                      <Link to={`/events/${event.slug}/registrations`}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="bg-white/10 hover:bg-white/20 text-white border-none"
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Registrations
+                        </Button>
+                      </Link>
+                      <Link to={`/events/${event.slug}/teams`}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="bg-white/10 hover:bg-white/20 text-white border-none"
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Teams
+                        </Button>
+                      </Link>
+                    </>
+                  )}
+                  {isGaming && (
+                    <Link to={`/events/${event.slug}/tournament`}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-white/10 hover:bg-white/20 text-white border-none"
+                      >
+                        <Users className="mr-2 h-4 w-4" />
+                        Tournament Dashboard
+                      </Button>
+                    </Link>
+                  )}
                   <Link to={`/events/${event.slug}/edit`}>
                     <Button variant="default" size="sm">
                       <Edit className="mr-2 h-4 w-4" />
@@ -696,7 +712,7 @@ export default function EventDetail() {
                 Event Schedule
               </button>
 
-              {isGaming && (
+              {isGaming && canManage && (
                 <button
                   onClick={() => setTab("tournament")}
                   className={`px-4 py-2 font-medium transition-colors border-b-2 ${
@@ -709,7 +725,7 @@ export default function EventDetail() {
                 </button>
               )}
 
-              {canManage && (
+              {canManage && !isGaming && (
                 <>
                   <Link
                     to={`/events/${event.slug}/registrations`}
@@ -769,16 +785,15 @@ export default function EventDetail() {
                 </Card>
               )}
 
-              {activeTab === "tournament" && isGaming && (
+              {activeTab === "tournament" && isGaming && canManage && (
                 <Card className="border-accent/20 bg-gradient-to-br from-accent/10 via-background to-background">
                   <CardHeader>
                     <CardTitle>Esports Tournament</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-muted-foreground leading-relaxed">
-                      This gaming event includes a Valorant-style bracket system
-                      with team registration, bracket generation, live scoring,
-                      and match updates.
+                      Brackets and match updates are posted manually by the
+                      event organiser.
                     </p>
                     <Link to={`/events/${event.slug}/tournament`}>
                       <Button className="w-full bg-accent text-accent-foreground">
@@ -901,7 +916,7 @@ export default function EventDetail() {
                       );
                     }
 
-                    if (event.registration_link) {
+                    if (event.registration_link && !(isGaming && !canManage)) {
                       const isExternal = /^https?:\/\//i.test(
                         event.registration_link,
                       );

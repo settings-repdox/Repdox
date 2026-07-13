@@ -97,8 +97,6 @@ export default function AddEvent() {
     type: "Hackathon",
     format: "Offline",
     game_name: "",
-    tournament_type: "Single Elimination",
-    max_teams: "16",
     start_date: "",
     start_time: "09:00",
     end_date: "",
@@ -487,25 +485,13 @@ export default function AddEvent() {
       });
     if (selectedEventType === "Gaming") {
       const gameName = form.game_name?.trim();
-      const tournamentType = form.tournament_type?.trim();
-      const maxTeams = form.max_teams?.trim();
-      if (gameName || tournamentType || maxTeams) {
-        const lines = [
-          gameName ? `Game: ${gameName}` : null,
-          tournamentType ? `Tournament Type: ${tournamentType}` : null,
-          maxTeams ? `Max Teams: ${maxTeams}` : null,
-        ]
-          .filter(Boolean)
-          .join("\n");
-
-        if (lines) {
-          secs.push({
-            id: "tournament_info",
-            type: "Tournament Info",
-            title: "Tournament Info",
-            content: lines,
-          });
-        }
+      if (gameName) {
+        secs.push({
+          id: "tournament_info",
+          type: "Tournament Info",
+          title: "Tournament Info",
+          content: `Game: ${gameName}`,
+        });
       }
     }
     if (prizeText)
@@ -890,12 +876,6 @@ export default function AddEvent() {
         if (selectedEventType === "Gaming") {
           await ensureTournamentForEvent(eventId, {
             game_name: form.game_name?.trim() || "Valorant",
-            tournament_type:
-              form.tournament_type?.trim() || "Single Elimination",
-            max_teams:
-              form.max_teams && Number(form.max_teams) > 0
-                ? Number(form.max_teams)
-                : 16,
           });
         }
         toast({
@@ -918,12 +898,6 @@ export default function AddEvent() {
         if (created?.id && selectedEventType === "Gaming") {
           await ensureTournamentForEvent(created.id, {
             game_name: form.game_name?.trim() || "Valorant",
-            tournament_type:
-              form.tournament_type?.trim() || "Single Elimination",
-            max_teams:
-              form.max_teams && Number(form.max_teams) > 0
-                ? Number(form.max_teams)
-                : 16,
           });
         }
         toast({
@@ -1287,47 +1261,14 @@ export default function AddEvent() {
 
               {/* Slug */}
               {selectedEventType === "Gaming" && (
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Game Title</Label>
-                    <Input
-                      value={form.game_name}
-                      onChange={(e) => onChange("game_name", e.target.value)}
-                      placeholder="e.g. Valorant, CS2, Rocket League"
-                      className="bg-card/50"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Tournament Type</Label>
-                    <select
-                      value={form.tournament_type}
-                      onChange={(e) =>
-                        onChange("tournament_type", e.target.value)
-                      }
-                      className="h-12 w-full rounded-xl border border-border/70 bg-card/50 px-3 text-sm text-foreground"
-                    >
-                      <option value="Single Elimination">
-                        Single Elimination
-                      </option>
-                      <option value="Double Elimination">
-                        Double Elimination
-                      </option>
-                      <option value="Round Robin">Round Robin</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Max Teams</Label>
-                    <Input
-                      type="number"
-                      min={2}
-                      step={1}
-                      value={form.max_teams}
-                      onChange={(e) => onChange("max_teams", e.target.value)}
-                      className="bg-card/50"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>Game Title</Label>
+                  <Input
+                    value={form.game_name}
+                    onChange={(e) => onChange("game_name", e.target.value)}
+                    placeholder="e.g. Valorant, CS2, Rocket League"
+                    className="bg-card/50"
+                  />
                 </div>
               )}
 

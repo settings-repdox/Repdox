@@ -4,8 +4,6 @@ create table if not exists public.esports_tournaments (
   id uuid primary key default gen_random_uuid(),
   event_id uuid references public.events(id) on delete cascade,
   game_name text not null default 'Valorant',
-  tournament_type text not null default 'Single Elimination',
-  max_teams integer default 16,
   current_teams integer default 0,
   status text not null default 'registration_open',
   created_at timestamptz default now(),

@@ -347,6 +347,32 @@ export default function EventTournament() {
     return null;
   }
 
+  if (!canManage) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-accent" /> Access
+                restricted
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                The tournament dashboard is only available to the event
+                organiser.
+              </p>
+              <Link to={`/events/${event.slug}`}>
+                <Button variant="outline">Back to event</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border/60 bg-card/40 backdrop-blur-xl">
@@ -371,8 +397,8 @@ export default function EventTournament() {
                 {event.title}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Valorant-style bracket management for professional gaming
-                events.
+                Organiser-only tournament workspace for manual bracket and match
+                updates.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
