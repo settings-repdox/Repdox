@@ -118,7 +118,13 @@ export interface MatchCentreData {
 
 export function isGamingEvent(
   event:
-    | { type?: string | string[] | null; category?: string | null }
+    | {
+        type?: string | string[] | null;
+        category?: string | null;
+        slug?: string | null;
+        title?: string | null;
+        tags?: string[] | null;
+      }
     | null
     | undefined,
 ) {
@@ -126,6 +132,9 @@ export function isGamingEvent(
   const candidates = [
     event.category,
     ...(Array.isArray(event.type) ? event.type : [event.type]),
+    event.slug,
+    event.title,
+    ...(Array.isArray(event.tags) ? event.tags : []),
   ]
     .filter(Boolean)
     .map((value) => String(value).toLowerCase());
@@ -134,7 +143,10 @@ export function isGamingEvent(
     (value) =>
       value.includes("gaming") ||
       value.includes("esports") ||
-      value.includes("valorant"),
+      value.includes("valorant") ||
+      value.includes("tournament") ||
+      value.includes("match") ||
+      value.includes("cs2"),
   );
 }
 

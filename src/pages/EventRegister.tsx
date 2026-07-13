@@ -156,7 +156,7 @@ export default function EventRegister() {
       // Fetch Event ID, Slug, Title, and Discord Invite
       const { data: eventData } = await supabase
         .from("events")
-        .select("id, slug, title, discord_invite, type, category")
+        .select("id, slug, title, discord_invite, type, category, tags")
         .eq("slug", slug)
         .maybeSingle();
 
@@ -169,11 +169,17 @@ export default function EventRegister() {
         setEventId(eventData.id);
         setEventTitle(eventData.title);
         setDiscordInvite(eventData.discord_invite);
-        setEventMeta({ type: eventData.type, category: eventData.category });
+        setEventMeta({
+          type: eventData.type,
+          category: eventData.category,
+          slug: eventData.slug,
+          title: eventData.title,
+          tags: eventData.tags,
+        });
       } else {
         const { data: latest } = await supabase
           .from("events")
-          .select("id, slug, title, discord_invite, type, category")
+          .select("id, slug, title, discord_invite, type, category, tags")
           .limit(1)
           .single();
         if (latest) {
@@ -182,7 +188,13 @@ export default function EventRegister() {
           setEventId(latest.id);
           setEventTitle(latest.title);
           setDiscordInvite(latest.discord_invite);
-          setEventMeta({ type: latest.type, category: latest.category });
+          setEventMeta({
+            type: latest.type,
+            category: latest.category,
+            slug: latest.slug,
+            title: latest.title,
+            tags: latest.tags,
+          });
         }
       }
 
