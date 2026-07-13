@@ -565,72 +565,75 @@ export default function EventDetail() {
                 </Button>
               </Link>
 
-              {canManage && (
-                <div className="flex flex-wrap gap-2">
-                  {!isGaming && (
-                    <>
-                      <Link to={`/events/${event.slug}/registrations`}>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="bg-white/10 hover:bg-white/20 text-white border-none"
-                        >
-                          <Users className="mr-2 h-4 w-4" />
-                          Registrations
-                        </Button>
-                      </Link>
-                      <Link to={`/events/${event.slug}/teams`}>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="bg-white/10 hover:bg-white/20 text-white border-none"
-                        >
-                          <Users className="mr-2 h-4 w-4" />
-                          Teams
-                        </Button>
-                      </Link>
-                    </>
-                  )}
-                  {isGaming && canManage && (
-                    <Link to={`/events/${event.slug}/tournament`}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="bg-white/10 hover:bg-white/20 text-white border-none"
-                      >
-                        <Users className="mr-2 h-4 w-4" />
-                        Tournament Dashboard
-                      </Button>
-                    </Link>
-                  )}
-                  {isGaming && !canManage && (
-                    <Link to={`/events/${event.slug}/register`}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="bg-white/10 hover:bg-white/20 text-white border-none"
-                      >
-                        <Users className="mr-2 h-4 w-4" />
-                        Register
-                      </Button>
-                    </Link>
-                  )}
-                  <Link to={`/events/${event.slug}/edit`}>
-                    <Button variant="default" size="sm">
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
+              <div className="flex flex-wrap gap-2">
+                {!canManage && (
+                  <Link to={`/events/${event.slug}/register`}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/10 hover:bg-white/20 text-white border-none"
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      Register
                     </Button>
                   </Link>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteClick}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </Button>
-                </div>
-              )}
+                )}
+
+                {canManage && (
+                  <>
+                    {!isGaming && (
+                      <>
+                        <Link to={`/events/${event.slug}/registrations`}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="bg-white/10 hover:bg-white/20 text-white border-none"
+                          >
+                            <Users className="mr-2 h-4 w-4" />
+                            Registrations
+                          </Button>
+                        </Link>
+                        <Link to={`/events/${event.slug}/teams`}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="bg-white/10 hover:bg-white/20 text-white border-none"
+                          >
+                            <Users className="mr-2 h-4 w-4" />
+                            Teams
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+                    {isGaming && (
+                      <Link to={`/events/${event.slug}/tournament`}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="bg-white/10 hover:bg-white/20 text-white border-none"
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Tournament Dashboard
+                        </Button>
+                      </Link>
+                    )}
+                    <Link to={`/events/${event.slug}/edit`}>
+                      <Button variant="default" size="sm">
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteClick}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="mb-6">
