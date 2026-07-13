@@ -898,8 +898,14 @@ export default function EventRegister() {
                 <User className="text-purple-400 w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Personal Details</h2>
-                <p className="text-gray-500 text-sm">Tell us about yourself</p>
+                <h2 className="text-2xl font-bold">
+                  {isGaming ? "Gamer Details" : "Personal Details"}
+                </h2>
+                <p className="text-gray-500 text-sm">
+                  {isGaming
+                    ? "Tell us how you’ll show up for the tournament"
+                    : "Tell us about yourself"}
+                </p>
               </div>
             </div>
 
@@ -940,28 +946,37 @@ export default function EventRegister() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-gray-400">School / University</Label>
+                <Label className="text-gray-400">
+                  {isGaming ? "In-Game Name (IGN)" : "School / University"}
+                </Label>
                 <Input
                   name="school"
                   required
+                  placeholder={isGaming ? "e.g. ShadowFox" : ""}
                   value={formData.school}
                   onChange={handleInputChange}
                   className="bg-black/40 border-white/10 h-14 rounded-xl text-white"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-gray-400">Stream / Major</Label>
+                <Label className="text-gray-400">
+                  {isGaming ? "Discord Username" : "Stream / Major"}
+                </Label>
                 <Input
                   name="stream"
                   required
-                  placeholder="e.g. PCM, CSE"
+                  placeholder={
+                    isGaming ? "e.g. shadowfox#1234" : "e.g. PCM, CSE"
+                  }
                   value={formData.stream}
                   onChange={handleInputChange}
                   className="bg-black/40 border-white/10 h-14 rounded-xl text-white"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-gray-400">Current Year</Label>
+                <Label className="text-gray-400">
+                  {isGaming ? "Preferred Role" : "Current Year"}
+                </Label>
                 <select
                   name="year"
                   required
@@ -970,20 +985,32 @@ export default function EventRegister() {
                   className="w-full bg-black/40 border border-white/10 h-14 rounded-xl px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 >
                   <option value="" disabled>
-                    Select Year
+                    {isGaming ? "Select Role" : "Select Year"}
                   </option>
-                  <optgroup label="School" className="bg-slate-900">
-                    <option value="9">9th Grade</option>
-                    <option value="10">10th Grade</option>
-                    <option value="11">11th Grade</option>
-                    <option value="12">12th Grade</option>
-                  </optgroup>
-                  <optgroup label="University" className="bg-slate-900">
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
-                  </optgroup>
+                  {isGaming ? (
+                    <>
+                      <option value="Entry Fragger">Entry Fragger</option>
+                      <option value="Support">Support</option>
+                      <option value="IGL">IGL</option>
+                      <option value="Flex">Flex</option>
+                      <option value="Coach/Analyst">Coach / Analyst</option>
+                    </>
+                  ) : (
+                    <>
+                      <optgroup label="School" className="bg-slate-900">
+                        <option value="9">9th Grade</option>
+                        <option value="10">10th Grade</option>
+                        <option value="11">11th Grade</option>
+                        <option value="12">12th Grade</option>
+                      </optgroup>
+                      <optgroup label="University" className="bg-slate-900">
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                      </optgroup>
+                    </>
+                  )}
                 </select>
               </div>
             </div>
@@ -1105,50 +1132,65 @@ export default function EventRegister() {
                 <Award className="text-green-400 w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Final Pulse</h2>
-                <p className="text-gray-500 text-sm">The finish line</p>
+                <h2 className="text-2xl font-bold">
+                  {isGaming ? "Tournament Notes" : "Final Pulse"}
+                </h2>
+                <p className="text-gray-500 text-sm">
+                  {isGaming
+                    ? "Anything the organiser should know?"
+                    : "The finish line"}
+                </p>
               </div>
             </div>
 
             <div className="space-y-8">
               <div className="space-y-2">
                 <Label className="text-gray-400">
-                  Why do you want to participate?
+                  {isGaming
+                    ? "Tell us a bit about your squad or playstyle"
+                    : "Why do you want to participate?"}
                 </Label>
                 <Textarea
                   name="motivation"
-                  required
+                  required={!isGaming}
                   value={formData.motivation}
                   onChange={handleInputChange}
+                  placeholder={
+                    isGaming
+                      ? "Optional: share your squad goals, experience, or anything helpful for the organiser"
+                      : ""
+                  }
                   className="bg-black/40 border-white/10 rounded-2xl min-h-[140px] p-4 text-lg text-white"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <Label className="text-gray-400">
-                    GitHub Profile (Optional)
-                  </Label>
-                  <Input
-                    name="github"
-                    type="url"
-                    value={formData.github}
-                    onChange={handleInputChange}
-                    className="bg-black/40 border-white/10 h-14 rounded-xl text-white"
-                  />
+              {!isGaming && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">
+                      GitHub Profile (Optional)
+                    </Label>
+                    <Input
+                      name="github"
+                      type="url"
+                      value={formData.github}
+                      onChange={handleInputChange}
+                      className="bg-black/40 border-white/10 h-14 rounded-xl text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">
+                      LinkedIn Profile (Optional)
+                    </Label>
+                    <Input
+                      name="linkedin"
+                      type="url"
+                      value={formData.linkedin}
+                      onChange={handleInputChange}
+                      className="bg-black/40 border-white/10 h-14 rounded-xl text-white"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-gray-400">
-                    LinkedIn Profile (Optional)
-                  </Label>
-                  <Input
-                    name="linkedin"
-                    type="url"
-                    value={formData.linkedin}
-                    onChange={handleInputChange}
-                    className="bg-black/40 border-white/10 h-14 rounded-xl text-white"
-                  />
-                </div>
-              </div>
+              )}
             </div>
           </motion.div>
 
