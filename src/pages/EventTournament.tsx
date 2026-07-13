@@ -58,9 +58,14 @@ export default function EventTournament() {
   const [matchTimeDrafts, setMatchTimeDrafts] = useState<
     Record<string, string>
   >({});
+  const [bracketUrlDraft, setBracketUrlDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: event, isLoading: eventLoading } = useQuery({
+  const {
+    data: event,
+    isLoading: eventLoading,
+    refetch: refetchEvent,
+  } = useQuery({
     queryKey: ["event", slug],
     queryFn: async () => {
       const { data, error } = await eventService.getEventBySlug(slug);
@@ -141,6 +146,22 @@ export default function EventTournament() {
       navigate(`/events/${event.slug}`, { replace: true });
     }
   }, [event, isGaming, navigate]);
+
+  useEffect(() => {
+    const fallbackUrl =
+      (
+        event as
+          | { bracket_url?: string | null; bracket_link?: string | null }
+          | undefined
+      )?.bracket_url ??
+      (
+        event as
+          | { bracket_url?: string | null; bracket_link?: string | null }
+          | undefined
+      )?.bracket_link ??
+      "";
+    setBracketUrlDraft(fallbackUrl);
+  }, [event]);
 
   const teamById = useMemo(() => {
     return Object.fromEntries((teams || []).map((team) => [team.id, team]));
@@ -309,6 +330,38 @@ export default function EventTournament() {
     }
   };
 
+  const handleSaveBracket = async () => {
+    if (!event?.id) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("events")
+        .update({ bracket_url: bracketUrlDraft.trim() || null } as Record<
+          string,
+          unknown
+        >)
+        .eq("id", event.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Bracket saved",
+        description: "The bracket link is now available to viewers.",
+      });
+      await refetchEvent();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to save the bracket.";
+      toast({
+        title: "Bracket save failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (eventLoading || tournamentLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -460,6 +513,30 @@ export default function EventTournament() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {canManage && (
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardList className="h-5 w-5 text-accent" /> Upload bracket
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Paste a link to the bracket file or page. It will appear in the
+                Bracket tab for everyone viewing the event.
+              </p>
+              <Input
+                value={bracketUrlDraft}
+                onChange={(e) => setBracketUrlDraft(e.target.value)}
+                placeholder="https://..."
+              />
+              <Button onClick={handleSaveBracket} disabled={submitting}>
+                Save bracket link
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 xl:grid-cols-[0.95fr_1.05fr] gap-6">
           <Card className="border-border/60">
