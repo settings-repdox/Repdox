@@ -15,7 +15,6 @@ import eventService from "@/lib/eventService";
 import {
   ensureTournamentForEvent,
   getLiveMatchOverlayData,
-  generateTournamentBracket,
   isGamingEvent,
   listTournamentMatches,
   listTournamentTeams,
@@ -34,7 +33,6 @@ import {
   CalendarClock,
   Crown,
   PlayCircle,
-  Swords,
   Trophy,
   Users,
   Sparkles,
@@ -235,30 +233,6 @@ export default function EventTournament() {
     }
   };
 
-  const handleGenerateBracket = async () => {
-    if (!tournament?.id) return;
-    setSubmitting(true);
-    try {
-      await generateTournamentBracket(tournament.id);
-      toast({
-        title: "Bracket generated",
-        description: "The tournament bracket has been created.",
-      });
-      await refetchMatches();
-      await refetchTournament();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Bracket generation failed.";
-      toast({
-        title: "Bracket failed",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const handleSeedChange = async (teamId: string) => {
     const seed = seedDrafts[teamId];
     if (seed === undefined) return;
@@ -347,32 +321,6 @@ export default function EventTournament() {
     return null;
   }
 
-  if (!canManage) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
-          <Card className="border-border/60">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5 text-accent" /> Access
-                restricted
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                The tournament dashboard is only available to the event
-                organiser.
-              </p>
-              <Link to={`/events/${event.slug}`}>
-                <Button variant="outline">Back to event</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border/60 bg-card/40 backdrop-blur-xl">
@@ -397,19 +345,11 @@ export default function EventTournament() {
                 {event.title}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Organiser-only tournament workspace for manual bracket and match
-                updates.
+                The official bracket will be shared by the organiser and shown
+                here once it is ready.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {canManage && (
-                <Button onClick={handleGenerateBracket} disabled={submitting}>
-                  <Swords className="mr-2 h-4 w-4" />
-                  {tournament?.status === "bracket_generated"
-                    ? "Regenerate Bracket"
-                    : "Generate Bracket"}
-                </Button>
-              )}
               <Badge variant="outline" className="border-accent/30 text-accent">
                 {tournament?.status || "registration_open"}
               </Badge>
@@ -633,8 +573,9 @@ export default function EventTournament() {
             <div className="overflow-x-auto pb-2">
               <div className="flex min-w-[900px] gap-4">
                 {groupedMatches.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    Generate the bracket to populate matches.
+                  <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+                    The official bracket will be uploaded here later by the
+                    organiser.
                   </div>
                 ) : (
                   groupedMatches.map(([roundNumber, roundMatches]) => (
@@ -823,55 +764,50 @@ export default function EventTournament() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-accent" /> Tournament
-              Controls
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {canManage && (
-              <>
-                <Button onClick={handleGenerateBracket} disabled={submitting}>
-                  Generate Bracket
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    updateTournamentMatch(matches[0]?.id || "", {
-                      streamed_match: true,
-                    }).catch(() => undefined)
-                  }
-                >
-                  Feature Match
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    updateTournamentMatch(matches[0]?.id || "", {
-                      streamed_match: false,
-                    }).catch(() => undefined)
-                  }
-                >
-                  Unfeature Match
-                </Button>
-              </>
-            )}
-            {tournament?.status !== "completed" && canManage && (
+        {canManage && (
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-accent" /> Tournament
+                Controls
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 onClick={() =>
-                  updateTournamentStatus(tournament.id, "completed").then(() =>
-                    refetchTournament(),
-                  )
+                  updateTournamentMatch(matches[0]?.id || "", {
+                    streamed_match: true,
+                  }).catch(() => undefined)
                 }
               >
-                Mark Tournament Complete
+                Feature Match
               </Button>
-            )}
-          </CardContent>
-        </Card>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  updateTournamentMatch(matches[0]?.id || "", {
+                    streamed_match: false,
+                  }).catch(() => undefined)
+                }
+              >
+                Unfeature Match
+              </Button>
+              {tournament?.status !== "completed" && (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    updateTournamentStatus(tournament.id, "completed").then(
+                      () => refetchTournament(),
+                    )
+                  }
+                >
+                  Mark Tournament Complete
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -157,6 +157,18 @@ export default function EventDetail() {
   const canManage = isOwner || isAdminUser;
   const isEnded = endCountdown.isExpired;
   const isGaming = Boolean(event && isGamingEvent(event as any));
+  const bracketUrl =
+    (
+      event as
+        | { bracket_url?: string | null; bracket_link?: string | null }
+        | undefined
+    )?.bracket_url ??
+    (
+      event as
+        | { bracket_url?: string | null; bracket_link?: string | null }
+        | undefined
+    )?.bracket_link ??
+    null;
 
   // Fetch per-role registration counts to show remaining capacity
   useEffect(() => {
@@ -579,7 +591,7 @@ export default function EventDetail() {
                       </Link>
                     </>
                   )}
-                  {isGaming && (
+                  {isGaming && canManage && (
                     <Link to={`/events/${event.slug}/tournament`}>
                       <Button
                         variant="secondary"
@@ -588,6 +600,18 @@ export default function EventDetail() {
                       >
                         <Users className="mr-2 h-4 w-4" />
                         Tournament Dashboard
+                      </Button>
+                    </Link>
+                  )}
+                  {isGaming && !canManage && (
+                    <Link to={`/events/${event.slug}/register`}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-white/10 hover:bg-white/20 text-white border-none"
+                      >
+                        <Users className="mr-2 h-4 w-4" />
+                        Register
                       </Button>
                     </Link>
                   )}
@@ -712,16 +736,16 @@ export default function EventDetail() {
                 Event Schedule
               </button>
 
-              {isGaming && canManage && (
+              {isGaming && (
                 <button
-                  onClick={() => setTab("tournament")}
+                  onClick={() => setTab("bracket")}
                   className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                    activeTab === "tournament"
+                    activeTab === "bracket"
                       ? "border-accent text-accent"
                       : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  Tournament
+                  Bracket
                 </button>
               )}
 
@@ -785,21 +809,27 @@ export default function EventDetail() {
                 </Card>
               )}
 
-              {activeTab === "tournament" && isGaming && canManage && (
+              {activeTab === "bracket" && isGaming && (
                 <Card className="border-accent/20 bg-gradient-to-br from-accent/10 via-background to-background">
                   <CardHeader>
-                    <CardTitle>Esports Tournament</CardTitle>
+                    <CardTitle>Bracket</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-muted-foreground leading-relaxed">
-                      Brackets and match updates are posted manually by the
-                      event organiser.
-                    </p>
-                    <Link to={`/events/${event.slug}/tournament`}>
-                      <Button className="w-full bg-accent text-accent-foreground">
-                        Open Tournament Dashboard
-                      </Button>
-                    </Link>
+                    {bracketUrl ? (
+                      <a
+                        href={bracketUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center text-accent hover:text-accent/80"
+                      >
+                        Open uploaded bracket
+                      </a>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-sm text-muted-foreground">
+                        The final bracket will be uploaded here later. Once it
+                        is available, it will appear in this section.
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
