@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Repdox Sponsor Rotation</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-panel: #0e1015;
+        --bg-panel-strong: rgba(14, 16, 22, 0.96);
+        --accent-live: #ffd23f;
+        --text-primary: #f2f2f0;
+        --text-secondary: #9a9ea6;
+        --panel-cut: 12px;
+        --border: rgba(255, 255, 255, 0.12);
+        --font-sans:
+          "Rajdhani", "Barlow Condensed", "Titillium Web", "Segoe UI Variable",
+          "Arial Narrow", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .sponsor-shell {
+        width: min(100vw, 980px);
+        padding: 32px;
+        display: grid;
+        gap: 18px;
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .sponsor-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .sponsor-title .label {
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .sponsor-title .status {
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--accent-live);
+      }
+
+      .sponsor-card {
+        min-height: 240px;
+        display: grid;
+        place-items: center;
+        padding: 22px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .sponsor-image {
+        max-width: 84%;
+        max-height: 140px;
+        object-fit: contain;
+        display: none;
+      }
+
+      .sponsor-text {
+        font-size: clamp(28px, 5vw, 65px);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+        color: var(--text-primary);
+      }
+
+      .sponsor-footer {
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .fade {
+        animation: fade 220ms ease-out;
+      }
+
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sponsor-shell" role="status" aria-live="polite">
+      <div class="sponsor-title">
+        <div class="label">Sponsor rotation</div>
+        <div class="status">Auto cycle</div>
+      </div>
+      <div class="sponsor-card" id="sponsorCard">
+        <img class="sponsor-image" id="sponsorImage" alt="Sponsor logo" />
+        <div class="sponsor-text" id="sponsorText">SPONSOR</div>
+      </div>
+      <div class="sponsor-footer">Next sponsor every 8 seconds</div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const matchId = params.get("matchId") || "default";
+      const tournamentId = params.get("tournamentId") || "";
+      const rotationInterval = 8000;
+
+      const elements = {
+        sponsorCard: document.getElementById("sponsorCard"),
+        sponsorImage: document.getElementById("sponsorImage"),
+        sponsorText: document.getElementById("sponsorText"),
+      };
+
+      const state = {
+        socket: null,
+        reconnectDelay: 1000,
+        sponsors: ["SPONSOR"],
+        currentIndex: 0,
+        rotationTimer: null,
+        snapshotReceived: false,
+      };
+
+      function normalize(value, fallback) {
+        if (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          Number.isNaN(value)
+        ) {
+          return fallback;
+        }
+        return String(value);
+      }
+
+      function isImageUrl(value) {
+        return (
+          /^https?:\/\/.+\.(png|jpe?g|webp|svg)$/i.test(value) ||
+          /^data:image\//i.test(value)
+        );
+      }
+
+      function applySponsorText(label) {
+        elements.sponsorImage.style.display = "none";
+        elements.sponsorText.textContent = normalize(label, "SPONSOR");
+        elements.sponsorText.classList.add("fade");
+        window.setTimeout(
+          () => elements.sponsorText.classList.remove("fade"),
+          220,
+        );
+      }
+
+      function applySponsorImage(url) {
+        elements.sponsorImage.src = url;
+        elements.sponsorImage.onload = () => {
+          elements.sponsorImage.style.display = "block";
+          elements.sponsorText.style.display = "none";
+          elements.sponsorImage.classList.add("fade");
+          window.setTimeout(
+            () => elements.sponsorImage.classList.remove("fade"),
+            220,
+          );
+        };
+        elements.sponsorImage.onerror = () => {
+          elements.sponsorImage.style.display = "none";
+          elements.sponsorText.style.display = "block";
+          applySponsorText(url);
+        };
+      }
+
+      function displaySponsor(index) {
+        const sponsor = normalize(state.sponsors[index], "SPONSOR");
+        if (isImageUrl(sponsor)) {
+          applySponsorImage(sponsor);
+        } else {
+          elements.sponsorImage.style.display = "none";
+          elements.sponsorText.style.display = "block";
+          applySponsorText(sponsor);
+        }
+      }
+
+      function nextSponsor() {
+        if (!state.sponsors.length) return;
+        state.currentIndex = (state.currentIndex + 1) % state.sponsors.length;
+        displaySponsor(state.currentIndex);
+      }
+
+      function startRotation() {
+        stopRotation();
+        if (state.sponsors.length <= 1) return;
+        state.rotationTimer = window.setInterval(nextSponsor, rotationInterval);
+      }
+
+      function stopRotation() {
+        if (state.rotationTimer) {
+          window.clearInterval(state.rotationTimer);
+          state.rotationTimer = null;
+        }
+      }
+
+      function updateSponsors(list) {
+        const sponsors = Array.isArray(list)
+          ? list.filter(Boolean).map(String)
+          : [];
+        if (!sponsors.length) {
+          state.sponsors = ["SPONSOR"];
+        } else {
+          state.sponsors = sponsors;
+        }
+        state.currentIndex = 0;
+        displaySponsor(state.currentIndex);
+        startRotation();
+      }
+
+      function applySnapshot(snapshot) {
+        if (!snapshot || typeof snapshot !== "object") return;
+        const sponsors = snapshot.sponsors || snapshot.data?.sponsors || [];
+        updateSponsors(sponsors);
+        state.snapshotReceived = true;
+      }
+
+      function handleUpdate(message) {
+        if (message.channel !== "sponsor:rotate") return;
+        const sponsors = message.data?.sponsors || [];
+        updateSponsors(sponsors);
+      }
+
+      function connect() {
+        const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const query = new URLSearchParams({ matchId });
+        if (tournamentId) {
+          query.set("tournamentId", tournamentId);
+        }
+        const url = `${scheme}://${window.location.host}/ws?${query.toString()}`;
+        state.socket = new WebSocket(url);
+
+        state.socket.addEventListener("open", () => {
+          state.reconnectDelay = 1000;
+          state.socket.send(
+            JSON.stringify({ type: "subscribe", channels: ["sponsor:rotate"] }),
+          );
+          state.socket.send(JSON.stringify({ type: "snapshot", matchId }));
+        });
+
+        state.socket.addEventListener("message", (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (
+              payload.type === "snapshot" &&
+              payload.channel === "sponsors:snapshot"
+            ) {
+              applySnapshot(payload.data);
+              return;
+            }
+            if (payload.channel === "sponsor:rotate") {
+              handleUpdate(payload);
+            }
+          } catch (error) {
+            return;
+          }
+        });
+
+        state.socket.addEventListener("close", scheduleReconnect);
+        state.socket.addEventListener("error", scheduleReconnect);
+      }
+
+      function scheduleReconnect() {
+        if (state.reconnectTimer) return;
+        state.reconnectTimer = window.setTimeout(() => {
+          state.reconnectTimer = null;
+          state.reconnectDelay = Math.min(state.reconnectDelay * 1.8, 10000);
+          connect();
+        }, state.reconnectDelay);
+      }
+
+      async function fetchFallbackSponsors() {
+        if (state.snapshotReceived) return;
+        try {
+          const response = await fetch("/api/sponsors/rotation");
+          if (!response.ok) return;
+          const payload = await response.json();
+          applySnapshot(payload);
+        } catch (error) {
+          return;
+        }
+      }
+
+      connect();
+      window.setTimeout(fetchFallbackSponsors, 1200);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Repdox Scoreboard</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-panel: #0e1015;
+        --bg-panel-strong: rgba(14, 16, 22, 0.96);
+        --team-a: #ff4655;
+        --team-b: #4a9eff;
+        --text-primary: #f2f2f0;
+        --text-secondary: #9a9ea6;
+        --accent-live: #ffd23f;
+        --panel-cut: 12px;
+        --border: rgba(255, 255, 255, 0.12);
+        --font-sans:
+          "Rajdhani", "Barlow Condensed", "Titillium Web", "Segoe UI Variable",
+          "Arial Narrow", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      body,
+      #app {
+        display: grid;
+        place-items: center;
+      }
+
+      .scoreboard {
+        width: min(100vw, 1280px);
+        max-width: 1180px;
+        min-height: 100vh;
+        padding: 24px;
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1.2fr 0.8fr 1.2fr;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      .top-bar,
+      .team-panel,
+      .center-panel,
+      .footer-bar {
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+      }
+
+      .top-bar,
+      .footer-bar {
+        grid-column: 1 / -1;
+        padding: 16px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .top-bar {
+        background: rgba(14, 16, 22, 0.96);
+      }
+
+      .meta-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .meta-label {
+        font-size: 11px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .meta-value {
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+      }
+
+      .status-pill {
+        padding: 10px 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        color: var(--accent-live);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .team-panel {
+        padding: 24px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .team-panel.team-b {
+        clip-path: polygon(var(--panel-cut) 0, 100% 0, 100% 100%, 0 100%);
+      }
+
+      .team-panel .team-name {
+        font-size: 18px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .score-block {
+        margin-top: 16px;
+        font-size: 92px;
+        font-weight: 900;
+        line-height: 0.9;
+        letter-spacing: -0.04em;
+      }
+
+      .team-panel.team-a .score-block {
+        color: var(--team-a);
+      }
+
+      .team-panel.team-b .score-block {
+        color: var(--team-b);
+      }
+
+      .team-panel .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+      }
+
+      .team-panel .detail-row span {
+        font-size: 14px;
+        color: var(--text-secondary);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .center-panel {
+        padding: 24px 20px;
+        display: grid;
+        gap: 10px;
+        place-items: center;
+        background: rgba(10, 13, 18, 0.92);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+      }
+
+      .center-panel .round-label {
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .center-panel .round-value {
+        font-size: 92px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+      }
+
+      .footer-bar {
+        gap: 14px;
+      }
+
+      .series-block {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .series-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: var(--text-secondary);
+      }
+
+      .series-score {
+        font-size: 44px;
+        font-weight: 900;
+      }
+
+      .pulse {
+        animation: pulse 220ms ease-out;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.08);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .scoreboard {
+          grid-template-columns: 1fr;
+          grid-template--rows: auto;
+        }
+
+        .center-panel {
+          order: -1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="scoreboard">
+      <div class="top-bar">
+        <div class="meta-group">
+          <div>
+            <div class="meta-label">Map</div>
+            <div class="meta-value" id="mapNumber">1</div>
+          </div>
+          <div>
+            <div class="meta-label">Match</div>
+            <div class="meta-value" id="matchStatus">PENDING</div>
+          </div>
+        </div>
+        <div class="status-pill">Live</div>
+      </div>
+
+      <section class="team-panel team-a">
+        <div class="team-name" id="teamAName">TEAM A</div>
+        <div class="score-block" id="teamAScore">0</div>
+        <div class="detail-row">
+          <span>Series</span>
+          <span id="seriesScoreA">0</span>
+        </div>
+      </section>
+
+      <section class="center-panel">
+        <div class="round-label">Round</div>
+        <div class="round-value" id="roundNumber">0</div>
+      </section>
+
+      <section class="team-panel team-b">
+        <div class="team-name" id="teamBName">TEAM B</div>
+        <div class="score-block" id="teamBScore">0</div>
+        <div class="detail-row">
+          <span>Series</span>
+          <span id="seriesScoreB">0</span>
+        </div>
+      </section>
+
+      <div class="footer-bar">
+        <div class="series-block">
+          <div class="series-label">Series A</div>
+          <div class="series-score" id="seriesScoreAAlt">0</div>
+        </div>
+        <div class="series-block">
+          <div class="series-label">Series B</div>
+          <div class="series-score" id="seriesScoreBAlt">0</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const matchId = params.get("matchId") || "default";
+      const DEFAULTS = {
+        mapNumber: "1",
+        matchStatus: "PENDING",
+        teamAName: "TEAM A",
+        teamBName: "TEAM B",
+        teamAScore: "0",
+        teamBScore: "0",
+        roundNumber: "0",
+        seriesScoreA: "0",
+        seriesScoreB: "0",
+      };
+
+      const elements = {
+        mapNumber: document.getElementById("mapNumber"),
+        matchStatus: document.getElementById("matchStatus"),
+        teamAName: document.getElementById("teamAName"),
+        teamBName: document.getElementById("teamBName"),
+        teamAScore: document.getElementById("teamAScore"),
+        teamBScore: document.getElementById("teamBScore"),
+        roundNumber: document.getElementById("roundNumber"),
+        seriesScoreA: document.getElementById("seriesScoreA"),
+        seriesScoreB: document.getElementById("seriesScoreB"),
+        seriesScoreAAlt: document.getElementById("seriesScoreAAlt"),
+        seriesScoreBAlt: document.getElementById("seriesScoreBAlt"),
+      };
+
+      const state = {
+        previous: {},
+        socket: null,
+        reconnectDelay: 1000,
+        snapshotReceived: false,
+      };
+
+      function normalize(value, fallback) {
+        if (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          Number.isNaN(value)
+        ) {
+          return fallback;
+        }
+        return String(value);
+      }
+
+      function setText(element, value, fallback) {
+        if (!element) return;
+        element.textContent = normalize(value, fallback);
+      }
+
+      function animateIfChanged(element, value) {
+        if (!element) return;
+        const previous = element.textContent;
+        if (String(value) !== previous) {
+          element.classList.add("pulse");
+          window.setTimeout(() => element.classList.remove("pulse"), 220);
+        }
+      }
+
+      function applySnapshot(snapshot) {
+        if (!snapshot || typeof snapshot !== "object") {
+          return;
+        }
+
+        const matchState = snapshot.state || {};
+        const scoreState = snapshot.score || {};
+
+        setText(elements.mapNumber, matchState.mapNumber, DEFAULTS.mapNumber);
+        setText(elements.matchStatus, matchState.status, DEFAULTS.matchStatus);
+        setText(elements.teamAName, matchState.teamA, DEFAULTS.teamAName);
+        setText(elements.teamBName, matchState.teamB, DEFAULTS.teamBName);
+        setText(
+          elements.teamAScore,
+          scoreState.teamAScore,
+          DEFAULTS.teamAScore,
+        );
+        setText(
+          elements.teamBScore,
+          scoreState.teamBScore,
+          DEFAULTS.teamBScore,
+        );
+        setText(
+          elements.roundNumber,
+          scoreState.roundNumber,
+          DEFAULTS.roundNumber,
+        );
+        setText(
+          elements.seriesScoreA,
+          matchState.seriesScoreA,
+          DEFAULTS.seriesScoreA,
+        );
+        setText(
+          elements.seriesScoreB,
+          matchState.seriesScoreB,
+          DEFAULTS.seriesScoreB,
+        );
+        setText(
+          elements.seriesScoreAAlt,
+          matchState.seriesScoreA,
+          DEFAULTS.seriesScoreA,
+        );
+        setText(
+          elements.seriesScoreBAlt,
+          matchState.seriesScoreB,
+          DEFAULTS.seriesScoreB,
+        );
+
+        state.snapshotReceived = true;
+      }
+
+      function handleUpdate(message) {
+        const data = message.data || {};
+
+        if (message.channel === "score:update") {
+          const score = data.score || {};
+          animateIfChanged(
+            elements.teamAScore,
+            normalize(score.teamAScore, DEFAULTS.teamAScore),
+          );
+          animateIfChanged(
+            elements.teamBScore,
+            normalize(score.teamBScore, DEFAULTS.teamBScore),
+          );
+          animateIfChanged(
+            elements.roundNumber,
+            normalize(score.roundNumber, DEFAULTS.roundNumber),
+          );
+          setText(elements.teamAScore, score.teamAScore, DEFAULTS.teamAScore);
+          setText(elements.teamBScore, score.teamBScore, DEFAULTS.teamBScore);
+          setText(
+            elements.roundNumber,
+            score.roundNumber,
+            DEFAULTS.roundNumber,
+          );
+          return;
+        }
+
+        if (message.channel === "match:status") {
+          const matchState = data.state || {};
+          setText(elements.mapNumber, matchState.mapNumber, DEFAULTS.mapNumber);
+          setText(
+            elements.matchStatus,
+            matchState.status,
+            DEFAULTS.matchStatus,
+          );
+          setText(
+            elements.seriesScoreA,
+            matchState.seriesScoreA,
+            DEFAULTS.seriesScoreA,
+          );
+          setText(
+            elements.seriesScoreB,
+            matchState.seriesScoreB,
+            DEFAULTS.seriesScoreB,
+          );
+          setText(
+            elements.seriesScoreAAlt,
+            matchState.seriesScoreA,
+            DEFAULTS.seriesScoreA,
+          );
+          setText(
+            elements.seriesScoreBAlt,
+            matchState.seriesScoreB,
+            DEFAULTS.seriesScoreB,
+          );
+          setText(elements.teamAName, matchState.teamA, DEFAULTS.teamAName);
+          setText(elements.teamBName, matchState.teamB, DEFAULTS.teamBName);
+        }
+      }
+
+      function connect() {
+        const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const url = `${scheme}://${window.location.host}/ws?matchId=${encodeURIComponent(matchId)}`;
+
+        state.socket = new WebSocket(url);
+
+        state.socket.addEventListener("open", () => {
+          state.reconnectDelay = 1000;
+          state.socket.send(
+            JSON.stringify({
+              type: "subscribe",
+              channels: ["score:update", "match:status"],
+            }),
+          );
+          state.socket.send(JSON.stringify({ type: "snapshot", matchId }));
+        });
+
+        state.socket.addEventListener("message", (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (
+              payload.type === "snapshot" &&
+              payload.channel === "match:snapshot"
+            ) {
+              applySnapshot(payload.data);
+              return;
+            }
+            if (payload.channel && payload.data) {
+              handleUpdate(payload);
+            }
+          } catch (error) {
+            return;
+          }
+        });
+
+        state.socket.addEventListener("close", () => {
+          scheduleReconnect();
+        });
+
+        state.socket.addEventListener("error", () => {
+          scheduleReconnect();
+        });
+      }
+
+      function scheduleReconnect() {
+        if (state.reconnectTimer) {
+          return;
+        }
+        state.reconnectTimer = window.setTimeout(() => {
+          state.reconnectTimer = null;
+          state.reconnectDelay = Math.min(state.reconnectDelay * 1.8, 10000);
+          connect();
+        }, state.reconnectDelay);
+      }
+
+      async function fetchFallbackSnapshot() {
+        if (state.snapshotReceived) return;
+        try {
+          const response = await fetch(
+            `/api/match/${encodeURIComponent(matchId)}/snapshot`,
+          );
+          if (!response.ok) return;
+          const payload = await response.json();
+          applySnapshot(payload);
+        } catch (error) {
+          return;
+        }
+      }
+
+      connect();
+      window.setTimeout(fetchFallbackSnapshot, 1200);
+    </script>
+  </body>
+</html>

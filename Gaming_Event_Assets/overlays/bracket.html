@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Repdox Bracket</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-panel: #0e1015;
+        --bg-panel-strong: rgba(14, 16, 22, 0.96);
+        --accent-live: #ffd23f;
+        --text-primary: #f2f2f0;
+        --text-secondary: #9a9ea6;
+        --panel-cut: 12px;
+        --border: rgba(255, 255, 255, 0.12);
+        --font-sans:
+          "Rajdhani", "Barlow Condensed", "Titillium Web", "Segoe UI Variable",
+          "Arial Narrow", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .bracket-shell {
+        width: min(100vw, 1240px);
+        padding: 24px;
+        display: grid;
+        gap: 18px;
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .bracket-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .bracket-header .title {
+        font-size: 16px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .bracket-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 18px;
+      }
+
+      .round-column {
+        display: grid;
+        gap: 14px;
+      }
+
+      .round-title {
+        font-size: 14px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .match-card {
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+        display: grid;
+        gap: 10px;
+      }
+
+      .match-teams {
+        display: grid;
+        gap: 6px;
+      }
+
+      .team-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .team-name {
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .team-score {
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      .match-status {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent-live);
+      }
+
+      .placeholder {
+        padding: 48px 24px;
+        text-align: center;
+        font-size: 22px;
+        color: var(--text-secondary);
+        border: 1px dashed var(--border);
+      }
+
+      .fade {
+        animation: fade 240ms ease-out;
+      }
+
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bracket-shell" role="region" aria-live="polite">
+      <div class="bracket-header">
+        <div class="title">Tournament bracket</div>
+        <div class="title" id="bracketMode">Live update</div>
+      </div>
+      <div class="bracket-grid" id="bracketGrid">
+        <div class="placeholder">Loading bracket...</div>
+      </div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const matchId = params.get("matchId") || "default";
+      const tournamentId = params.get("tournamentId") || "";
+
+      const elements = {
+        grid: document.getElementById("bracketGrid"),
+      };
+
+      const state = {
+        socket: null,
+        reconnectDelay: 1000,
+        snapshotReceived: false,
+      };
+
+      function normalize(value, fallback) {
+        if (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          Number.isNaN(value)
+        ) {
+          return fallback;
+        }
+        return String(value);
+      }
+
+      function createText(label, fallback, className = "team-name") {
+        const span = document.createElement("span");
+        span.className = className;
+        span.textContent = normalize(label, fallback);
+        return span;
+      }
+
+      function createMatchCard(match) {
+        const card = document.createElement("article");
+        card.className = "match-card fade";
+
+        const teams = document.createElement("div");
+        teams.className = "match-teams";
+        teams.appendChild(createText(match.teamA, "TBD"));
+        teams.appendChild(createText(match.teamB, "TBD"));
+
+        const scores = document.createElement("div");
+        scores.className = "team-row";
+        scores.appendChild(createText(match.scoreA, "0", "team-score"));
+        scores.appendChild(createText(match.scoreB, "0", "team-score"));
+
+        const status = document.createElement("div");
+        status.className = "match-status";
+        status.textContent = normalize(match.status, "upcoming");
+
+        card.appendChild(teams);
+        card.appendChild(scores);
+        card.appendChild(status);
+        return card;
+      }
+
+      function ensureArray(value) {
+        if (Array.isArray(value)) return value;
+        if (value === undefined || value === null) return [];
+        return [value];
+      }
+
+      function normalizeMatch(raw) {
+        if (!raw || typeof raw !== "object") {
+          return {
+            teamA: "TBD",
+            teamB: "TBD",
+            scoreA: "0",
+            scoreB: "0",
+            status: "upcoming",
+          };
+        }
+
+        return {
+          teamA:
+            raw.teamA ||
+            raw.team_a ||
+            raw.teamAName ||
+            raw.team_a_name ||
+            raw.teamAName ||
+            raw.teamA?.name ||
+            raw.team_a?.name ||
+            "TBD",
+          teamB:
+            raw.teamB ||
+            raw.team_b ||
+            raw.teamBName ||
+            raw.team_b_name ||
+            raw.teamBName ||
+            raw.teamB?.name ||
+            raw.team_b?.name ||
+            "TBD",
+          scoreA: normalize(
+            raw.teamAScore ??
+              raw.team_a_score ??
+              raw.scoreA ??
+              raw.score_a ??
+              raw.leftScore,
+            "0",
+          ),
+          scoreB: normalize(
+            raw.teamBScore ??
+              raw.team_b_score ??
+              raw.scoreB ??
+              raw.score_b ??
+              raw.rightScore,
+            "0",
+          ),
+          status: raw.status || raw.matchStatus || raw.state || "upcoming",
+        };
+      }
+
+      function normalizeRounds(raw) {
+        if (!raw) return [];
+
+        if (Array.isArray(raw)) {
+          if (raw.length === 0) return [];
+          if (raw[0] && raw[0].matches) {
+            return raw.map((round, index) => ({
+              title: normalize(
+                round.name ||
+                  round.roundName ||
+                  round.title ||
+                  `Round ${index + 1}`,
+                `Round ${index + 1}`,
+              ),
+              matches: ensureArray(round.matches).map(normalizeMatch),
+            }));
+          }
+          if (
+            raw.every(
+              (item) =>
+                item.roundNumber !== undefined || item.round !== undefined,
+            )
+          ) {
+            const buckets = {};
+            raw.forEach((item) => {
+              const round = item.roundNumber ?? item.round ?? 1;
+              if (!buckets[round]) buckets[round] = [];
+              buckets[round].push(normalizeMatch(item));
+            });
+            return Object.keys(buckets)
+              .sort((a, b) => Number(a) - Number(b))
+              .map((round) => ({
+                title: `Round ${round}`,
+                matches: buckets[round],
+              }));
+          }
+          return [{ title: "Bracket", matches: raw.map(normalizeMatch) }];
+        }
+
+        if (typeof raw === "object") {
+          if (raw.rounds || raw.bracket || raw.groups) {
+            return normalizeRounds(raw.rounds || raw.bracket || raw.groups);
+          }
+          if (raw.matches) {
+            return [
+              {
+                title: normalize(raw.name || raw.title || "Bracket", "Bracket"),
+                matches: ensureArray(raw.matches).map(normalizeMatch),
+              },
+            ];
+          }
+        }
+
+        return [];
+      }
+
+      function renderBracket(data) {
+        const rounds = normalizeRounds(data);
+        elements.grid.innerHTML = "";
+
+        if (!rounds.length) {
+          const placeholder = document.createElement("div");
+          placeholder.className = "placeholder";
+          placeholder.textContent = "No bracket data available.";
+          elements.grid.appendChild(placeholder);
+          return;
+        }
+
+        rounds.forEach((round) => {
+          const column = document.createElement("section");
+          column.className = "round-column";
+
+          const title = document.createElement("div");
+          title.className = "round-title";
+          title.textContent = round.title;
+          column.appendChild(title);
+
+          if (!round.matches.length) {
+            const placeholder = document.createElement("div");
+            placeholder.className = "placeholder";
+            placeholder.textContent = "No matches in this round.";
+            column.appendChild(placeholder);
+          } else {
+            round.matches.forEach((match) =>
+              column.appendChild(createMatchCard(match)),
+            );
+          }
+
+          elements.grid.appendChild(column);
+        });
+      }
+
+      function applySnapshot(snapshot) {
+        if (!snapshot || typeof snapshot !== "object") return;
+        const payload = snapshot.bracket || snapshot.data?.bracket || snapshot;
+        renderBracket(payload);
+        state.snapshotReceived = true;
+      }
+
+      function handleUpdate(message) {
+        if (message.channel !== "bracket:update") return;
+        const payload = message.data?.bracket || message.data || {};
+        renderBracket(payload);
+      }
+
+      function connect() {
+        const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const query = new URLSearchParams({ matchId });
+        if (tournamentId) {
+          query.set("tournamentId", tournamentId);
+        }
+        const url = `${scheme}://${window.location.host}/ws?${query.toString()}`;
+        state.socket = new WebSocket(url);
+
+        state.socket.addEventListener("open", () => {
+          state.reconnectDelay = 1000;
+          state.socket.send(
+            JSON.stringify({ type: "subscribe", channels: ["bracket:update"] }),
+          );
+          state.socket.send(JSON.stringify({ type: "snapshot", matchId }));
+        });
+
+        state.socket.addEventListener("message", (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (
+              payload.type === "snapshot" &&
+              payload.channel === "bracket:snapshot"
+            ) {
+              applySnapshot(payload.data);
+              return;
+            }
+            if (payload.channel === "bracket:update") {
+              handleUpdate(payload);
+            }
+          } catch (error) {
+            return;
+          }
+        });
+
+        state.socket.addEventListener("close", scheduleReconnect);
+        state.socket.addEventListener("error", scheduleReconnect);
+      }
+
+      function scheduleReconnect() {
+        if (state.reconnectTimer) return;
+        state.reconnectTimer = window.setTimeout(() => {
+          state.reconnectTimer = null;
+          state.reconnectDelay = Math.min(state.reconnectDelay * 1.8, 10000);
+          connect();
+        }, state.reconnectDelay);
+      }
+
+      async function fetchFallbackBracket() {
+        if (state.snapshotReceived || !tournamentId) return;
+        try {
+          const response = await fetch(
+            `/api/bracket/${encodeURIComponent(tournamentId)}`,
+          );
+          if (!response.ok) return;
+          const payload = await response.json();
+          applySnapshot(payload);
+        } catch (error) {
+          return;
+        }
+      }
+
+      connect();
+      window.setTimeout(fetchFallbackBracket, 1200);
+    </script>
+  </body>
+</html>

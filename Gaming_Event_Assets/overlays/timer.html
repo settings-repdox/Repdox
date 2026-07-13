@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Repdox Timer</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-panel: #0e1015;
+        --bg-panel-strong: rgba(14, 16, 22, 0.96);
+        --accent-live: #ffd23f;
+        --text-primary: #f2f2f0;
+        --text-secondary: #9a9ea6;
+        --panel-cut: 12px;
+        --border: rgba(255, 255, 255, 0.12);
+        --font-sans:
+          "Rajdhani", "Barlow Condensed", "Titillium Web", "Segoe UI Variable",
+          "Arial Narrow", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .timer-shell {
+        width: min(100vw, 820px);
+        padding: 24px;
+        display: grid;
+        gap: 14px;
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .timer-title {
+        font-size: 14px;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .timer-value {
+        font-size: clamp(80px, 12vw, 160px);
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        line-height: 0.85;
+      }
+
+      .timer-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .timer-status span {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        color: var(--text-secondary);
+      }
+
+      .timer-status .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--accent-live);
+      }
+
+      .active {
+        color: var(--accent-live);
+      }
+
+      .pulse {
+        animation: pulse 200ms ease-out;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.08);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="timer-shell" role="timer" aria-live="polite">
+      <div class="timer-title">Round timer</div>
+      <div class="timer-value" id="timerValue">00:00</div>
+      <div class="timer-status" id="statusPill">
+        <span class="status-dot"></span>
+        <span id="timerState">Paused</span>
+      </div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const matchId = params.get("matchId") || "default";
+
+      const elements = {
+        timerValue: document.getElementById("timerValue"),
+        timerState: document.getElementById("timerState"),
+        statusPill: document.getElementById("statusPill"),
+      };
+
+      const state = {
+        socket: null,
+        reconnectDelay: 1000,
+        snapshotReceived: false,
+      };
+
+      function normalize(value, fallback) {
+        if (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          Number.isNaN(value)
+        ) {
+          return fallback;
+        }
+        return String(value);
+      }
+
+      function formatSeconds(value) {
+        const seconds = Number(value);
+        if (!Number.isFinite(seconds) || seconds < 0) {
+          return "00:00";
+        }
+        const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const remainder = String(seconds % 60).padStart(2, "0");
+        return `${minutes}:${remainder}`;
+      }
+
+      function setText(element, value, fallback) {
+        if (!element) return;
+        element.textContent = normalize(value, fallback);
+      }
+
+      function setTimer(seconds, action) {
+        const formatted = formatSeconds(seconds);
+        const previous = elements.timerValue.textContent;
+        elements.timerValue.textContent = formatted;
+        if (formatted !== previous) {
+          elements.timerValue.classList.add("pulse");
+          window.setTimeout(
+            () => elements.timerValue.classList.remove("pulse"),
+            220,
+          );
+        }
+
+        const stateText = action === "start" ? "Live" : "Paused";
+        setText(elements.timerState, stateText, "Paused");
+        elements.statusPill.classList.toggle("active", action === "start");
+      }
+
+      function applySnapshot(snapshot) {
+        if (!snapshot || typeof snapshot !== "object") {
+          return;
+        }
+        const timerSeconds = snapshot.timer;
+        setTimer(timerSeconds, snapshot.timer > 0 ? "start" : "pause");
+        state.snapshotReceived = true;
+      }
+
+      function handleUpdate(message) {
+        const data = message.data || {};
+        if (message.channel !== "timer:tick") {
+          return;
+        }
+        const seconds = Number(data.seconds ?? data.timer ?? 0);
+        const action = String(data.action || "pause").toLowerCase();
+        setTimer(seconds, action === "start" ? "start" : "pause");
+      }
+
+      function connect() {
+        const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const url = `${scheme}://${window.location.host}/ws?matchId=${encodeURIComponent(matchId)}`;
+        state.socket = new WebSocket(url);
+
+        state.socket.addEventListener("open", () => {
+          state.reconnectDelay = 1000;
+          state.socket.send(
+            JSON.stringify({ type: "subscribe", channels: ["timer:tick"] }),
+          );
+          state.socket.send(JSON.stringify({ type: "snapshot", matchId }));
+        });
+
+        state.socket.addEventListener("message", (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (
+              payload.type === "snapshot" &&
+              payload.channel === "match:snapshot"
+            ) {
+              applySnapshot(payload.data);
+              return;
+            }
+            if (payload.channel === "timer:tick") {
+              handleUpdate(payload);
+            }
+          } catch (error) {
+            return;
+          }
+        });
+
+        state.socket.addEventListener("close", scheduleReconnect);
+        state.socket.addEventListener("error", scheduleReconnect);
+      }
+
+      function scheduleReconnect() {
+        if (state.reconnectTimer) return;
+        state.reconnectTimer = window.setTimeout(() => {
+          state.reconnectTimer = null;
+          state.reconnectDelay = Math.min(state.reconnectDelay * 1.8, 10000);
+          connect();
+        }, state.reconnectDelay);
+      }
+
+      async function fetchFallbackSnapshot() {
+        if (state.snapshotReceived) return;
+        try {
+          const response = await fetch(
+            `/api/match/${encodeURIComponent(matchId)}/snapshot`,
+          );
+          if (!response.ok) return;
+          const payload = await response.json();
+          applySnapshot(payload);
+        } catch (error) {
+          return;
+        }
+      }
+
+      connect();
+      window.setTimeout(fetchFallbackSnapshot, 1200);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Repdox Lower Third</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-panel: #0e1015;
+        --bg-panel-strong: rgba(14, 16, 22, 0.96);
+        --accent-live: #ffd23f;
+        --text-primary: #f2f2f0;
+        --text-secondary: #9a9ea6;
+        --panel-cut: 12px;
+        --border: rgba(255, 255, 255, 0.12);
+        --font-sans:
+          "Rajdhani", "Barlow Condensed", "Titillium Web", "Segoe UI Variable",
+          "Arial Narrow", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+      }
+
+      body {
+        overflow: hidden;
+        position: relative;
+      }
+
+      .lower-third-shell {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: min(100vw, 860px);
+        margin: 24px;
+        padding: 18px 20px;
+        display: grid;
+        gap: 8px;
+        background: var(--bg-panel-strong);
+        border: 1px solid var(--border);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+        transform: translateX(-105%);
+        opacity: 0;
+        transition:
+          transform 240ms ease-out,
+          opacity 220ms ease-out;
+      }
+
+      .lower-third-shell.visible {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .lower-third-headline {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .lower-third-tag {
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 11px;
+        color: var(--text-secondary);
+        clip-path: polygon(
+          0 0,
+          calc(100% - var(--panel-cut)) 0,
+          100% 100%,
+          0 100%
+        );
+      }
+
+      .lower-third-name {
+        font-size: clamp(28px, 4vw, 46px);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+      }
+
+      .lower-third-role {
+        font-size: 14px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .live-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--accent-live);
+      }
+
+      .lower-third-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="lower-third-shell"
+      id="lowerThirdShell"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="lower-third-headline">
+        <div class="live-indicator"></div>
+        <div class="lower-third-type" id="lowerThirdType">Player</div>
+      </div>
+      <div class="lower-third-name" id="lowerThirdName">PLAYER NAME</div>
+      <div class="lower-third-role" id="lowerThirdRole">PRO PLAYER</div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const matchId = params.get("matchId") || "default";
+
+      const elements = {
+        shell: document.getElementById("lowerThirdShell"),
+        name: document.getElementById("lowerThirdName"),
+        role: document.getElementById("lowerThirdRole"),
+        type: document.getElementById("lowerThirdType"),
+      };
+
+      const DEFAULTS = {
+        name: "PLAYER NAME",
+        role: "PRO PLAYER",
+        type: "Player",
+      };
+
+      const state = {
+        socket: null,
+        reconnectDelay: 1000,
+        snapshotReceived: false,
+        sceneActive: false,
+      };
+
+      function normalize(value, fallback) {
+        if (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          Number.isNaN(value)
+        ) {
+          return fallback;
+        }
+        return String(value);
+      }
+
+      function setText(element, value, fallback) {
+        if (!element) return;
+        element.textContent = normalize(value, fallback);
+      }
+
+      function setVisibility(visible) {
+        if (visible) {
+          elements.shell.classList.add("visible");
+        } else {
+          elements.shell.classList.remove("visible");
+        }
+      }
+
+      function isLowerScene(scene) {
+        if (!scene) return false;
+        const normalized = String(scene).toLowerCase();
+        return [
+          "lower",
+          "lower-third",
+          "lowerthird",
+          "lower_third",
+          "feature",
+          "cast",
+        ].some((token) => normalized.includes(token));
+      }
+
+      function updateLowerThird(stateData) {
+        const name =
+          stateData.lowerThirdName ||
+          stateData.lower_third_name ||
+          stateData.lowerThird ||
+          DEFAULTS.name;
+        const role =
+          stateData.lowerThirdRole ||
+          stateData.lower_third_role ||
+          stateData.role ||
+          DEFAULTS.role;
+        const type =
+          stateData.lowerThirdType ||
+          stateData.lower_third_type ||
+          stateData.type ||
+          DEFAULTS.type;
+        setText(elements.name, name, DEFAULTS.name);
+        setText(elements.role, role, DEFAULTS.role);
+        setText(elements.type, type, DEFAULTS.type);
+      }
+
+      function applySnapshot(snapshot) {
+        if (!snapshot || typeof snapshot !== "object") {
+          return;
+        }
+        updateLowerThird(snapshot.state || {});
+        state.sceneActive = isLowerScene(snapshot.activeScene);
+        setVisibility(
+          state.sceneActive || Boolean(snapshot.state?.lowerThirdName),
+        );
+        state.snapshotReceived = true;
+      }
+
+      function handleMatchStatus(message) {
+        const matchState = (message.data || {}).state || {};
+        updateLowerThird(matchState);
+        if (
+          !state.sceneActive &&
+          (matchState.lowerThirdName || matchState.lowerThirdRole)
+        ) {
+          setVisibility(true);
+        }
+      }
+
+      function handleSceneChange(message) {
+        const data = message.data || {};
+        const activeScene = data.activeScene || data.scene || "";
+        state.sceneActive = isLowerScene(activeScene);
+        setVisibility(state.sceneActive);
+      }
+
+      function handleMessage(message) {
+        if (message.channel === "match:status") {
+          handleMatchStatus(message);
+        }
+        if (message.channel === "scene:change") {
+          handleSceneChange(message);
+        }
+      }
+
+      function connect() {
+        const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const url = `${scheme}://${window.location.host}/ws?matchId=${encodeURIComponent(matchId)}`;
+        state.socket = new WebSocket(url);
+
+        state.socket.addEventListener("open", () => {
+          state.reconnectDelay = 1000;
+          state.socket.send(
+            JSON.stringify({
+              type: "subscribe",
+              channels: ["match:status", "scene:change"],
+            }),
+          );
+          state.socket.send(JSON.stringify({ type: "snapshot", matchId }));
+        });
+
+        state.socket.addEventListener("message", (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (
+              payload.type === "snapshot" &&
+              payload.channel === "match:snapshot"
+            ) {
+              applySnapshot(payload.data);
+              return;
+            }
+            if (payload.channel) {
+              handleMessage(payload);
+            }
+          } catch (error) {
+            return;
+          }
+        });
+
+        state.socket.addEventListener("close", scheduleReconnect);
+        state.socket.addEventListener("error", scheduleReconnect);
+      }
+
+      function scheduleReconnect() {
+        if (state.reconnectTimer) return;
+        state.reconnectTimer = window.setTimeout(() => {
+          state.reconnectTimer = null;
+          state.reconnectDelay = Math.min(state.reconnectDelay * 1.8, 10000);
+          connect();
+        }, state.reconnectDelay);
+      }
+
+      async function fetchFallbackSnapshot() {
+        if (state.snapshotReceived) return;
+        try {
+          const response = await fetch(
+            `/api/match/${encodeURIComponent(matchId)}/snapshot`,
+          );
+          if (!response.ok) return;
+          const payload = await response.json();
+          applySnapshot(payload);
+        } catch (error) {
+          return;
+        }
+      }
+
+      connect();
+      window.setTimeout(fetchFallbackSnapshot, 1200);
+    </script>
+  </body>
+</html>
