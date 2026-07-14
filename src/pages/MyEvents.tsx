@@ -112,7 +112,7 @@ export default function MyEvents() {
     if (!eventToDelete) return;
 
     try {
-      await eventService().deleteEvent(eventToDelete);
+      await eventServiceCore().deleteEvent(eventToDelete);
       toast({
         title: "Event deleted",
         description: "Your event has been deleted successfully",

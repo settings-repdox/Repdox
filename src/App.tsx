@@ -2,6 +2,7 @@
 // Complete App with Email Verification routes integrated
 
 import { useEffect, useState, useRef, lazy, Suspense } from "react";
+import { registerDefaults } from "@/core/services/registerDefaults";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -69,6 +70,11 @@ const LoadingFallback = () => null;
 function AppContent() {
   const location = useLocation();
   const { user, loading, isProfileComplete } = useAuth();
+
+  // Initialize service container once at app startup (Phase 9)
+  useEffect(() => {
+    registerDefaults();
+  }, []);
 
   console.log("AppContent Render State:", {
     user,

@@ -2,31 +2,20 @@ import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";
 
-// Re-export types for compatibility
-export type TournamentStatus =
-  | "registration_open"
-  | "registration_closed"
-  | "bracket_generated"
-  | "live"
-  | "completed";
+// Re-export types from domain DTO (Phase 9: consolidation)
+// DEPRECATED: import directly from @/domains/gaming/dtos/tournament.dto instead
+export type {
+  TournamentStatus,
+  TournamentType,
+  MatchStatus,
+  TournamentRecord,
+  TournamentTeamRecord,
+  TournamentMatchRecord,
+  TournamentMapRecord,
+  MatchCentreData,
+} from "@/domains/gaming/dtos/tournament.dto";
 
-export type TournamentType =
-  | "Single Elimination"
-  | "Double Elimination"
-  | "Round Robin";
-
-export type MatchStatus = "upcoming" | "live" | "completed" | "disputed";
-
-export type TournamentRecord = any;
-export type TournamentTeamRecord = any;
-export type TournamentMatchRecord = any;
-export type TournamentMapRecord = any;
-export type MatchCentreData = any;
-
-const svc = () => {
-  registerDefaults();
-  return resolveService<IGamingService>("GamingService");
-};
+const svc = () => resolveService<IGamingService>("GamingService");
 
 export const isGamingEvent = (event: any) => svc().isGamingEvent(event);
 export const getTournamentByEventId = (eventId: string) =>

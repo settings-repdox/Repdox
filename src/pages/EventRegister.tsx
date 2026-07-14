@@ -44,6 +44,9 @@ export default function EventRegister() {
   const [eventMeta, setEventMeta] = useState<{
     type?: string | string[] | null;
     category?: string | null;
+    slug?: string | null;
+    title?: string | null;
+    tags?: string[] | null;
   } | null>(null);
 
   const [formData, setFormData] = useState({
@@ -172,19 +175,18 @@ export default function EventRegister() {
           currentEventSlug = eventData.slug;
           setEventId(eventData.id);
           setEventTitle(eventData.title);
-          setDiscordInvite((eventData as any).discord_invite);
+          setDiscordInvite(eventData.discord_invite ?? null);
           setEventMeta({
-            type: (eventData as any).type,
-            category: (eventData as any).category,
-            slug: (eventData as any).slug,
-            title: (eventData as any).title,
-            tags: (eventData as any).tags,
+            type: eventData.type as string | string[] | null,
+            slug: eventData.slug,
+            title: eventData.title,
+            tags: eventData.tags ?? null,
           });
         } else {
           // fallback to legacy query
           const { data: latest } = await supabase
             .from("events")
-            .select("id, slug, title, discord_invite, type, category, tags")
+            .select("id, slug, title, discord_invite, type, tags")
             .limit(1)
             .single();
           if (latest) {
@@ -192,13 +194,12 @@ export default function EventRegister() {
             currentEventSlug = latest.slug;
             setEventId(latest.id);
             setEventTitle(latest.title);
-            setDiscordInvite(latest.discord_invite);
+            setDiscordInvite(latest.discord_invite ?? null);
             setEventMeta({
-              type: latest.type,
-              category: latest.category,
+              type: latest.type as string | string[] | null,
               slug: latest.slug,
               title: latest.title,
-              tags: latest.tags,
+              tags: latest.tags ?? null,
             });
           }
         }
@@ -206,7 +207,7 @@ export default function EventRegister() {
         // fallback to legacy query
         const { data: eventData } = await supabase
           .from("events")
-          .select("id, slug, title, discord_invite, type, category, tags")
+          .select("id, slug, title, discord_invite, type, tags")
           .eq("slug", slug)
           .maybeSingle();
 
@@ -215,18 +216,17 @@ export default function EventRegister() {
           currentEventSlug = eventData.slug;
           setEventId(eventData.id);
           setEventTitle(eventData.title);
-          setDiscordInvite(eventData.discord_invite);
+          setDiscordInvite(eventData.discord_invite ?? null);
           setEventMeta({
-            type: eventData.type,
-            category: eventData.category,
+            type: eventData.type as string | string[] | null,
             slug: eventData.slug,
             title: eventData.title,
-            tags: eventData.tags,
+            tags: eventData.tags ?? null,
           });
         } else {
           const { data: latest } = await supabase
             .from("events")
-            .select("id, slug, title, discord_invite, type, category, tags")
+            .select("id, slug, title, discord_invite, type, tags")
             .limit(1)
             .single();
           if (latest) {
@@ -234,13 +234,12 @@ export default function EventRegister() {
             currentEventSlug = latest.slug;
             setEventId(latest.id);
             setEventTitle(latest.title);
-            setDiscordInvite(latest.discord_invite);
+            setDiscordInvite(latest.discord_invite ?? null);
             setEventMeta({
-              type: latest.type,
-              category: latest.category,
+              type: latest.type as string | string[] | null,
               slug: latest.slug,
               title: latest.title,
-              tags: latest.tags,
+              tags: latest.tags ?? null,
             });
           }
         }

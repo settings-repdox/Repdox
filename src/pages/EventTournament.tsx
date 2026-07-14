@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ADMIN_EMAILS } from "@/lib/adminService";
-import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import {
@@ -30,6 +29,10 @@ import {
   type TournamentRecord,
   type TournamentTeamRecord,
 } from "@/lib/tournamentService";
+
+const eventServiceCore = () => resolveService<IEventService>("EventService");
+
+import type { Database } from "@/integrations/supabase/types";
 import {
   ArrowLeft,
   CalendarClock,
@@ -346,9 +349,8 @@ export default function EventTournament() {
       } catch (e) {
         const { error } = await supabase
           .from("events")
-          .update({ bracket_url: bracketUrlDraft.trim() || null } as Record<
-            string,
-            unknown
+          .update({ bracket_url: bracketUrlDraft.trim() || null } as Partial<
+            Database["public"]["Tables"]["events"]["Update"]
           >)
           .eq("id", event.id);
         if (error) throw error;

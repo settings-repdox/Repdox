@@ -1,16 +1,18 @@
 import { supabase } from "@/integrations/supabase/client";
-import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IPermissionService } from "@/core/services/interfaces/IPermissionService";
 import type { INotificationService } from "@/core/services/interfaces/INotificationService";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
 
-registerDefaults();
-
 const permission = () =>
   resolveService<IPermissionService>("PermissionService");
 const notification = () =>
   resolveService<INotificationService>("NotificationService");
+
+export const ADMIN_EMAILS = [
+  "shlokram5mar@gmail.com",
+  "amishgandhi316@gmail.com",
+];
 
 export async function isUserAdmin(): Promise<boolean> {
   return permission().isUserAdmin();

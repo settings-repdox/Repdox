@@ -7,7 +7,7 @@ import type {
   TournamentStatus,
   TournamentType,
   MatchStatus,
-} from "@/lib/tournamentService";
+} from "../dtos/tournament.dto";
 
 export interface IGamingService {
   isGamingEvent(event: any): boolean;

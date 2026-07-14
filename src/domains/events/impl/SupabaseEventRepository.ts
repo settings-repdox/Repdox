@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type { IEventRepository } from "../interfaces/IEventRepository";
 import type { EventDTO } from "../dtos/event.dto";
 
@@ -38,7 +39,9 @@ export class SupabaseEventRepository implements IEventRepository {
   async create(dto: Partial<EventDTO>): Promise<EventDTO> {
     const { data, error } = await supabase
       .from("events")
-      .insert([dto])
+      .insert([
+        dto as Partial<Database["public"]["Tables"]["events"]["Insert"]>,
+      ])
       .select()
       .single();
     if (error || !data) throw error || new Error("Insert failed");
@@ -48,7 +51,7 @@ export class SupabaseEventRepository implements IEventRepository {
   async update(id: string, dto: Partial<EventDTO>): Promise<EventDTO> {
     const { data, error } = await supabase
       .from("events")
-      .update(dto)
+      .update(dto as Partial<Database["public"]["Tables"]["events"]["Update"]>)
       .eq("id", id)
       .select()
       .single();

@@ -8,7 +8,7 @@ import type {
   TournamentStatus,
   TournamentType,
   MatchStatus,
-} from "@/lib/tournamentService";
+} from "../dtos/tournament.dto";
 import type { IGamingService } from "../interfaces/IGamingService";
 
 // Implementation largely ported from legacy src/lib/tournamentService.ts

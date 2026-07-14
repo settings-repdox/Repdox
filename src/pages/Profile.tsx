@@ -50,11 +50,8 @@ import {
   getUserAchievements,
   type Achievement,
 } from "@/lib/achievementService";
-import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
-
-registerDefaults();
 
 const registrationService = () =>
   resolveService<IRegistrationService>("RegistrationService");

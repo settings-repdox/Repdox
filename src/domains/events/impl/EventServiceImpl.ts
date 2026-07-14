@@ -72,6 +72,6 @@ export class EventServiceImpl implements IEventService {
     if (!allowed.includes(to) && from !== to) {
       throw new Error(`Invalid lifecycle transition from ${from} to ${to}`);
     }
-    return this.repo.update(id, { status: to });
+    return repo.update(id, { status: to } as Partial<EventDTO>);
   }
 }

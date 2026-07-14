@@ -30,7 +30,7 @@ export default function EventTeams() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const isOwner = user && data.created_by === user.id;
+      const isOwner = user && eventData.created_by === user.id;
       const isAdmin = user?.email
         ? ADMIN_EMAILS.includes(user.email.toLowerCase())
         : false;
@@ -38,7 +38,7 @@ export default function EventTeams() {
       if (!isOwner && !isAdmin) {
         throw new Error("Unauthorized");
       }
-      return data;
+      return eventData;
     },
     retry: false,
   });

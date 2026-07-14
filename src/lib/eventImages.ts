@@ -22,7 +22,6 @@ const filenameMap: Record<string, string> = {
 };
 
 import type { IAssetService } from "@/core/services/interfaces/IAssetService";
-import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 
 /**

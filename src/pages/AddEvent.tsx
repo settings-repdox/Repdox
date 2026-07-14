@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ADMIN_EMAILS } from "@/lib/adminService";
+import { isUserAdmin } from "@/lib/adminService";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -90,7 +90,6 @@ export default function AddEvent() {
   const queryClient = useQueryClient();
   const isEditMode = !!slug;
   const [event, setEvent] = useState<any | null>(null);
-  const eventService = eventServiceCore();
 
   const [loading, setLoading] = useState(false);
   const [loadingEvent, setLoadingEvent] = useState(true);
@@ -280,14 +279,14 @@ export default function AddEvent() {
         setProfileComplete(true);
 
         if (isEditMode && slug) {
-          const eventData = await eventServiceCore().getEventBySlug(slug);
+          const eventData = (await eventServiceCore().getEventBySlug(
+            slug,
+          )) as any;
           if (!eventData) {
             throw new Error("Event not found");
           }
 
-          const isAdminUser = user?.email
-            ? ADMIN_EMAILS.includes(user.email.toLowerCase())
-            : false;
+          const isAdminUser = await isUserAdmin();
           if (eventData.created_by !== user?.id && !isAdminUser) {
             toast({
               title: "Permission Denied",
@@ -301,15 +300,16 @@ export default function AddEvent() {
           setEvent(eventData);
           setEventId(eventData.id);
 
-          const startDate = new Date(eventData.start_at);
-          const endDate = new Date(eventData.end_at);
-          const regDeadline = new Date(eventData.registration_deadline);
+          const startDate = new Date(String(eventData.start_at));
+          const endDate = new Date(String(eventData.end_at));
+          const regDeadline = new Date(String(eventData.registration_deadline));
 
           setForm({
             title: eventData.title || "",
             slug: eventData.slug || "",
             type: String(eventData.type || "Hackathon"),
             format: String(eventData.format || "Offline"),
+            game_name: eventData.game_name || "",
             start_date: startDate.toISOString().split("T")[0],
             start_time: startDate.toTimeString().slice(0, 5),
             end_date: endDate.toISOString().split("T")[0],
@@ -435,7 +435,7 @@ export default function AddEvent() {
     };
 
     checkProfileAndLoad();
-  }, [isEditMode, slug, navigate, eventService, toast]);
+  }, [isEditMode, slug, navigate, toast]);
   const onChange = (k: keyof typeof form, v: string | string[]) =>
     setForm((s) => ({ ...s, [k]: v }));
 
@@ -856,7 +856,7 @@ export default function AddEvent() {
 
       if (isEditMode && eventId) {
         // Update existing event
-        const updated = await eventService.updateEvent(eventId, payload);
+        const updated = await eventServiceCore().updateEvent(eventId, payload);
         if (selectedEventType === "Gaming") {
           await ensureTournamentForEvent(eventId, {
             game_name: form.game_name?.trim() || "Valorant",
@@ -878,7 +878,7 @@ export default function AddEvent() {
         }
       } else {
         // Create new event
-        const created = await eventService.createEvent(payload);
+        const created = await eventServiceCore().createEvent(payload);
         if (created?.id && selectedEventType === "Gaming") {
           await ensureTournamentForEvent(created.id, {
             game_name: form.game_name?.trim() || "Valorant",

@@ -612,18 +612,18 @@ export default function EventDetail() {
             <div className="mb-6">
               {Array.isArray(event.type) ? (
                 <div className="flex flex-wrap gap-2">
-                  {event.type.map((t) => (
+                  {event.type.map((t, index) => (
                     <span
-                      key={t}
+                      key={String(t) + index}
                       className="bg-purple-600 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
                     >
-                      {t}
+                      {String(t)}
                     </span>
                   ))}
                 </div>
               ) : (
                 <Badge className="bg-accent text-accent-foreground border-0 px-3 py-1 text-sm font-semibold">
-                  {event.type}
+                  {String(event.type)}
                 </Badge>
               )}
             </div>
@@ -823,15 +823,15 @@ export default function EventDetail() {
                           event.short_blurb}
                       </p>
 
-                      {event.tags && event.tags.length > 0 && (
+                      {Array.isArray(event.tags) && event.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
-                          {event.tags.map((tag) => (
+                          {(event.tags as string[]).map((tag) => (
                             <Badge
-                              key={tag}
+                              key={String(tag)}
                               variant="outline"
                               className="border-accent/30"
                             >
-                              {tag}
+                              {String(tag)}
                             </Badge>
                           ))}
                         </div>

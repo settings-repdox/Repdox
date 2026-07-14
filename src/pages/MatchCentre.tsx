@@ -22,6 +22,9 @@ import {
   updateTournamentStatus,
   type MatchCentreData,
 } from "@/lib/tournamentService";
+
+const eventServiceCore = () => resolveService<IEventService>("EventService");
+
 import {
   ArrowLeft,
   CalendarClock,

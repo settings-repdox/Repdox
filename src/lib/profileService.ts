@@ -1,12 +1,9 @@
 // profileService.ts - For PRIVATE buckets with authentication
 
-import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IAssetService } from "@/core/services/interfaces/IAssetService";
 import type { IUserService } from "@/core/services/interfaces/IUserService";
 import { supabase } from "@/integrations/supabase/client";
-
-registerDefaults();
 
 const assetService = () => resolveService<IAssetService>("AssetService");
 const userService = () => resolveService<IUserService>("UserService");
