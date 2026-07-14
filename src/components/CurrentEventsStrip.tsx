@@ -165,7 +165,7 @@ export default function CurrentEventsStrip() {
                 key={index}
                 className={`h-2 w-2 rounded-full transition-all duration-500 ${
                   index === currentIndex 
-                    ? 'bg-accent scale-125' 
+                    ? 'bg-accent scale-125'
                     : 'bg-muted'
                 }`}
               />

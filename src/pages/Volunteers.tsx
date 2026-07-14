@@ -183,39 +183,38 @@ export default function Volunteers() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#05050e] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-accent/20 border-t-accent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (hasApplied) {
     return (
-      <div className="min-h-screen bg-[#05050e] text-white pt-24 pb-20 relative overflow-hidden">
+      <div className="min-h-screen bg-background text-foreground pt-24 pb-20 relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute top-[-200px] left-[-200px] w-[600px] h-[600px] bg-purple-600/10 blur-[120px] rounded-full animate-pulse"></div>
-          <div className="absolute bottom-[-100px] right-[-100px] w-[500px] h-[500px] bg-cyan-600/10 blur-[100px] rounded-full animate-pulse delay-700"></div>
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
+          <div className="absolute top-[-200px] left-[-200px] w-[600px] h-[600px] bg-accent/10 blur-[120px] rounded-full"></div>
+          <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--border)/0.5)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border)/0.5)_1px,transparent_1px)] bg-[size:64px_64px] opacity-40"></div>
         </div>
 
         <div className="max-w-3xl mx-auto px-4 relative z-10 text-center">
-          <div className="w-24 h-24 bg-purple-500/10 border-2 border-purple-500/30 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
+          <div className="w-24 h-24 bg-accent/10 border-2 border-accent/30 rounded-full flex items-center justify-center mx-auto mb-8">
             {applicationStatus === "approved" ? (
-              <Trophy className="w-12 h-12 text-purple-400" />
+              <Trophy className="w-12 h-12 text-accent" />
             ) : (
-              <CheckCircle2 className="w-12 h-12 text-purple-400" />
+              <CheckCircle2 className="w-12 h-12 text-accent" />
             )}
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-display font-bold mb-6 tracking-tight text-foreground">
             {applicationStatus === "pending" && "Application Pending"}
             {applicationStatus === "interview" && "Selected for Interview!"}
             {applicationStatus === "approved" && "Welcome to the Team!"}
             {applicationStatus === "rejected" && "Application Status"}
           </h1>
 
-          <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-8 md:p-12 shadow-2xl">
+          <div className="bg-card border border-border rounded-3xl p-8 md:p-12 shadow-lg">
             {applicationStatus === "pending" && (
               <>
                 <p className="text-xl text-muted-foreground mb-8">
@@ -225,7 +224,7 @@ export default function Volunteers() {
                 <div className="flex flex-col md:flex-row gap-4 justify-center">
                   <Button
                     onClick={() => navigate("/events")}
-                    className="bg-purple-600 hover:bg-purple-700 h-12 px-8 rounded-xl font-bold"
+                    className="bg-accent text-accent-foreground hover:bg-accent/90 h-12 px-8 rounded-xl font-bold"
                   >
                     Explore Events
                   </Button>
@@ -235,10 +234,10 @@ export default function Volunteers() {
 
             {applicationStatus === "interview" && (
               <>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-cyan-400 text-sm font-bold mb-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-full text-accent text-sm font-bold mb-6">
                   <Sparkles className="w-4 h-4" /> RECRUITMENT PHASE 2
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-4">
+                <h2 className="text-2xl font-display font-bold text-foreground mb-4">
                   Interview Invitation
                 </h2>
                 <p className="text-muted-foreground mb-8 text-lg">
@@ -248,12 +247,12 @@ export default function Volunteers() {
 
                 {interviewTime ? (
                   <div className="space-y-6">
-                    <div className="p-6 bg-purple-500/10 rounded-2xl border border-purple-500/20 flex flex-col items-center">
-                      <Clock className="w-8 h-8 text-purple-400 mb-3" />
-                      <p className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-2">
+                    <div className="p-6 bg-accent/10 rounded-2xl border border-accent/20 flex flex-col items-center">
+                      <Clock className="w-8 h-8 text-accent mb-3" />
+                      <p className="text-accent font-bold text-sm uppercase tracking-wider mb-2">
                         Scheduled Time
                       </p>
-                      <p className="text-xl font-bold text-white">
+                      <p className="text-xl font-bold text-foreground">
                         {new Date(interviewTime).toLocaleString("en-IN", {
                           dateStyle: "long",
                           timeStyle: "short",
@@ -275,7 +274,7 @@ export default function Volunteers() {
                           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <Button
                               onClick={() => window.open(meetLink, "_blank")}
-                              className="w-full h-16 bg-gradient-to-r from-purple-600 to-cyan-500 hover:opacity-90 rounded-2xl text-lg font-black tracking-wider shadow-2xl shadow-purple-500/20 group"
+                              className="w-full h-16 bg-accent text-accent-foreground hover:bg-accent/90 rounded-2xl text-lg font-black tracking-wider shadow-accent group"
                             >
                               JOIN INTERVIEW MEET{" "}
                               <Video className="ml-3 w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -288,7 +287,7 @@ export default function Volunteers() {
                         );
                       } else {
                         return (
-                          <div className="p-6 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center">
+                          <div className="p-6 bg-secondary rounded-2xl border border-border flex flex-col items-center">
                             <Video className="w-8 h-8 text-muted-foreground/50 mb-3" />
                             <p className="text-muted-foreground italic text-center">
                               The meet link will become active 10 minutes before
@@ -300,7 +299,7 @@ export default function Volunteers() {
                     })()}
                   </div>
                 ) : (
-                  <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                  <div className="p-6 bg-secondary rounded-2xl border border-border">
                     <p className="text-muted-foreground">
                       Our team is currently finalizing your interview slot. You
                       will receive an email confirmation very shortly.
@@ -308,21 +307,21 @@ export default function Volunteers() {
                   </div>
                 )}
 
-                <div className="mt-10 p-4 bg-white/5 rounded-2xl border border-white/10 text-left">
+                <div className="mt-10 p-4 bg-secondary rounded-2xl border border-border text-left">
                   <p className="text-sm text-muted-foreground mb-3 font-bold uppercase tracking-widest">
                     Preparation Tips:
                   </p>
-                  <ul className="space-y-2 text-sm text-white/80">
+                  <ul className="space-y-2 text-sm text-foreground/80">
                     <li className="flex items-center gap-2 font-medium">
-                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />{" "}
+                      <div className="w-1.5 h-1.5 bg-accent rounded-full" />{" "}
                       Be ready to discuss your skills and motivation
                     </li>
                     <li className="flex items-center gap-2 font-medium">
-                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />{" "}
+                      <div className="w-1.5 h-1.5 bg-accent rounded-full" />{" "}
                       Have your portfolio or previous work ready if applicable
                     </li>
                     <li className="flex items-center gap-2 font-medium">
-                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />{" "}
+                      <div className="w-1.5 h-1.5 bg-accent rounded-full" />{" "}
                       Find a quiet space with good lighting
                     </li>
                   </ul>
@@ -332,13 +331,13 @@ export default function Volunteers() {
 
             {applicationStatus === "approved" && (
               <>
-                <p className="text-xl text-white mb-8">
+                <p className="text-xl text-foreground mb-8">
                   Congratulations! You are officially part of the Repdox
                   community.
                 </p>
-                <div className="p-4 bg-green-500/10 rounded-2xl border border-green-500/20 text-center mb-4">
-                  <p className="text-green-400 font-bold mb-1">NEXT STEPS</p>
-                  <p className="text-sm text-white/80">
+                <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center mb-4">
+                  <p className="text-emerald-500 font-bold mb-1">NEXT STEPS</p>
+                  <p className="text-sm text-foreground/80">
                     You will receive a call and a WhatsApp message from our team
                     shortly regarding your onboarding.
                   </p>
@@ -360,7 +359,7 @@ export default function Volunteers() {
                   onClick={() =>
                     (window.location.href = "mailto:supportrepdox@gmail.com")
                   }
-                  className="border-white/10 hover:bg-white/5 h-12 px-8 rounded-xl font-bold"
+                  className="hover:bg-accent/10 h-12 px-8 rounded-xl font-bold"
                 >
                   <Mail className="w-4 h-4 mr-2" /> Contact Support
                 </Button>
@@ -373,26 +372,21 @@ export default function Volunteers() {
   }
 
   return (
-    <div className="min-h-screen bg-[#05050e] text-white pt-24 pb-20 relative overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground pt-24 pb-20 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-250px] left-[-250px] w-[700px] h-[700px] bg-purple-600/10 blur-[130px] rounded-full"></div>
-        <div className="absolute bottom-[-150px] right-[-100px] w-[500px] h-[500px] bg-cyan-600/10 blur-[110px] rounded-full"></div>
-        <div className="absolute top-[40%] right-[10%] w-[350px] h-[350px] bg-amber-600/5 blur-[90px] rounded-full"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
+        <div className="absolute top-[-250px] left-[-250px] w-[700px] h-[700px] bg-accent/10 blur-[130px] rounded-full"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--border)/0.5)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border)/0.5)_1px,transparent_1px)] bg-[size:64px_64px] opacity-40"></div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 relative z-10">
         <header className="text-center mb-16 space-y-4">
-          <div className="inline-flex items-center gap-3 bg-purple-500/10 border border-purple-500/30 rounded-full px-6 py-2 text-sm font-bold text-purple-400 mb-4 animate-fade-down">
-            <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
+          <div className="inline-flex items-center gap-3 bg-accent/10 border border-accent/30 rounded-full px-6 py-2 text-sm font-bold text-accent mb-4">
+            <span className="w-2 h-2 bg-accent rounded-full animate-pulse"></span>
             RECRUITMENT 2026
           </div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
-            JOIN US{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
-              TODAY
-            </span>
+          <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight leading-[1.1] text-foreground">
+            JOIN US <span className="text-accent">TODAY</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-lg mx-auto">
             Help us build the future of student events and competitions. Become
@@ -400,12 +394,12 @@ export default function Volunteers() {
           </p>
         </header>
 
-        <div className="bg-white/5 border border-white/10 backdrop-blur-2xl rounded-[32px] p-6 md:p-12 shadow-2xl relative">
+        <div className="bg-card border border-border rounded-[32px] p-6 md:p-12 shadow-lg relative">
           <form onSubmit={handleSubmit} className="space-y-10">
             {/* Personal Section */}
             <div className="space-y-6">
-              <div className="flex items-center gap-3 text-purple-400 font-bold border-b border-white/5 pb-4">
-                <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
+              <div className="flex items-center gap-3 text-foreground font-bold border-b border-border pb-4">
+                <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center text-accent">
                   <Users className="w-5 h-5" />
                 </div>
                 PERSONAL INFORMATION
@@ -417,7 +411,7 @@ export default function Volunteers() {
                     htmlFor="fullName"
                     className="text-muted-foreground flex items-center gap-2"
                   >
-                    Full Name <span className="text-purple-400">*</span>
+                    Full Name <span className="text-accent">*</span>
                   </Label>
                   <Input
                     id="fullName"
@@ -426,7 +420,7 @@ export default function Volunteers() {
                     onChange={(e) =>
                       setFormData({ ...formData, fullName: e.target.value })
                     }
-                    className="h-14 bg-white/5 border-white/10 focus:border-purple-500/50 focus:bg-purple-500/5 transition-all rounded-2xl"
+                    className="h-14 bg-secondary/50 border-border focus:border-accent/50 focus:bg-accent/5 transition-all rounded-2xl"
                     required
                   />
                 </div>
@@ -444,7 +438,7 @@ export default function Volunteers() {
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    className="h-14 bg-white/5 border-white/10 focus:border-purple-500/50 focus:bg-purple-500/5 transition-all rounded-2xl"
+                    className="h-14 bg-secondary/50 border-border focus:border-accent/50 focus:bg-accent/5 transition-all rounded-2xl"
                   />
                 </div>
               </div>
@@ -452,8 +446,8 @@ export default function Volunteers() {
 
             {/* Academic Section */}
             <div className="space-y-6">
-              <div className="flex items-center gap-3 text-cyan-400 font-bold border-b border-white/5 pb-4">
-                <div className="w-10 h-10 bg-cyan-500/10 rounded-xl flex items-center justify-center">
+              <div className="flex items-center gap-3 text-foreground font-bold border-b border-border pb-4">
+                <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center text-accent">
                   <GraduationCap className="w-5 h-5" />
                 </div>
                 ACADEMIC DETAILS
@@ -465,7 +459,7 @@ export default function Volunteers() {
                     htmlFor="school"
                     className="text-muted-foreground flex items-center gap-2"
                   >
-                    School / College <span className="text-cyan-400">*</span>
+                    School / College <span className="text-accent">*</span>
                   </Label>
                   <Input
                     id="school"
@@ -474,7 +468,7 @@ export default function Volunteers() {
                     onChange={(e) =>
                       setFormData({ ...formData, school: e.target.value })
                     }
-                    className="h-14 bg-white/5 border-white/10 focus:border-cyan-500/50 focus:bg-cyan-500/5 transition-all rounded-2xl"
+                    className="h-14 bg-secondary/50 border-border focus:border-accent/50 focus:bg-accent/5 transition-all rounded-2xl"
                     required
                   />
                 </div>
@@ -483,7 +477,7 @@ export default function Volunteers() {
                     htmlFor="city"
                     className="text-muted-foreground flex items-center gap-2"
                   >
-                    City <span className="text-cyan-400">*</span>
+                    City <span className="text-accent">*</span>
                   </Label>
                   <Input
                     id="city"
@@ -492,7 +486,7 @@ export default function Volunteers() {
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
-                    className="h-14 bg-white/5 border-white/10 focus:border-cyan-500/50 focus:bg-cyan-500/5 transition-all rounded-2xl"
+                    className="h-14 bg-secondary/50 border-border focus:border-accent/50 focus:bg-accent/5 transition-all rounded-2xl"
                     required
                   />
                 </div>
@@ -501,7 +495,7 @@ export default function Volunteers() {
                     htmlFor="branch"
                     className="text-muted-foreground flex items-center gap-2"
                   >
-                    Branch / Stream <span className="text-cyan-400">*</span>
+                    Branch / Stream <span className="text-accent">*</span>
                   </Label>
                   <Input
                     id="branch"
@@ -510,7 +504,7 @@ export default function Volunteers() {
                     onChange={(e) =>
                       setFormData({ ...formData, branch: e.target.value })
                     }
-                    className="h-14 bg-white/5 border-white/10 focus:border-cyan-500/50 focus:bg-cyan-500/5 transition-all rounded-2xl"
+                    className="h-14 bg-secondary/50 border-border focus:border-accent/50 focus:bg-accent/5 transition-all rounded-2xl"
                     required
                   />
                 </div>
@@ -519,7 +513,7 @@ export default function Volunteers() {
                     htmlFor="class"
                     className="text-muted-foreground flex items-center gap-2"
                   >
-                    Class / Year <span className="text-cyan-400">*</span>
+                    Class / Year <span className="text-accent">*</span>
                   </Label>
                   <Select
                     onValueChange={(val) =>
@@ -527,10 +521,10 @@ export default function Volunteers() {
                     }
                     required
                   >
-                    <SelectTrigger className="h-14 bg-white/5 border-white/10 focus:ring-cyan-500/30 rounded-2xl">
+                    <SelectTrigger className="h-14 bg-secondary/50 border-border focus:ring-accent/30 rounded-2xl">
                       <SelectValue placeholder="Select your year" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0e0c1e] border-white/10 text-white">
+                    <SelectContent className="bg-popover border-border text-popover-foreground">
                       <SelectItem value="9th Grade">9th Grade</SelectItem>
                       <SelectItem value="10th Grade">10th Grade</SelectItem>
                       <SelectItem value="11th Grade">11th Grade</SelectItem>
@@ -552,8 +546,8 @@ export default function Volunteers() {
 
             {/* Role Section */}
             <div className="space-y-6">
-              <div className="flex items-center gap-3 text-amber-400 font-bold border-b border-white/5 pb-4">
-                <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center">
+              <div className="flex items-center gap-3 text-foreground font-bold border-b border-border pb-4">
+                <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center text-accent">
                   <Briefcase className="w-5 h-5" />
                 </div>
                 ROLE PREFERENCE
@@ -564,7 +558,7 @@ export default function Volunteers() {
                   htmlFor="role"
                   className="text-muted-foreground flex items-center gap-2"
                 >
-                  Preferred Role <span className="text-amber-400">*</span>
+                  Preferred Role <span className="text-accent">*</span>
                 </Label>
                 <Select
                   onValueChange={(val) =>
@@ -572,10 +566,10 @@ export default function Volunteers() {
                   }
                   required
                 >
-                  <SelectTrigger className="h-14 bg-white/5 border-white/10 focus:ring-amber-500/30 rounded-2xl">
+                  <SelectTrigger className="h-14 bg-secondary/50 border-border focus:ring-accent/30 rounded-2xl">
                     <SelectValue placeholder="Select a position" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0e0c1e] border-white/10 text-white">
+                  <SelectContent className="bg-popover border-border text-popover-foreground">
                     <SelectItem value="Event Management">
                       Event Management
                     </SelectItem>
@@ -602,7 +596,7 @@ export default function Volunteers() {
                   className="text-muted-foreground flex items-center gap-2"
                 >
                   Why do you want to join Repdox?{" "}
-                  <span className="text-amber-400">*</span>
+                  <span className="text-accent">*</span>
                 </Label>
                 <Textarea
                   id="motivation"
@@ -611,7 +605,7 @@ export default function Volunteers() {
                   onChange={(e) =>
                     setFormData({ ...formData, motivation: e.target.value })
                   }
-                  className="min-h-[150px] bg-white/5 border-white/10 focus:border-amber-500/50 focus:bg-amber-500/5 transition-all rounded-2xl resize-none leading-relaxed"
+                  className="min-h-[150px] bg-secondary/50 border-border focus:border-accent/50 focus:bg-accent/5 transition-all rounded-2xl resize-none leading-relaxed"
                   required
                 />
               </div>
@@ -620,7 +614,7 @@ export default function Volunteers() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-16 bg-gradient-to-r from-purple-600 via-purple-500 to-cyan-500 hover:opacity-90 rounded-2xl text-xl font-black tracking-widest shadow-2xl shadow-purple-500/20 group overflow-hidden relative"
+              className="w-full h-16 bg-accent text-accent-foreground hover:bg-accent/90 rounded-2xl text-xl font-black tracking-widest shadow-accent group overflow-hidden relative"
             >
               <div className="relative z-10 flex items-center justify-center gap-3">
                 {isSubmitting ? (
@@ -632,7 +626,7 @@ export default function Volunteers() {
                   </>
                 )}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent-foreground/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
             </Button>
           </form>
         </div>

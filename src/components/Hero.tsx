@@ -2,7 +2,14 @@ import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Share2 } from "lucide-react";
+import { ArrowRight, Sparkles, Share2, Code2, Presentation, Mic2, Gamepad2, ChevronDown } from "lucide-react";
+
+const categories = [
+  { label: "Hackathons", icon: Code2 },
+  { label: "Workshops", icon: Presentation },
+  { label: "Model UN", icon: Mic2 },
+  { label: "Gaming", icon: Gamepad2 },
+];
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -12,7 +19,7 @@ export default function Hero() {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-subtle"
+      className="relative min-h-[92vh] flex items-center justify-center overflow-hidden bg-gradient-subtle"
     >
       <div
         aria-hidden
@@ -44,7 +51,7 @@ export default function Hero() {
           Compete. Connect.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-10">
           {/* Primary CTA: View Events */}
           <motion.button
             onClick={() => navigate("/events")}
@@ -75,6 +82,27 @@ export default function Hero() {
             </span>
           </motion.button>
         </div>
+
+        {/* Category strip */}
+        <div className="flex flex-wrap justify-center gap-3 mb-6">
+          {categories.map(({ label, icon: Icon }) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card/60 text-sm text-muted-foreground"
+            >
+              <Icon className="w-4 h-4 text-accent" />
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="flex justify-center text-muted-foreground/50"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </motion.div>
 
         {/* Discord Modal Overlay */}
         {showDiscordModal && (
