@@ -27,9 +27,9 @@ export default function Footer() {
   if (pathname.startsWith("/profile")) return null;
 
   return (
-    <footer className="relative overflow-hidden border-t border-border/30 bg-background/80 backdrop-blur-sm">
-      {/* Animated background */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.1),transparent_70%)]" />
+    <footer className="relative overflow-hidden border-t border-border bg-background">
+      {/* Subtle background wash */}
+      <div className="absolute inset-0 bg-gradient-subtle" />
 
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
@@ -43,20 +43,13 @@ export default function Footer() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              {/* Logo with glow effect */}
-              <motion.h3
-                className="text-2xl md:text-3xl font-bold tracking-[0.1em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 animate-gradient-x transition-all duration-300 hover:drop-shadow-lg"
-                style={{ 
-                  fontFamily: "'Outfit', sans-serif",
-                  textShadow: "0 0 15px rgba(168, 85, 247, 0.3)"
-                }}
-                whileHover={{
-                  scale: 1.05,
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                REPDOX
-              </motion.h3>
+              {/* Logo */}
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-sm bg-accent" />
+                <h3 className="font-display text-2xl font-bold tracking-[0.08em] text-foreground">
+                  REPDOX
+                </h3>
+              </div>
               <p className="text-muted-foreground leading-relaxed">
                 Think. Build. Transform.<br />
                 Empowering the next generation of innovators.
@@ -64,9 +57,9 @@ export default function Footer() {
               {/* Social Links */}
               <div className="flex gap-3">
                 {[
-                  { icon: FaDiscord, href: "https://discord.gg/y9kRMNn49K", label: "Discord", color: "from-indigo-500 to-blue-500", glow: "rgba(79, 70, 229, 0.5)" },
-                  { icon: FaInstagram, href: "https://www.instagram.com/repdox.official", label: "Instagram", color: "from-pink-500 to-rose-500", glow: "rgba(236, 72, 153, 0.5)" },
-                  { icon: FaWhatsapp, href: "https://chat.whatsapp.com/HhJfHtq7gE411KEYa6qpQP", label: "WhatsApp", color: "from-green-500 to-emerald-500", glow: "rgba(16, 185, 129, 0.5)" },
+                  { icon: FaDiscord, href: "https://discord.gg/y9kRMNn49K", label: "Discord" },
+                  { icon: FaInstagram, href: "https://www.instagram.com/repdox.official", label: "Instagram" },
+                  { icon: FaWhatsapp, href: "https://chat.whatsapp.com/HhJfHtq7gE411KEYa6qpQP", label: "WhatsApp" },
                 ].map((social, index) => {
                   const Icon = social.icon;
                   return (
@@ -75,28 +68,12 @@ export default function Footer() {
                       href={social.href}
                        target="_blank"
                        rel="noopener noreferrer"
-                       whileHover={{
-                         y: -6,
-                         scale: 1.15,
-                       }}
+                       whileHover={{ y: -4 }}
                        whileTap={{ scale: 0.95 }}
-                       className="group relative p-3 rounded-xl bg-accent/10 hover:bg-accent/20 border border-border transition-all duration-300"
-                       style={{
-                         boxShadow: "0 0 0 rgba(0,0,0,0)",
-                       }}
-                       onMouseEnter={(e) => {
-                         e.currentTarget.style.boxShadow = `0 0 20px ${social.glow}`;
-                       }}
-                       onMouseLeave={(e) => {
-                         e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
-                       }}
+                       className="group p-3 rounded-xl bg-card hover:bg-accent/10 border border-border hover:border-accent/40 transition-all duration-300"
                        aria-label={social.label}
                      >
-                       <Icon className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                      <motion.div
-                        className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-30 bg-gradient-to-br ${social.color}`}
-                        transition={{ duration: 0.3 }}
-                      />
+                       <Icon className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
                     </motion.a>
                   );
                 })}
@@ -143,7 +120,7 @@ export default function Footer() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="pt-8 border-t border-white/10"
+          className="pt-8 border-t border-border"
         >
            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground/60">
              <p>© {currentYear} Repdox. All rights reserved.</p>

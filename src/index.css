@@ -1,122 +1,84 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syncopate:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
-All colors MUST be HSL.
-*/
+/* Design system. One accent color, one warm-neutral gray family, HSL everywhere. */
 
 @layer base {
   :root {
-    /* Light mode: Sophisticated palette */
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Light mode */
+    --background: 36 30% 98%;
+    --foreground: 30 12% 10%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card: 36 25% 96%;
+    --card-foreground: 30 12% 10%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover: 36 25% 97%;
+    --popover-foreground: 30 12% 10%;
 
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 30 12% 10%;
+    --primary-foreground: 36 30% 98%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 32 15% 92%;
+    --secondary-foreground: 30 12% 10%;
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 32 15% 92%;
+    --muted-foreground: 30 8% 42%;
 
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 32 78% 52%;
+    --accent-foreground: 30 30% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 6 70% 48%;
+    --destructive-foreground: 36 30% 98%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    --border: 32 15% 88%;
+    --input: 32 15% 88%;
+    --ring: 32 78% 52%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Glassmorphism & Shadows */
-    --glass-bg: 255 255 255 / 0.7;
-    --glass-border: 255 255 255 / 0.18;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1),
-      0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
-      0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
-      0 8px 10px -6px rgb(0 0 0 / 0.1);
-    --shadow-glow: 0 0 20px rgb(139 92 246 / 0.3);
-
-    /* Extended accent colors */
-    --accent-cyan: 200 100% 50%;
-    --accent-pink: 330 100% 60%;
-    --accent-yellow: 45 100% 50%;
-    --glow-purple: 270 60% 60%;
-
-    /* Glow shadows */
-    --shadow-glow-purple: 0 0 20px rgb(168 85 247 / 0.4);
-    --shadow-glow-cyan: 0 0 20px rgb(34 211 238 / 0.4);
-    --shadow-glow-pink: 0 0 20px rgb(236 72 153 / 0.4);
+    --shadow-sm: 0 1px 2px 0 rgb(30 20 8 / 0.06);
+    --shadow-md: 0 4px 10px -2px rgb(30 20 8 / 0.08), 0 2px 4px -2px rgb(30 20 8 / 0.06);
+    --shadow-lg: 0 12px 24px -6px rgb(30 20 8 / 0.10), 0 4px 8px -4px rgb(30 20 8 / 0.06);
+    --shadow-accent: 0 8px 24px -8px hsl(32 78% 52% / 0.35);
   }
 
   .dark {
-    /* Dark mode: Deep, rich palette */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Dark mode: warm charcoal, single amber accent */
+    --background: 30 8% 8%;
+    --foreground: 36 18% 94%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 30 8% 10.5%;
+    --card-foreground: 36 18% 94%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 30 8% 10%;
+    --popover-foreground: 36 18% 94%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 36 18% 94%;
+    --primary-foreground: 30 10% 10%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 30 7% 16%;
+    --secondary-foreground: 36 18% 94%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 30 7% 15%;
+    --muted-foreground: 30 6% 62%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 32 82% 58%;
+    --accent-foreground: 30 30% 8%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 6 65% 55%;
+    --destructive-foreground: 36 18% 94%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 30 7% 18%;
+    --input: 30 7% 18%;
+    --ring: 32 82% 58%;
 
-    /* Dark mode specific */
-    --glass-bg: 0 0 0 / 0.4;
-    --glass-border: 255 255 255 / 0.1;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5),
-      0 2px 4px -2px rgb(0 0 0 / 0.5);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5),
-      0 4px 6px -4px rgb(0 0 0 / 0.5);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5),
-      0 8px 10px -6px rgb(0 0 0 / 0.5);
-    --shadow-glow: 0 0 30px rgb(139 92 246 / 0.5);
-
-    /* Extended accent colors */
-    --accent-cyan: 200 100% 50%;
-    --accent-pink: 330 100% 60%;
-    --accent-yellow: 45 100% 50%;
-    --glow-purple: 270 60% 60%;
-
-    /* Glow shadows */
-    --shadow-glow-purple: 0 0 30px rgb(168 85 247 / 0.6);
-    --shadow-glow-cyan: 0 0 30px rgb(34 211 238 / 0.6);
-    --shadow-glow-pink: 0 0 30px rgb(236 72 153 / 0.6);
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+    --shadow-md: 0 4px 10px -2px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 16px 32px -8px rgb(0 0 0 / 0.5), 0 4px 10px -4px rgb(0 0 0 / 0.35);
+    --shadow-accent: 0 8px 28px -6px hsl(32 82% 58% / 0.3);
   }
 
   * {
@@ -128,14 +90,17 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-      sans-serif;
+    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
-      sans-serif;
+    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   html {
@@ -146,9 +111,9 @@ All colors MUST be HSL.
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
-  /* Custom selection colors */
   ::selection {
-    @apply bg-purple-500/30 text-foreground;
+    background-color: hsl(var(--accent) / 0.25);
+    color: hsl(var(--foreground));
   }
 
   kbd {
@@ -157,25 +122,28 @@ All colors MUST be HSL.
 }
 
 @layer components {
-  /* Typography components */
   .font-display {
-    @apply font-bold;
-    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
-      sans-serif;
+    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-weight: 600;
     letter-spacing: -0.02em;
   }
 
   .font-body {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-      sans-serif;
+    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.65;
+  }
+
+  .text-accent-mark {
+    color: hsl(var(--accent));
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground;
   }
 }
 
 @layer utilities {
-  /* Scrollbar utilities */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -191,16 +159,11 @@ All colors MUST be HSL.
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-white/5 rounded-full;
+    @apply bg-foreground/5 rounded-full;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-white/20 rounded-full hover:bg-white/30;
-  }
-
-  /* Interactive utilities */
-  .transition-twitter {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    @apply bg-foreground/15 rounded-full hover:bg-foreground/25;
   }
 
   .transition-smooth {
@@ -211,100 +174,71 @@ All colors MUST be HSL.
     @apply transition-all duration-300 ease-in-out;
   }
 
-  .hover-scale {
+  .hover-lift {
     @apply transition-transform duration-300;
   }
 
-  .hover-scale:hover {
-    transform: scale(1.05);
+  .hover-lift:hover {
+    transform: translateY(-3px);
   }
 
   .active-scale:active {
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
 
-  /* Visual effects */
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400;
+  .surface-card {
+    @apply bg-card border border-border rounded-xl transition-all duration-300;
+  }
+
+  .surface-card:hover {
+    @apply border-accent/40;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
   }
 
   .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+    background: hsl(var(--card) / 0.7);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid hsl(var(--border));
   }
 
-  .glass-hover {
-    @apply transition-all duration-300;
+  .nav-glass {
+    @apply glass sticky top-0 z-50;
   }
 
-  .glass-hover:hover {
-    background: rgba(var(--glass-bg));
-    backdrop-filter: blur(20px) saturate(200%);
-    -webkit-backdrop-filter: blur(20px) saturate(200%);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .glass-effect {
-    background: rgba(var(--glass-bg));
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid rgba(var(--glass-border));
-  }
-
-  .bg-gradient-radial {
-    background: radial-gradient(
-      circle at center,
-      rgba(120, 119, 198, 0.15),
-      transparent 70%
-    );
+  .glow-accent {
+    box-shadow: var(--shadow-accent);
   }
 
   .bg-gradient-subtle {
-    @apply bg-gradient-to-b from-background to-muted/20;
+    background: radial-gradient(ellipse at top, hsl(var(--accent) / 0.06), transparent 60%);
   }
 
-  .gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  .underline-animation, .link-smooth {
+    @apply relative inline-block;
   }
 
-  .dark .gradient-text {
-    background-image: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  .underline-animation::after, .link-smooth::after {
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-accent transition-all duration-300;
+    content: "";
   }
 
-  /* Animations */
-  .gradient-animation {
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+  .underline-animation:hover::after, .link-smooth:hover::after {
+    @apply w-full;
   }
 
-  @keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  .fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
   }
 
-  .aurora-glow {
-    animation: aurora-glow 8s ease-in-out infinite;
-  }
-
-  @keyframes aurora-glow {
-    0%, 100% { opacity: 0.5; transform: translateY(0px); }
-    50% { opacity: 0.8; transform: translateY(-10px); }
-  }
-
-  .noise-shimmer {
-    animation: noise-shimmer 6s ease-in-out infinite;
-  }
-
-  @keyframes noise-shimmer {
-    0% { background-position: 0% 0%; }
-    100% { background-position: 100% 100%; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .shimmer {
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, hsl(var(--foreground) / 0.06) 50%, transparent 100%);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
@@ -314,59 +248,6 @@ All colors MUST be HSL.
     100% { background-position: 200% 0; }
   }
 
-  .fade-in {
-    animation: fadeIn 0.6s ease-out forwards;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* UI Feedback */
-  .magnetic-hover {
-    @apply transition-transform duration-200 ease-out;
-  }
-
-  .magnetic-hover:hover { transform: scale(1.05); }
-  .magnetic-hover:active { transform: scale(0.98); }
-
-  .glow-on-hover, .btn-glow-on-hover {
-    @apply transition-all duration-300 ease-out;
-  }
-
-  .glow-on-hover:hover, .btn-glow-on-hover:hover {
-    box-shadow: var(--shadow-glow);
-  }
-
-  .card-lift {
-    @apply transition-all duration-300 ease-out;
-  }
-
-  .card-lift:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: var(--shadow-xl);
-  }
-
-  .nav-glass {
-    @apply glass-effect sticky top-0 z-50;
-    box-shadow: var(--shadow-md);
-  }
-
-  .underline-animation, .link-smooth {
-    @apply relative inline-block;
-  }
-
-  .underline-animation::after, .link-smooth::after {
-    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300;
-    content: "";
-  }
-
-  .underline-animation:hover::after, .link-smooth:hover::after {
-    @apply w-full;
-  }
-
-  /* Consistency and Misc */
   button, a, input, textarea, select {
     @apply transition-colors duration-200;
   }
@@ -377,10 +258,6 @@ All colors MUST be HSL.
 
   button:disabled, input:disabled {
     @apply opacity-60 cursor-not-allowed;
-  }
-
-  .select-none {
-    user-select: none;
   }
 
   .sr-only {

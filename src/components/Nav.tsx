@@ -319,24 +319,15 @@ export default function Nav() {
     return (
       <CardNav
         logo={
-          <span
-            className="text-[14px] font-black tracking-[0.05em] uppercase whitespace-nowrap flex-shrink-0 bg-clip-text text-transparent"
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              backgroundImage: theme === "dark"
-                ? "linear-gradient(to right, #ffffff, #a855f7, #ec4899)"
-                : "linear-gradient(to right, #09090b, #7c3aed, #db2777)",
-              display: "inline-block",
-            }}
-          >
-            REPDOX
+          <span className="font-display text-[15px] font-bold tracking-[0.08em] uppercase whitespace-nowrap flex-shrink-0 text-foreground">
+            Repdox
           </span>
         }
         items={mobileItems}
-        baseColor={theme === "dark" ? "#0D0716" : "#fff"}
-        menuColor={theme === "dark" ? "#fff" : "#000"}
-        buttonBgColor={theme === "dark" ? "#fff" : "#000"}
-        buttonTextColor={theme === "dark" ? "#000" : "#fff"}
+        baseColor={theme === "dark" ? "#141110" : "#fff"}
+        menuColor={theme === "dark" ? "#f2ede7" : "#1a1512"}
+        buttonBgColor={theme === "dark" ? "#f2ede7" : "#1a1512"}
+        buttonTextColor={theme === "dark" ? "#1a1512" : "#f2ede7"}
         ease="power3.out"
       />
     );
@@ -353,8 +344,8 @@ export default function Nav() {
       className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 transition-colors duration-300"
       style={{
         background: theme === "dark"
-          ? (scrolled ? "rgba(13, 7, 22, 0.5)" : "rgba(13, 7, 22, 0.2)")
-          : (scrolled ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.3)"),
+          ? (scrolled ? "hsl(30 8% 8% / 0.75)" : "hsl(30 8% 8% / 0.35)")
+          : (scrolled ? "hsl(36 30% 98% / 0.8)" : "hsl(36 30% 98% / 0.4)"),
         backdropFilter: scrolled
           ? "blur(20px) saturate(200%)"
           : "blur(16px) saturate(180%)",
@@ -368,16 +359,9 @@ export default function Nav() {
           {/* Left side */}
           <div className="flex items-center gap-8">
             <Link to="/" className="flex-shrink-0 group relative py-2">
-              <div className="flex items-center">
-                <span
-                  className="text-2xl font-black tracking-[0.15em] transition-all duration-300 bg-clip-text text-transparent"
-                  style={{
-                    fontFamily: "'Outfit', sans-serif",
-                    backgroundImage: theme === "dark"
-                      ? "linear-gradient(to right, #ffffff, #a855f7, #ec4899)"
-                      : "linear-gradient(to right, #09090b, #7c3aed, #db2777)",
-                  }}
-                >
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-sm bg-accent" />
+                <span className="font-display text-xl font-bold tracking-[0.1em] text-foreground group-hover:text-accent transition-colors duration-300">
                   REPDOX
                 </span>
               </div>
@@ -389,13 +373,12 @@ export default function Nav() {
                   <NavigationMenuItem key={index}>
                     <NavigationMenuLink
                       asChild
-                      className="relative px-5 py-2.5 text-sm font-bold text-foreground/60 hover:text-foreground transition-all duration-300 group whitespace-nowrap tracking-widest uppercase"
-                      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                      className="relative px-5 py-2.5 text-sm font-semibold text-foreground/60 hover:text-foreground transition-all duration-300 group whitespace-nowrap tracking-wide"
                     >
                       <Link to={link.href}>
                         {link.label}
                         <motion.span
-                          className="absolute bottom-1 left-5 right-5 h-0.5 bg-gradient-to-r from-purple-500 to-cyan w-0 group-hover:w-[calc(100%-40px)] transition-all origin-left"
+                          className="absolute bottom-1 left-5 right-5 h-0.5 bg-accent w-0 group-hover:w-[calc(100%-40px)] transition-all origin-left"
                           transition={{ duration: 0.3, ease: "easeOut" }}
                         />
                       </Link>
@@ -419,7 +402,7 @@ export default function Nav() {
               {theme === "dark" ? (
                 <Sun className="h-5 w-5 text-yellow-400" />
               ) : (
-                <Moon className="h-5 w-5 text-purple-400" />
+                <Moon className="h-5 w-5 text-accent" />
               )}
             </motion.button>
 
@@ -431,7 +414,7 @@ export default function Nav() {
                   onClick={() => setMenuOpen((s) => !s)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-transparent ring-purple-500/50 hover:ring-purple-500 transition-all"
+                  className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-transparent ring-accent/50 hover:ring-accent transition-all"
                   aria-label="Open user menu"
                 >
                   {avatarSrc && !avatarError ? (
@@ -459,7 +442,7 @@ export default function Nav() {
                         .join("")
                         .toUpperCase();
                       return (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
+                        <div className="w-full h-full bg-accent flex items-center justify-center text-accent-foreground font-semibold">
                           {initials || "U"}
                         </div>
                       );
@@ -500,7 +483,7 @@ export default function Nav() {
                             setMenuOpen(false);
                             navigate("/admin/events");
                           }}
-                          className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2 border-t border-border/50"
+                          className="w-full text-left px-4 py-3 text-sm text-accent font-semibold hover:bg-accent/10 transition-colors flex items-center gap-2 border-t border-border/50"
                         >
                           <ShieldCheck className="w-4 h-4" />
                           Approve Events
@@ -510,7 +493,7 @@ export default function Nav() {
                             setMenuOpen(false);
                             navigate("/admin/volunteers");
                           }}
-                          className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2"
+                          className="w-full text-left px-4 py-3 text-sm text-accent font-semibold hover:bg-accent/10 transition-colors flex items-center gap-2"
                         >
                           <Users className="w-4 h-4" />
                           Manage Volunteers
@@ -525,7 +508,7 @@ export default function Nav() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold text-sm hover:shadow-lg hover:shadow-purple-500/50 transition-shadow"
+                  className="px-6 py-2 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:shadow-accent transition-shadow"
                 >
                   Sign In
                 </motion.button>

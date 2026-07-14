@@ -8,29 +8,21 @@ const features = [
     icon: Zap,
     title: "Energize Innovation",
     description: "Spark creativity through hands-on hackathons and collaborative workshops.",
-    gradient: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
-    glow: "rgba(245, 158, 11, 0.4)"
   },
   {
     icon: Target,
     title: "Build Skills",
     description: "Develop technical and leadership abilities in real-world scenarios.",
-    gradient: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)",
-    glow: "rgba(6, 182, 212, 0.4)"
   },
   {
     icon: Heart,
     title: "Foster Community",
     description: "Connect with like-minded students, mentors, and industry leaders.",
-    gradient: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)",
-    glow: "rgba(236, 72, 153, 0.4)"
   },
   {
     icon: Lightbulb,
     title: "Drive Impact",
     description: "Transform ideas into solutions that make a difference.",
-    gradient: "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
-    glow: "rgba(168, 85, 247, 0.4)"
   },
 ];
 
@@ -53,7 +45,7 @@ export default function About() {
       {/* Animated background layers */}
       <motion.div 
         style={{ y }}
-        className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(120,119,198,0.1),transparent_50%)] pointer-events-none"
+        className="absolute inset-0 bg-gradient-subtle pointer-events-none"
       />
       
       <div ref={ref} className="max-w-6xl mx-auto relative z-10">
@@ -63,7 +55,8 @@ export default function About() {
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >          
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
+          <span className="eyebrow justify-center mb-4 text-accent">Who we are</span>
+          <h2 className="text-4xl md:text-6xl font-display font-bold mb-6 text-foreground">
             About Repdox
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
@@ -83,24 +76,15 @@ export default function About() {
                 initial={{ opacity: 0, y: 50 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
-                whileHover={{ y: -10, scale: 1.05 }}
+                whileHover={{ y: -6 }}
                 className="group relative"
               >
-                <div className="h-full bg-card/50 backdrop-blur-md rounded-2xl p-6 border border-border/50 overflow-hidden hover:border-border transition-all duration-300">
-                  {/* Gradient overlay on hover */}
-                  <div 
-                    className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500" 
-                    style={{ background: feature.gradient }}
-                  />
-                  
-                  <div 
-                    style={{ background: feature.gradient }}
-                    className="relative inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
-                  >
-                    <Icon className="h-7 w-7 text-white" />
+                <div className="h-full surface-card p-6">
+                  <div className="relative inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 bg-accent/10 border border-accent/20 group-hover:bg-accent/15 transition-colors duration-300">
+                    <Icon className="h-6 w-6 text-accent" />
                   </div>
-                  
-                  <h3 className="text-xl font-semibold mb-3 text-foreground group-hover:text-purple-500 transition-colors duration-300">
+
+                  <h3 className="text-lg font-display font-semibold mb-2 text-foreground">
                     {feature.title}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed text-sm">
@@ -115,19 +99,19 @@ export default function About() {
 
         {/* Extra Content: Organizer Benefits, Guidelines, Contact */}
         <div className="max-w-4xl mx-auto mt-24 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-emerald-500/30 transition-all">
-              <h3 className="text-2xl font-bold mb-4 text-emerald-500">For Organizers</h3>
-              <p className="text-muted-foreground leading-relaxed">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="surface-card p-8">
+              <h3 className="text-xl font-display font-semibold mb-3 text-foreground">For Organizers</h3>
+              <p className="text-muted-foreground leading-relaxed text-sm">
                 Repdox supports organizers with professional tools to create events, manage registrations,
                 accept role-based signups, and export participant lists. We provide
                 templates and best practices for running safe, accessible, and impactful events.
               </p>
             </section>
 
-            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-cyan-500/30 transition-all">
-              <h3 className="text-2xl font-bold mb-4 text-cyan-500">Community Guidelines</h3>
-              <p className="text-muted-foreground leading-relaxed">
+            <section className="surface-card p-8">
+              <h3 className="text-xl font-display font-semibold mb-3 text-foreground">Community Guidelines</h3>
+              <p className="text-muted-foreground leading-relaxed text-sm">
                 We strive to build welcoming spaces. Treat others with respect, follow local
                 laws, and report behavior that makes you uncomfortable.
                 Organizers are expected to provide clear codes of conduct.
@@ -135,22 +119,22 @@ export default function About() {
             </section>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-purple-500/30 transition-all">
-              <h3 className="text-2xl font-bold mb-4 text-purple-500">Verification & Safety</h3>
-              <p className="text-muted-foreground leading-relaxed">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="surface-card p-8">
+              <h3 className="text-xl font-display font-semibold mb-3 text-foreground">Verification & Safety</h3>
+              <p className="text-muted-foreground leading-relaxed text-sm">
                 We offer account verification via email or phone to help organisers and attendees trust interactions. You can request a verification token in your profile settings — this ensures secure and verified community engagement.
               </p>
             </section>
 
-            <section className="bg-emerald-500/10 backdrop-blur-md rounded-3xl p-8 border border-emerald-500/20 text-center flex flex-col items-center justify-center">
-              <h3 className="text-2xl font-bold mb-4 text-foreground">Get Involved</h3>
-              <p className="text-muted-foreground mb-6">
+            <section className="rounded-xl p-8 border border-accent/30 bg-accent/5 text-center flex flex-col items-center justify-center">
+              <h3 className="text-xl font-display font-semibold mb-2 text-foreground">Get Involved</h3>
+              <p className="text-muted-foreground mb-6 text-sm">
                 Interested in contributing, organizing, or sponsoring?
               </p>
               <a 
                 href="/contact" 
-                className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/20"
+                className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-lg transition-all active-scale text-sm"
               >
                 Contact Our Team
               </a>

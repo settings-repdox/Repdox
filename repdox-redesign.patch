@@ -1,0 +1,1423 @@
+diff --git a/src/components/About.tsx b/src/components/About.tsx
+index ec38dd8..215e349 100644
+--- a/src/components/About.tsx
++++ b/src/components/About.tsx
+@@ -1,41 +1,32 @@
+ import { motion } from "framer-motion";
+ import { Zap, Target, Heart, Lightbulb } from "lucide-react";
+-import { useState } from "react";
+ 
+ const features = [
+   {
+     icon: Zap,
+     title: "Energize Innovation",
+     description: "Spark creativity through hands-on hackathons and collaborative workshops.",
+-    gradient: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+-    glow: "rgba(245, 158, 11, 0.4)"
+   },
+   {
+     icon: Target,
+     title: "Build Skills",
+     description: "Develop technical and leadership abilities in real-world scenarios.",
+-    gradient: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)",
+-    glow: "rgba(6, 182, 212, 0.4)"
+   },
+   {
+     icon: Heart,
+     title: "Foster Community",
+     description: "Connect with like-minded students, mentors, and industry leaders.",
+-    gradient: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)",
+-    glow: "rgba(236, 72, 153, 0.4)"
+   },
+   {
+     icon: Lightbulb,
+     title: "Drive Impact",
+     description: "Transform ideas into solutions that make a difference.",
+-    gradient: "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
+-    glow: "rgba(168, 85, 247, 0.4)"
+   },
+ ];
+ 
+ export default function About() {
+   return (
+-    <section className="py-24 px-6">
++    <section className="py-24 px-6 bg-gradient-subtle">
+       <div className="max-w-6xl mx-auto">
+         <motion.div
+           initial={{ opacity: 0, y: 20 }}
+@@ -44,18 +35,19 @@ export default function About() {
+           transition={{ duration: 0.6 }}
+           className="text-center mb-16"
+         >
+-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
++          <span className="eyebrow justify-center mb-4 text-accent">Who we are</span>
++          <h2 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6">
+             About Repdox
+           </h2>
+-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+-            We're a youth-led movement empowering students and early-career professionals 
+-            through transformative events. From hackathons to Model UN conferences, 
+-            gaming tournaments to skill-building workshops—we create spaces where 
++          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
++            We're a youth-led movement empowering students and early-career professionals
++            through transformative events. From hackathons to Model UN conferences,
++            gaming tournaments to skill-building workshops—we create spaces where
+             ambition meets opportunity.
+           </p>
+         </motion.div>
+ 
+-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
++        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+           {features.map((feature, index) => (
+             <FeatureCard key={index} feature={feature} index={index} />
+           ))}
+@@ -65,9 +57,8 @@ export default function About() {
+   );
+ }
+ 
+-function FeatureCard({ feature, index }: { feature: typeof features[0], index: number }) {
++function FeatureCard({ feature, index }: { feature: typeof features[0]; index: number }) {
+   const Icon = feature.icon;
+-  const [isHovered, setIsHovered] = useState(false);
+ 
+   return (
+     <motion.div
+@@ -75,43 +66,20 @@ function FeatureCard({ feature, index }: { feature: typeof features[0], index: n
+       whileInView={{ opacity: 1, y: 0 }}
+       viewport={{ once: true }}
+       transition={{ delay: index * 0.1, duration: 0.5 }}
+-      whileHover={{ y: -8, scale: 1.02 }}
+-      onHoverStart={() => setIsHovered(true)}
+-      onHoverEnd={() => setIsHovered(false)}
++      whileHover={{ y: -6 }}
+       className="group"
+     >
+-      <motion.div
+-        className="bg-card rounded-lg p-6 h-full border border-border/50 transition-all duration-300 relative overflow-hidden"
+-        animate={{
+-          boxShadow: isHovered
+-            ? `0 10px 30px -10px ${feature.glow.replace('0.4', '0.2')}`
+-            : "0 0 0 rgba(0, 0, 0, 0)",
+-        }}
+-        transition={{ duration: 0.3 }}
+-      >
+-        <div 
+-          className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none" 
+-          style={{ background: feature.gradient }}
+-        />
+-        
+-        <motion.div
+-          className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 shadow-lg transition-all duration-300"
+-          style={{ background: feature.gradient }}
+-          whileHover={{
+-            scale: 1.1,
+-            rotate: 2,
+-          }}
+-          transition={{ duration: 0.3 }}
+-        >
+-          <Icon className="h-7 w-7 text-white" />
+-        </motion.div>
+-        <h3 className="text-xl font-semibold font-display mb-2 text-foreground group-hover:text-purple-500 transition-colors duration-300">
++      <div className="surface-card p-6 h-full">
++        <div className="relative inline-flex items-center justify-center w-12 h-12 rounded-xl mb-5 bg-accent/10 border border-accent/20 group-hover:bg-accent/15 transition-colors duration-300">
++          <Icon className="h-6 w-6 text-accent" />
++        </div>
++        <h3 className="text-lg font-display font-semibold mb-2 text-foreground">
+           {feature.title}
+         </h3>
+         <p className="text-muted-foreground leading-relaxed text-sm">
+           {feature.description}
+         </p>
+-      </motion.div>
++      </div>
+     </motion.div>
+   );
+ }
+diff --git a/src/components/CurrentEventsStrip.tsx b/src/components/CurrentEventsStrip.tsx
+index 7658834..f1b91bf 100644
+--- a/src/components/CurrentEventsStrip.tsx
++++ b/src/components/CurrentEventsStrip.tsx
+@@ -165,7 +165,7 @@ export default function CurrentEventsStrip() {
+                 key={index}
+                 className={`h-2 w-2 rounded-full transition-all duration-500 ${
+                   index === currentIndex 
+-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 scale-125' 
++                    ? 'bg-accent scale-125' 
+                     : 'bg-muted'
+                 }`}
+               />
+@@ -218,11 +218,11 @@ function EmptyEventsState() {
+         >
+           {/* Decorative icon */}
+           <motion.div
+-            className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20"
++            className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/10 border border-accent/20"
+             // animate={{ scale: [1, 1.05, 1], rotate: [0, 5, 0] }}
+             // transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+           >
+-            <Mail className="w-10 h-10 text-purple-400" />
++            <Mail className="w-10 h-10 text-accent" />
+           </motion.div>
+ 
+           <h2 className="text-4xl md:text-5xl font-display font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/60">
+@@ -253,7 +253,7 @@ function EmptyEventsState() {
+                 }}
+                 disabled={isSubmitted || isLoading}
+                 whileFocus={{ scale: 1.02 }}
+-                className="flex-1 px-6 py-3 rounded-2xl bg-card border border-border/50 text-foreground placeholder-muted-foreground focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 disabled:opacity-50"
++                className="flex-1 px-6 py-3 rounded-2xl bg-card border border-border/50 text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all duration-300 disabled:opacity-50"
+               />
+               <motion.button
+                 type="submit"
+diff --git a/src/components/EventCard.tsx b/src/components/EventCard.tsx
+index 42ac0f5..a088f39 100644
+--- a/src/components/EventCard.tsx
++++ b/src/components/EventCard.tsx
+@@ -70,7 +70,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+   if (compact) {
+     return (
+       <div className="flex-shrink-0 w-[85vw] sm:w-[350px] md:w-[380px] snap-center">
+-        <Card className="h-full border-primary/20 bg-card/80 backdrop-blur-sm hover:border-primary transition-all duration-300 hover:shadow-lg">
++        <Card className="h-full border-border bg-card hover:border-accent/50 transition-all duration-300 hover:shadow-lg hover-lift">
+           <div className="relative h-48 overflow-hidden rounded-t-lg">
+             <img
+               src={imgSrc}
+@@ -78,29 +78,29 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+             />
+             {isEnded && (
+-              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+-                <span className="text-white border-4 border-red-500 text-red-500 font-black tracking-widest text-2xl uppercase px-3 py-1.5 rounded-lg transform -rotate-12 select-none shadow-2xl">
++              <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center z-10">
++                <span className="text-foreground border-2 border-foreground/40 bg-background/80 font-semibold tracking-widest text-sm uppercase px-3 py-1.5 rounded-lg select-none">
+                   Ended
+                 </span>
+               </div>
+             )}
+             <Badge
+               variant="secondary"
+-              className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm border-primary/30"
++              className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm border-border"
+             >
+               {Array.isArray(event.type) ? (
+                 <div className="flex flex-wrap gap-1">
+                   {event.type.map((t) => (
+                     <Badge
+                       key={t}
+-                      className="bg-purple-600/90 hover:bg-purple-600 text-[10px] px-2 py-0"
++                      className="bg-accent/90 hover:bg-accent text-accent-foreground text-[10px] px-2 py-0"
+                     >
+                       {t}
+                     </Badge>
+                   ))}
+                 </div>
+               ) : (
+-                <Badge className="bg-purple-600/90 hover:bg-purple-600 text-[10px] px-2 py-0">
++                <Badge className="bg-accent/90 hover:bg-accent text-accent-foreground text-[10px] px-2 py-0">
+                   {event.type}
+                 </Badge>
+               )}
+@@ -128,8 +128,8 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+               </div>
+             )}
+             <div className="flex items-center gap-2 text-xs">
+-              <Clock className={`h-3 w-3 ${isEnded ? "text-red-500" : "text-primary"}`} />
+-              <span className={`font-mono ${isEnded ? "text-red-500 font-bold" : "text-primary"}`}>
++              <Clock className={`h-3 w-3 ${isEnded ? "text-destructive" : "text-accent"}`} />
++              <span className={`font-mono ${isEnded ? "text-destructive font-semibold" : "text-accent"}`}>
+                 {isEnded
+                   ? "Ended"
+                   : countdown.isExpired
+@@ -152,7 +152,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+   }
+ 
+   return (
+-    <Card className="overflow-hidden h-full flex flex-col group border-border/50 hover:border-primary/50 transition-all duration-300">
++    <Card className="overflow-hidden h-full flex flex-col group border-border hover:border-accent/50 transition-all duration-300 hover-lift">
+       <div className="relative h-48 overflow-hidden">
+         <img
+           src={imgSrc}
+@@ -160,22 +160,22 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+         />
+         {isEnded && (
+-          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+-            <span className="text-white border-4 border-red-500 text-red-500 font-black tracking-widest text-3xl uppercase px-4 py-2 rounded-lg transform -rotate-12 select-none shadow-2xl">
++          <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center z-10">
++            <span className="text-foreground border-2 border-foreground/40 bg-background/80 font-semibold tracking-widest text-xl uppercase px-4 py-2 rounded-lg select-none">
+               Ended
+             </span>
+           </div>
+         )}
+         <Badge
+           variant="secondary"
+-          className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border-primary/30"
++          className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border-border"
+         >
+           {Array.isArray(event.type) ? (
+             <div className="flex flex-wrap gap-1">
+               {event.type.map((t) => (
+                 <Badge
+                   key={t}
+-                  className="bg-purple-600 text-white border-0 text-[10px] px-2 py-0"
++                  className="bg-accent text-accent-foreground border-0 text-[10px] px-2 py-0"
+                 >
+                   {t}
+                 </Badge>
+@@ -186,7 +186,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+           )}
+         </Badge>
+         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+-          <div className={`flex items-center gap-2 text-sm font-mono ${isEnded ? "text-red-400" : "text-primary"}`}>
++          <div className={`flex items-center gap-2 text-sm font-mono ${isEnded ? "text-destructive" : "text-accent"}`}>
+             <Clock className="h-4 w-4" />
+             {isEnded
+               ? "Event Ended"
+@@ -198,7 +198,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+       </div>
+ 
+       <CardHeader>
+-        <CardTitle className="text-2xl group-hover:text-primary transition-colors">
++        <CardTitle className="text-2xl font-display group-hover:text-accent transition-colors">
+           {event.title}
+         </CardTitle>
+         <CardDescription>{event.short_blurb}</CardDescription>
+@@ -230,7 +230,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+             <Badge
+               key={tag}
+               variant="outline"
+-              className="text-xs border-primary/30 whitespace-nowrap"
++              className="text-xs border-border whitespace-nowrap"
+             >
+               {tag}
+             </Badge>
+@@ -245,7 +245,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
+         </Button>
+         <Button
+           variant="outline"
+-          className="flex-1 border-primary/30 hover:bg-primary/10"
++          className="flex-1 hover:bg-accent/10 hover:border-accent/50"
+           disabled={isEnded}
+           asChild={!isEnded}
+         >
+diff --git a/src/components/Footer.tsx b/src/components/Footer.tsx
+index 4d7eb55..7572762 100644
+--- a/src/components/Footer.tsx
++++ b/src/components/Footer.tsx
+@@ -27,9 +27,9 @@ export default function Footer() {
+   if (pathname.startsWith("/profile")) return null;
+ 
+   return (
+-    <footer className="relative overflow-hidden border-t border-border/30 bg-background/80 backdrop-blur-sm">
+-      {/* Animated background */}
+-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.1),transparent_70%)]" />
++    <footer className="relative overflow-hidden border-t border-border bg-background">
++      {/* Subtle background wash */}
++      <div className="absolute inset-0 bg-gradient-subtle" />
+ 
+ 
+       <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+@@ -43,20 +43,13 @@ export default function Footer() {
+               transition={{ duration: 0.6 }}
+               className="space-y-6"
+             >
+-              {/* Logo with glow effect */}
+-              <motion.h3
+-                className="text-2xl md:text-3xl font-bold tracking-[0.1em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 animate-gradient-x transition-all duration-300 hover:drop-shadow-lg"
+-                style={{ 
+-                  fontFamily: "'Outfit', sans-serif",
+-                  textShadow: "0 0 15px rgba(168, 85, 247, 0.3)"
+-                }}
+-                whileHover={{
+-                  scale: 1.05,
+-                }}
+-                transition={{ duration: 0.3 }}
+-              >
+-                REPDOX
+-              </motion.h3>
++              {/* Logo */}
++              <div className="flex items-center gap-1.5">
++                <span className="w-2 h-2 rounded-sm bg-accent" />
++                <h3 className="font-display text-2xl font-bold tracking-[0.08em] text-foreground">
++                  REPDOX
++                </h3>
++              </div>
+               <p className="text-muted-foreground leading-relaxed">
+                 Think. Build. Transform.<br />
+                 Empowering the next generation of innovators.
+@@ -64,9 +57,9 @@ export default function Footer() {
+               {/* Social Links */}
+               <div className="flex gap-3">
+                 {[
+-                  { icon: FaDiscord, href: "https://discord.gg/y9kRMNn49K", label: "Discord", color: "from-indigo-500 to-blue-500", glow: "rgba(79, 70, 229, 0.5)" },
+-                  { icon: FaInstagram, href: "https://www.instagram.com/repdox.official", label: "Instagram", color: "from-pink-500 to-rose-500", glow: "rgba(236, 72, 153, 0.5)" },
+-                  { icon: FaWhatsapp, href: "https://chat.whatsapp.com/HhJfHtq7gE411KEYa6qpQP", label: "WhatsApp", color: "from-green-500 to-emerald-500", glow: "rgba(16, 185, 129, 0.5)" },
++                  { icon: FaDiscord, href: "https://discord.gg/y9kRMNn49K", label: "Discord" },
++                  { icon: FaInstagram, href: "https://www.instagram.com/repdox.official", label: "Instagram" },
++                  { icon: FaWhatsapp, href: "https://chat.whatsapp.com/HhJfHtq7gE411KEYa6qpQP", label: "WhatsApp" },
+                 ].map((social, index) => {
+                   const Icon = social.icon;
+                   return (
+@@ -75,28 +68,12 @@ export default function Footer() {
+                       href={social.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+-                       whileHover={{
+-                         y: -6,
+-                         scale: 1.15,
+-                       }}
++                       whileHover={{ y: -4 }}
+                        whileTap={{ scale: 0.95 }}
+-                       className="group relative p-3 rounded-xl bg-accent/10 hover:bg-accent/20 border border-border transition-all duration-300"
+-                       style={{
+-                         boxShadow: "0 0 0 rgba(0,0,0,0)",
+-                       }}
+-                       onMouseEnter={(e) => {
+-                         e.currentTarget.style.boxShadow = `0 0 20px ${social.glow}`;
+-                       }}
+-                       onMouseLeave={(e) => {
+-                         e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
+-                       }}
++                       className="group p-3 rounded-xl bg-card hover:bg-accent/10 border border-border hover:border-accent/40 transition-all duration-300"
+                        aria-label={social.label}
+                      >
+-                       <Icon className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+-                      <motion.div
+-                        className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-30 bg-gradient-to-br ${social.color}`}
+-                        transition={{ duration: 0.3 }}
+-                      />
++                       <Icon className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                     </motion.a>
+                   );
+                 })}
+@@ -143,7 +120,7 @@ export default function Footer() {
+           whileInView={{ opacity: 1 }}
+           viewport={{ once: true }}
+           transition={{ duration: 0.6, delay: 0.6 }}
+-          className="pt-8 border-t border-white/10"
++          className="pt-8 border-t border-border"
+         >
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground/60">
+              <p>© {currentYear} Repdox. All rights reserved.</p>
+diff --git a/src/components/Hero.tsx b/src/components/Hero.tsx
+index 2bc4347..9308fec 100644
+--- a/src/components/Hero.tsx
++++ b/src/components/Hero.tsx
+@@ -12,39 +12,31 @@ export default function Hero() {
+   return (
+     <section
+       ref={containerRef}
+-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
++      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-subtle"
+     >
++      <div
++        aria-hidden
++        className="absolute inset-0 -z-10 opacity-[0.4]"
++        style={{
++          backgroundImage:
++            "linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px)",
++          backgroundSize: "56px 56px",
++          maskImage: "radial-gradient(ellipse 60% 50% at 50% 30%, black, transparent)",
++          WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 50% 30%, black, transparent)",
++        }}
++      />
+       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
+-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 backdrop-blur-sm border border-border mb-8">
+-          <Sparkles className="w-4 h-4 text-purple-500" />
+-          <span className="text-sm font-medium text-foreground">
++        <div className="eyebrow inline-flex px-4 py-2 rounded-full bg-card border border-border mb-8">
++          <Sparkles className="w-3.5 h-3.5 text-accent" />
++          <span className="normal-case tracking-normal text-foreground/80 font-medium">
+             Next-Gen Event Platform
+           </span>
+         </div>
+ 
+-        <h1
+-          className="text-4xl sm:text-5xl md:text-8xl font-display font-bold mb-6 leading-tight"
+-          style={{
+-            backgroundClip: "text",
+-            WebkitBackgroundClip: "text",
+-            WebkitTextFillColor: "transparent",
+-            backgroundImage: "linear-gradient(to bottom, hsl(var(--foreground)), hsl(var(--foreground)), hsl(var(--foreground) / 0.4))",
+-            filter: "drop-shadow(0 0 4px rgba(168, 85, 247, 0.15))",
+-          }}
+-        >
++        <h1 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold mb-6 leading-[1.05] text-foreground">
+           Think. Build.
+           <br />
+-          <span
+-            style={{
+-              backgroundClip: "text",
+-              WebkitBackgroundClip: "text",
+-              WebkitTextFillColor: "transparent",
+-              backgroundImage: "linear-gradient(to right, hsl(168, 70%, 55%), hsl(331, 70%, 65%), hsl(204, 70%, 60%))",
+-              filter: "drop-shadow(0 0 8px rgba(168, 85, 247, 0.2))",
+-            }}
+-          >
+-            Transform.
+-          </span>
++          <span className="text-accent">Transform.</span>
+         </h1>
+ 
+         <p className="text-lg md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed px-4 md:px-0">
+@@ -60,7 +52,7 @@ export default function Hero() {
+               scale: 1.05,
+             }}
+             whileTap={{ scale: 0.95 }}
+-            className="group relative overflow-hidden bg-primary text-primary-foreground px-8 py-6 text-lg rounded-2xl font-semibold transition-all duration-300 hover:shadow-glow-purple"
++            className="group relative overflow-hidden bg-accent text-accent-foreground px-8 py-6 text-lg rounded-xl font-semibold transition-all duration-300 hover:shadow-accent"
+           >
+             <span className="relative z-10 flex items-center gap-2">
+               View Events
+@@ -75,7 +67,7 @@ export default function Hero() {
+               scale: 1.05,
+             }}
+             whileTap={{ scale: 0.95 }}
+-            className="group relative px-8 py-6 text-lg rounded-2xl font-semibold text-foreground bg-background border-2 border-foreground/20 transition-all duration-300 hover:shadow-glow-cyan hover:border-foreground/60"
++            className="group relative px-8 py-6 text-lg rounded-xl font-semibold text-foreground bg-transparent border border-border transition-all duration-300 hover:border-accent/60 hover:bg-accent/5"
+           >
+             <span className="relative z-10 flex items-center gap-2">
+               Join Community
+@@ -98,7 +90,7 @@ export default function Hero() {
+               animate={{ scale: 1, opacity: 1 }}
+               exit={{ scale: 0.9, opacity: 0 }}
+               onClick={(e) => e.stopPropagation()}
+-              className="bg-card rounded-2xl p-8 max-w-md w-full border border-border"
++              className="bg-card rounded-2xl p-8 max-w-md w-full border border-border shadow-lg"
+             >
+               <h2 className="text-2xl font-display font-bold mb-4 text-foreground">
+                 Join Our Community
+@@ -110,7 +102,7 @@ export default function Hero() {
+                 href="https://discord.gg/y9kRMNn49K"
+                 target="_blank"
+                 rel="noopener noreferrer"
+-                className="block w-full bg-primary text-primary-foreground px-6 py-3 rounded-lg text-center font-semibold hover:bg-primary/90 transition-colors duration-300"
++                className="block w-full bg-accent text-accent-foreground px-6 py-3 rounded-lg text-center font-semibold hover:bg-accent/90 transition-colors duration-300"
+               >
+                 Open Discord Invite
+               </a>
+diff --git a/src/components/Nav.tsx b/src/components/Nav.tsx
+index e4a2559..6fdfeed 100644
+--- a/src/components/Nav.tsx
++++ b/src/components/Nav.tsx
+@@ -319,24 +319,15 @@ export default function Nav() {
+     return (
+       <CardNav
+         logo={
+-          <span
+-            className="text-[14px] font-black tracking-[0.05em] uppercase whitespace-nowrap flex-shrink-0 bg-clip-text text-transparent"
+-            style={{
+-              fontFamily: "'Outfit', sans-serif",
+-              backgroundImage: theme === "dark"
+-                ? "linear-gradient(to right, #ffffff, #a855f7, #ec4899)"
+-                : "linear-gradient(to right, #09090b, #7c3aed, #db2777)",
+-              display: "inline-block",
+-            }}
+-          >
+-            REPDOX
++          <span className="font-display text-[15px] font-bold tracking-[0.08em] uppercase whitespace-nowrap flex-shrink-0 text-foreground">
++            Repdox
+           </span>
+         }
+         items={mobileItems}
+-        baseColor={theme === "dark" ? "#0D0716" : "#fff"}
+-        menuColor={theme === "dark" ? "#fff" : "#000"}
+-        buttonBgColor={theme === "dark" ? "#fff" : "#000"}
+-        buttonTextColor={theme === "dark" ? "#000" : "#fff"}
++        baseColor={theme === "dark" ? "#141110" : "#fff"}
++        menuColor={theme === "dark" ? "#f2ede7" : "#1a1512"}
++        buttonBgColor={theme === "dark" ? "#f2ede7" : "#1a1512"}
++        buttonTextColor={theme === "dark" ? "#1a1512" : "#f2ede7"}
+         ease="power3.out"
+       />
+     );
+@@ -353,8 +344,8 @@ export default function Nav() {
+       className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 transition-colors duration-300"
+       style={{
+         background: theme === "dark"
+-          ? (scrolled ? "rgba(13, 7, 22, 0.5)" : "rgba(13, 7, 22, 0.2)")
+-          : (scrolled ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.3)"),
++          ? (scrolled ? "hsl(30 8% 8% / 0.75)" : "hsl(30 8% 8% / 0.35)")
++          : (scrolled ? "hsl(36 30% 98% / 0.8)" : "hsl(36 30% 98% / 0.4)"),
+         backdropFilter: scrolled
+           ? "blur(20px) saturate(200%)"
+           : "blur(16px) saturate(180%)",
+@@ -368,16 +359,9 @@ export default function Nav() {
+           {/* Left side */}
+           <div className="flex items-center gap-8">
+             <Link to="/" className="flex-shrink-0 group relative py-2">
+-              <div className="flex items-center">
+-                <span
+-                  className="text-2xl font-black tracking-[0.15em] transition-all duration-300 bg-clip-text text-transparent"
+-                  style={{
+-                    fontFamily: "'Outfit', sans-serif",
+-                    backgroundImage: theme === "dark"
+-                      ? "linear-gradient(to right, #ffffff, #a855f7, #ec4899)"
+-                      : "linear-gradient(to right, #09090b, #7c3aed, #db2777)",
+-                  }}
+-                >
++              <div className="flex items-center gap-1.5">
++                <span className="w-2 h-2 rounded-sm bg-accent" />
++                <span className="font-display text-xl font-bold tracking-[0.1em] text-foreground group-hover:text-accent transition-colors duration-300">
+                   REPDOX
+                 </span>
+               </div>
+@@ -389,13 +373,12 @@ export default function Nav() {
+                   <NavigationMenuItem key={index}>
+                     <NavigationMenuLink
+                       asChild
+-                      className="relative px-5 py-2.5 text-sm font-bold text-foreground/60 hover:text-foreground transition-all duration-300 group whitespace-nowrap tracking-widest uppercase"
+-                      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
++                      className="relative px-5 py-2.5 text-sm font-semibold text-foreground/60 hover:text-foreground transition-all duration-300 group whitespace-nowrap tracking-wide"
+                     >
+                       <Link to={link.href}>
+                         {link.label}
+                         <motion.span
+-                          className="absolute bottom-1 left-5 right-5 h-0.5 bg-gradient-to-r from-purple-500 to-cyan w-0 group-hover:w-[calc(100%-40px)] transition-all origin-left"
++                          className="absolute bottom-1 left-5 right-5 h-0.5 bg-accent w-0 group-hover:w-[calc(100%-40px)] transition-all origin-left"
+                           transition={{ duration: 0.3, ease: "easeOut" }}
+                         />
+                       </Link>
+@@ -419,7 +402,7 @@ export default function Nav() {
+               {theme === "dark" ? (
+                 <Sun className="h-5 w-5 text-yellow-400" />
+               ) : (
+-                <Moon className="h-5 w-5 text-purple-400" />
++                <Moon className="h-5 w-5 text-accent" />
+               )}
+             </motion.button>
+ 
+@@ -431,7 +414,7 @@ export default function Nav() {
+                   onClick={() => setMenuOpen((s) => !s)}
+                   whileHover={{ scale: 1.05 }}
+                   whileTap={{ scale: 0.95 }}
+-                  className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-transparent ring-purple-500/50 hover:ring-purple-500 transition-all"
++                  className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-transparent ring-accent/50 hover:ring-accent transition-all"
+                   aria-label="Open user menu"
+                 >
+                   {avatarSrc && !avatarError ? (
+@@ -459,7 +442,7 @@ export default function Nav() {
+                         .join("")
+                         .toUpperCase();
+                       return (
+-                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
++                        <div className="w-full h-full bg-accent flex items-center justify-center text-accent-foreground font-semibold">
+                           {initials || "U"}
+                         </div>
+                       );
+@@ -500,7 +483,7 @@ export default function Nav() {
+                             setMenuOpen(false);
+                             navigate("/admin/events");
+                           }}
+-                          className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2 border-t border-border/50"
++                          className="w-full text-left px-4 py-3 text-sm text-accent font-semibold hover:bg-accent/10 transition-colors flex items-center gap-2 border-t border-border/50"
+                         >
+                           <ShieldCheck className="w-4 h-4" />
+                           Approve Events
+@@ -510,7 +493,7 @@ export default function Nav() {
+                             setMenuOpen(false);
+                             navigate("/admin/volunteers");
+                           }}
+-                          className="w-full text-left px-4 py-3 text-sm text-purple-600 font-bold hover:bg-accent/10 transition-colors flex items-center gap-2"
++                          className="w-full text-left px-4 py-3 text-sm text-accent font-semibold hover:bg-accent/10 transition-colors flex items-center gap-2"
+                         >
+                           <Users className="w-4 h-4" />
+                           Manage Volunteers
+@@ -525,7 +508,7 @@ export default function Nav() {
+                 <motion.button
+                   whileHover={{ scale: 1.05 }}
+                   whileTap={{ scale: 0.95 }}
+-                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold text-sm hover:shadow-lg hover:shadow-purple-500/50 transition-shadow"
++                  className="px-6 py-2 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:shadow-accent transition-shadow"
+                 >
+                   Sign In
+                 </motion.button>
+diff --git a/src/index.css b/src/index.css
+index dae31a1..e1f9914 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -1,122 +1,84 @@
+-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syncopate:wght@400;700&display=swap");
++@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+ 
+ @tailwind base;
+ @tailwind components;
+ @tailwind utilities;
+ 
+-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+-All colors MUST be HSL.
+-*/
++/* Design system. One accent color, one warm-neutral gray family, HSL everywhere. */
+ 
+ @layer base {
+   :root {
+-    /* Light mode: Sophisticated palette */
+-    --background: 0 0% 100%;
+-    --foreground: 240 10% 3.9%;
++    /* Light mode */
++    --background: 36 30% 98%;
++    --foreground: 30 12% 10%;
+ 
+-    --card: 0 0% 100%;
+-    --card-foreground: 240 10% 3.9%;
++    --card: 36 25% 96%;
++    --card-foreground: 30 12% 10%;
+ 
+-    --popover: 0 0% 100%;
+-    --popover-foreground: 240 10% 3.9%;
++    --popover: 36 25% 97%;
++    --popover-foreground: 30 12% 10%;
+ 
+-    --primary: 240 5.9% 10%;
+-    --primary-foreground: 0 0% 98%;
++    --primary: 30 12% 10%;
++    --primary-foreground: 36 30% 98%;
+ 
+-    --secondary: 240 4.8% 95.9%;
+-    --secondary-foreground: 240 5.9% 10%;
++    --secondary: 32 15% 92%;
++    --secondary-foreground: 30 12% 10%;
+ 
+-    --muted: 240 4.8% 95.9%;
+-    --muted-foreground: 240 3.8% 46.1%;
++    --muted: 32 15% 92%;
++    --muted-foreground: 30 8% 42%;
+ 
+-    --accent: 240 4.8% 95.9%;
+-    --accent-foreground: 240 5.9% 10%;
++    --accent: 32 78% 52%;
++    --accent-foreground: 30 30% 8%;
+ 
+-    --destructive: 0 84.2% 60.2%;
+-    --destructive-foreground: 0 0% 98%;
++    --destructive: 6 70% 48%;
++    --destructive-foreground: 36 30% 98%;
+ 
+-    --border: 240 5.9% 90%;
+-    --input: 240 5.9% 90%;
+-    --ring: 240 5.9% 10%;
++    --border: 32 15% 88%;
++    --input: 32 15% 88%;
++    --ring: 32 78% 52%;
+ 
+-    --radius: 0.5rem;
++    --radius: 0.75rem;
+ 
+-    /* Glassmorphism & Shadows */
+-    --glass-bg: 255 255 255 / 0.7;
+-    --glass-border: 255 255 255 / 0.18;
+-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+-      0 2px 4px -2px rgb(0 0 0 / 0.1);
+-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+-      0 4px 6px -4px rgb(0 0 0 / 0.1);
+-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+-      0 8px 10px -6px rgb(0 0 0 / 0.1);
+-    --shadow-glow: 0 0 20px rgb(139 92 246 / 0.3);
+-
+-    /* Extended accent colors */
+-    --accent-cyan: 200 100% 50%;
+-    --accent-pink: 330 100% 60%;
+-    --accent-yellow: 45 100% 50%;
+-    --glow-purple: 270 60% 60%;
+-
+-    /* Glow shadows */
+-    --shadow-glow-purple: 0 0 20px rgb(168 85 247 / 0.4);
+-    --shadow-glow-cyan: 0 0 20px rgb(34 211 238 / 0.4);
+-    --shadow-glow-pink: 0 0 20px rgb(236 72 153 / 0.4);
++    --shadow-sm: 0 1px 2px 0 rgb(30 20 8 / 0.06);
++    --shadow-md: 0 4px 10px -2px rgb(30 20 8 / 0.08), 0 2px 4px -2px rgb(30 20 8 / 0.06);
++    --shadow-lg: 0 12px 24px -6px rgb(30 20 8 / 0.10), 0 4px 8px -4px rgb(30 20 8 / 0.06);
++    --shadow-accent: 0 8px 24px -8px hsl(32 78% 52% / 0.35);
+   }
+ 
+   .dark {
+-    /* Dark mode: Deep, rich palette */
+-    --background: 240 10% 3.9%;
+-    --foreground: 0 0% 98%;
+-
+-    --card: 240 10% 3.9%;
+-    --card-foreground: 0 0% 98%;
++    /* Dark mode: warm charcoal, single amber accent */
++    --background: 30 8% 8%;
++    --foreground: 36 18% 94%;
+ 
+-    --popover: 240 10% 3.9%;
+-    --popover-foreground: 0 0% 98%;
++    --card: 30 8% 10.5%;
++    --card-foreground: 36 18% 94%;
+ 
+-    --primary: 0 0% 98%;
+-    --primary-foreground: 240 5.9% 10%;
++    --popover: 30 8% 10%;
++    --popover-foreground: 36 18% 94%;
+ 
+-    --secondary: 240 3.7% 15.9%;
+-    --secondary-foreground: 0 0% 98%;
++    --primary: 36 18% 94%;
++    --primary-foreground: 30 10% 10%;
+ 
+-    --muted: 240 3.7% 15.9%;
+-    --muted-foreground: 240 5% 64.9%;
++    --secondary: 30 7% 16%;
++    --secondary-foreground: 36 18% 94%;
+ 
+-    --accent: 240 3.7% 15.9%;
+-    --accent-foreground: 0 0% 98%;
++    --muted: 30 7% 15%;
++    --muted-foreground: 30 6% 62%;
+ 
+-    --destructive: 0 62.8% 30.6%;
+-    --destructive-foreground: 0 0% 98%;
++    --accent: 32 82% 58%;
++    --accent-foreground: 30 30% 8%;
+ 
+-    --border: 240 3.7% 15.9%;
+-    --input: 240 3.7% 15.9%;
+-    --ring: 240 4.9% 83.9%;
++    --destructive: 6 65% 55%;
++    --destructive-foreground: 36 18% 94%;
+ 
+-    /* Dark mode specific */
+-    --glass-bg: 0 0 0 / 0.4;
+-    --glass-border: 255 255 255 / 0.1;
+-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5),
+-      0 2px 4px -2px rgb(0 0 0 / 0.5);
+-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5),
+-      0 4px 6px -4px rgb(0 0 0 / 0.5);
+-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5),
+-      0 8px 10px -6px rgb(0 0 0 / 0.5);
+-    --shadow-glow: 0 0 30px rgb(139 92 246 / 0.5);
++    --border: 30 7% 18%;
++    --input: 30 7% 18%;
++    --ring: 32 82% 58%;
+ 
+-    /* Extended accent colors */
+-    --accent-cyan: 200 100% 50%;
+-    --accent-pink: 330 100% 60%;
+-    --accent-yellow: 45 100% 50%;
+-    --glow-purple: 270 60% 60%;
+-
+-    /* Glow shadows */
+-    --shadow-glow-purple: 0 0 30px rgb(168 85 247 / 0.6);
+-    --shadow-glow-cyan: 0 0 30px rgb(34 211 238 / 0.6);
+-    --shadow-glow-pink: 0 0 30px rgb(236 72 153 / 0.6);
++    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
++    --shadow-md: 0 4px 10px -2px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
++    --shadow-lg: 0 16px 32px -8px rgb(0 0 0 / 0.5), 0 4px 10px -4px rgb(0 0 0 / 0.35);
++    --shadow-accent: 0 8px 28px -6px hsl(32 82% 58% / 0.3);
+   }
+ 
+   * {
+@@ -128,14 +90,17 @@ All colors MUST be HSL.
+ 
+   body {
+     @apply bg-background text-foreground;
+-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+-      sans-serif;
++    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+   }
+ 
+   h1, h2, h3, h4, h5, h6 {
+-    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
+-      sans-serif;
++    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+     letter-spacing: -0.02em;
++    text-wrap: balance;
++  }
++
++  p {
++    text-wrap: pretty;
+   }
+ 
+   html {
+@@ -146,9 +111,9 @@ All colors MUST be HSL.
+     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+   }
+ 
+-  /* Custom selection colors */
+   ::selection {
+-    @apply bg-purple-500/30 text-foreground;
++    background-color: hsl(var(--accent) / 0.25);
++    color: hsl(var(--foreground));
+   }
+ 
+   kbd {
+@@ -157,25 +122,28 @@ All colors MUST be HSL.
+ }
+ 
+ @layer components {
+-  /* Typography components */
+   .font-display {
+-    @apply font-bold;
+-    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
+-      sans-serif;
++    font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+     font-weight: 600;
+     letter-spacing: -0.02em;
+   }
+ 
+   .font-body {
+-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+-      sans-serif;
++    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+     font-weight: 400;
+-    line-height: 1.6;
++    line-height: 1.65;
++  }
++
++  .text-accent-mark {
++    color: hsl(var(--accent));
++  }
++
++  .eyebrow {
++    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground;
+   }
+ }
+ 
+ @layer utilities {
+-  /* Scrollbar utilities */
+   .scrollbar-hide {
+     -ms-overflow-style: none;
+     scrollbar-width: none;
+@@ -191,16 +159,11 @@ All colors MUST be HSL.
+   }
+ 
+   .scrollbar-thin::-webkit-scrollbar-track {
+-    @apply bg-white/5 rounded-full;
++    @apply bg-foreground/5 rounded-full;
+   }
+ 
+   .scrollbar-thin::-webkit-scrollbar-thumb {
+-    @apply bg-white/20 rounded-full hover:bg-white/30;
+-  }
+-
+-  /* Interactive utilities */
+-  .transition-twitter {
+-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
++    @apply bg-foreground/15 rounded-full hover:bg-foreground/25;
+   }
+ 
+   .transition-smooth {
+@@ -211,100 +174,71 @@ All colors MUST be HSL.
+     @apply transition-all duration-300 ease-in-out;
+   }
+ 
+-  .hover-scale {
++  .hover-lift {
+     @apply transition-transform duration-300;
+   }
+ 
+-  .hover-scale:hover {
+-    transform: scale(1.05);
++  .hover-lift:hover {
++    transform: translateY(-3px);
+   }
+ 
+   .active-scale:active {
+-    transform: scale(0.95);
++    transform: scale(0.97);
+   }
+ 
+-  /* Visual effects */
+-  .text-gradient {
+-    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400;
+-  }
+-
+-  .glass {
+-    @apply bg-white/5 backdrop-blur-xl border border-white/10;
++  .surface-card {
++    @apply bg-card border border-border rounded-xl transition-all duration-300;
+   }
+ 
+-  .glass-hover {
+-    @apply transition-all duration-300;
+-  }
+-
+-  .glass-hover:hover {
+-    background: rgba(var(--glass-bg));
+-    backdrop-filter: blur(20px) saturate(200%);
+-    -webkit-backdrop-filter: blur(20px) saturate(200%);
+-    transform: translateY(-2px);
++  .surface-card:hover {
++    @apply border-accent/40;
+     box-shadow: var(--shadow-lg);
++    transform: translateY(-4px);
+   }
+ 
+-  .glass-effect {
+-    background: rgba(var(--glass-bg));
+-    backdrop-filter: blur(16px) saturate(180%);
+-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+-    border: 1px solid rgba(var(--glass-border));
+-  }
+-
+-  .bg-gradient-radial {
+-    background: radial-gradient(
+-      circle at center,
+-      rgba(120, 119, 198, 0.15),
+-      transparent 70%
+-    );
+-  }
+-
+-  .bg-gradient-subtle {
+-    @apply bg-gradient-to-b from-background to-muted/20;
++  .glass {
++    background: hsl(var(--card) / 0.7);
++    backdrop-filter: blur(14px) saturate(140%);
++    -webkit-backdrop-filter: blur(14px) saturate(140%);
++    border: 1px solid hsl(var(--border));
+   }
+ 
+-  .gradient-text {
+-    @apply bg-clip-text text-transparent;
+-    background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
++  .nav-glass {
++    @apply glass sticky top-0 z-50;
+   }
+ 
+-  .dark .gradient-text {
+-    background-image: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
++  .glow-accent {
++    box-shadow: var(--shadow-accent);
+   }
+ 
+-  /* Animations */
+-  .gradient-animation {
+-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+-    background-size: 400% 400%;
+-    animation: gradient 15s ease infinite;
++  .bg-gradient-subtle {
++    background: radial-gradient(ellipse at top, hsl(var(--accent) / 0.06), transparent 60%);
+   }
+ 
+-  @keyframes gradient {
+-    0% { background-position: 0% 50%; }
+-    50% { background-position: 100% 50%; }
+-    100% { background-position: 0% 50%; }
++  .underline-animation, .link-smooth {
++    @apply relative inline-block;
+   }
+ 
+-  .aurora-glow {
+-    animation: aurora-glow 8s ease-in-out infinite;
++  .underline-animation::after, .link-smooth::after {
++    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-accent transition-all duration-300;
++    content: "";
+   }
+ 
+-  @keyframes aurora-glow {
+-    0%, 100% { opacity: 0.5; transform: translateY(0px); }
+-    50% { opacity: 0.8; transform: translateY(-10px); }
++  .underline-animation:hover::after, .link-smooth:hover::after {
++    @apply w-full;
+   }
+ 
+-  .noise-shimmer {
+-    animation: noise-shimmer 6s ease-in-out infinite;
++  .fade-in {
++    animation: fadeIn 0.6s ease-out forwards;
+   }
+ 
+-  @keyframes noise-shimmer {
+-    0% { background-position: 0% 0%; }
+-    100% { background-position: 100% 100%; }
++  @keyframes fadeIn {
++    from { opacity: 0; transform: translateY(16px); }
++    to { opacity: 1; transform: translateY(0); }
+   }
+ 
+   .shimmer {
+-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
++    background: linear-gradient(90deg, transparent 0%, hsl(var(--foreground) / 0.06) 50%, transparent 100%);
+     background-size: 200% 100%;
+     animation: shimmer 2s infinite;
+   }
+@@ -314,59 +248,6 @@ All colors MUST be HSL.
+     100% { background-position: 200% 0; }
+   }
+ 
+-  .fade-in {
+-    animation: fadeIn 0.6s ease-out forwards;
+-  }
+-
+-  @keyframes fadeIn {
+-    from { opacity: 0; transform: translateY(20px); }
+-    to { opacity: 1; transform: translateY(0); }
+-  }
+-
+-  /* UI Feedback */
+-  .magnetic-hover {
+-    @apply transition-transform duration-200 ease-out;
+-  }
+-
+-  .magnetic-hover:hover { transform: scale(1.05); }
+-  .magnetic-hover:active { transform: scale(0.98); }
+-
+-  .glow-on-hover, .btn-glow-on-hover {
+-    @apply transition-all duration-300 ease-out;
+-  }
+-
+-  .glow-on-hover:hover, .btn-glow-on-hover:hover {
+-    box-shadow: var(--shadow-glow);
+-  }
+-
+-  .card-lift {
+-    @apply transition-all duration-300 ease-out;
+-  }
+-
+-  .card-lift:hover {
+-    transform: translateY(-8px) scale(1.02);
+-    box-shadow: var(--shadow-xl);
+-  }
+-
+-  .nav-glass {
+-    @apply glass-effect sticky top-0 z-50;
+-    box-shadow: var(--shadow-md);
+-  }
+-
+-  .underline-animation, .link-smooth {
+-    @apply relative inline-block;
+-  }
+-
+-  .underline-animation::after, .link-smooth::after {
+-    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300;
+-    content: "";
+-  }
+-
+-  .underline-animation:hover::after, .link-smooth:hover::after {
+-    @apply w-full;
+-  }
+-
+-  /* Consistency and Misc */
+   button, a, input, textarea, select {
+     @apply transition-colors duration-200;
+   }
+@@ -379,10 +260,6 @@ All colors MUST be HSL.
+     @apply opacity-60 cursor-not-allowed;
+   }
+ 
+-  .select-none {
+-    user-select: none;
+-  }
+-
+   .sr-only {
+     position: absolute;
+     width: 1px;
+diff --git a/src/pages/About.tsx b/src/pages/About.tsx
+index dfe035d..41b1380 100644
+--- a/src/pages/About.tsx
++++ b/src/pages/About.tsx
+@@ -8,29 +8,21 @@ const features = [
+     icon: Zap,
+     title: "Energize Innovation",
+     description: "Spark creativity through hands-on hackathons and collaborative workshops.",
+-    gradient: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+-    glow: "rgba(245, 158, 11, 0.4)"
+   },
+   {
+     icon: Target,
+     title: "Build Skills",
+     description: "Develop technical and leadership abilities in real-world scenarios.",
+-    gradient: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)",
+-    glow: "rgba(6, 182, 212, 0.4)"
+   },
+   {
+     icon: Heart,
+     title: "Foster Community",
+     description: "Connect with like-minded students, mentors, and industry leaders.",
+-    gradient: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)",
+-    glow: "rgba(236, 72, 153, 0.4)"
+   },
+   {
+     icon: Lightbulb,
+     title: "Drive Impact",
+     description: "Transform ideas into solutions that make a difference.",
+-    gradient: "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
+-    glow: "rgba(168, 85, 247, 0.4)"
+   },
+ ];
+ 
+@@ -53,7 +45,7 @@ export default function About() {
+       {/* Animated background layers */}
+       <motion.div 
+         style={{ y }}
+-        className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(120,119,198,0.1),transparent_50%)] pointer-events-none"
++        className="absolute inset-0 bg-gradient-subtle pointer-events-none"
+       />
+       
+       <div ref={ref} className="max-w-6xl mx-auto relative z-10">
+@@ -63,7 +55,8 @@ export default function About() {
+           transition={{ duration: 0.8 }}
+           className="text-center mb-20"
+         >          
+-          <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
++          <span className="eyebrow justify-center mb-4 text-accent">Who we are</span>
++          <h2 className="text-4xl md:text-6xl font-display font-bold mb-6 text-foreground">
+             About Repdox
+           </h2>
+           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+@@ -83,24 +76,15 @@ export default function About() {
+                 initial={{ opacity: 0, y: 50 }}
+                 animate={inView ? { opacity: 1, y: 0 } : {}}
+                 transition={{ delay: index * 0.1, duration: 0.6 }}
+-                whileHover={{ y: -10, scale: 1.05 }}
++                whileHover={{ y: -6 }}
+                 className="group relative"
+               >
+-                <div className="h-full bg-card/50 backdrop-blur-md rounded-2xl p-6 border border-border/50 overflow-hidden hover:border-border transition-all duration-300">
+-                  {/* Gradient overlay on hover */}
+-                  <div 
+-                    className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500" 
+-                    style={{ background: feature.gradient }}
+-                  />
+-                  
+-                  <div 
+-                    style={{ background: feature.gradient }}
+-                    className="relative inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
+-                  >
+-                    <Icon className="h-7 w-7 text-white" />
++                <div className="h-full surface-card p-6">
++                  <div className="relative inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 bg-accent/10 border border-accent/20 group-hover:bg-accent/15 transition-colors duration-300">
++                    <Icon className="h-6 w-6 text-accent" />
+                   </div>
+-                  
+-                  <h3 className="text-xl font-semibold mb-3 text-foreground group-hover:text-purple-500 transition-colors duration-300">
++
++                  <h3 className="text-lg font-display font-semibold mb-2 text-foreground">
+                     {feature.title}
+                   </h3>
+                   <p className="text-muted-foreground leading-relaxed text-sm">
+@@ -115,19 +99,19 @@ export default function About() {
+ 
+         {/* Extra Content: Organizer Benefits, Guidelines, Contact */}
+         <div className="max-w-4xl mx-auto mt-24 space-y-8">
+-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+-            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-emerald-500/30 transition-all">
+-              <h3 className="text-2xl font-bold mb-4 text-emerald-500">For Organizers</h3>
+-              <p className="text-muted-foreground leading-relaxed">
++          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
++            <section className="surface-card p-8">
++              <h3 className="text-xl font-display font-semibold mb-3 text-foreground">For Organizers</h3>
++              <p className="text-muted-foreground leading-relaxed text-sm">
+                 Repdox supports organizers with professional tools to create events, manage registrations,
+                 accept role-based signups, and export participant lists. We provide
+                 templates and best practices for running safe, accessible, and impactful events.
+               </p>
+             </section>
+ 
+-            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-cyan-500/30 transition-all">
+-              <h3 className="text-2xl font-bold mb-4 text-cyan-500">Community Guidelines</h3>
+-              <p className="text-muted-foreground leading-relaxed">
++            <section className="surface-card p-8">
++              <h3 className="text-xl font-display font-semibold mb-3 text-foreground">Community Guidelines</h3>
++              <p className="text-muted-foreground leading-relaxed text-sm">
+                 We strive to build welcoming spaces. Treat others with respect, follow local
+                 laws, and report behavior that makes you uncomfortable.
+                 Organizers are expected to provide clear codes of conduct.
+@@ -135,22 +119,22 @@ export default function About() {
+             </section>
+           </div>
+ 
+-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+-            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 border border-border/50 hover:border-purple-500/30 transition-all">
+-              <h3 className="text-2xl font-bold mb-4 text-purple-500">Verification & Safety</h3>
+-              <p className="text-muted-foreground leading-relaxed">
++          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
++            <section className="surface-card p-8">
++              <h3 className="text-xl font-display font-semibold mb-3 text-foreground">Verification & Safety</h3>
++              <p className="text-muted-foreground leading-relaxed text-sm">
+                 We offer account verification via email or phone to help organisers and attendees trust interactions. You can request a verification token in your profile settings — this ensures secure and verified community engagement.
+               </p>
+             </section>
+ 
+-            <section className="bg-emerald-500/10 backdrop-blur-md rounded-3xl p-8 border border-emerald-500/20 text-center flex flex-col items-center justify-center">
+-              <h3 className="text-2xl font-bold mb-4 text-foreground">Get Involved</h3>
+-              <p className="text-muted-foreground mb-6">
++            <section className="rounded-xl p-8 border border-accent/30 bg-accent/5 text-center flex flex-col items-center justify-center">
++              <h3 className="text-xl font-display font-semibold mb-2 text-foreground">Get Involved</h3>
++              <p className="text-muted-foreground mb-6 text-sm">
+                 Interested in contributing, organizing, or sponsoring?
+               </p>
+               <a 
+                 href="/contact" 
+-                className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/20"
++                className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-lg transition-all active-scale text-sm"
+               >
+                 Contact Our Team
+               </a>
+diff --git a/src/pages/Contact.tsx b/src/pages/Contact.tsx
+index c995d1b..fa285b9 100644
+--- a/src/pages/Contact.tsx
++++ b/src/pages/Contact.tsx
+@@ -123,7 +123,7 @@ export default function Contact() {
+           >
+             <form
+               onSubmit={handleSubmit}
+-              className="bg-card/50 backdrop-blur-sm rounded-2xl p-8 border border-border/50 shadow-lg"
++              className="bg-card rounded-2xl p-8 border border-border shadow-sm"
+             >
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                 <div className="space-y-2">
+@@ -135,7 +135,7 @@ export default function Contact() {
+                     value={form.name}
+                     onChange={(e) => setForm({ ...form, name: e.target.value })}
+                     required
+-                    className="bg-background/50 border-border/50 focus:border-purple-500 focus:ring-purple-500/20"
++                    className="bg-background/50 border-border/50 focus:border-accent focus:ring-accent/20"
+                     placeholder="John Doe"
+                   />
+                 </div>
+@@ -154,7 +154,7 @@ export default function Contact() {
+                       setForm({ ...form, email: e.target.value })
+                     }
+                     required
+-                    className="bg-background/50 border-border/50 focus:border-purple-500 focus:ring-purple-500/20"
++                    className="bg-background/50 border-border/50 focus:border-accent focus:ring-accent/20"
+                     placeholder="john@example.com"
+                   />
+                 </div>
+@@ -174,18 +174,18 @@ export default function Contact() {
+                   }
+                   rows={6}
+                   required
+-                  className="bg-background/50 border-border/50 focus:border-purple-500 focus:ring-purple-500/20 resize-none"
++                  className="bg-background/50 border-border/50 focus:border-accent focus:ring-accent/20 resize-none"
+                   placeholder="Tell us what's on your mind..."
+                 />
+               </div>
+ 
+               {/* Success Message */}
+               {submitStatus === "success" && (
+-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+-                  <p className="text-green-800 font-medium">
++                <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
++                  <p className="text-emerald-500 font-medium">
+                     ✓ Message sent successfully!
+                   </p>
+-                  <p className="text-green-700 text-sm mt-1">
++                  <p className="text-emerald-500/80 text-sm mt-1">
+                     We'll get back to you as soon as possible.
+                   </p>
+                 </div>
+@@ -193,22 +193,18 @@ export default function Contact() {
+ 
+               {/* Error Message */}
+               {submitStatus === "error" && (
+-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+-                  <p className="text-red-800 font-medium">
++                <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
++                  <p className="text-destructive font-medium">
+                     ✗ Failed to send message
+                   </p>
+-                  <p className="text-red-700 text-sm mt-1">{errorMessage}</p>
++                  <p className="text-destructive/80 text-sm mt-1">{errorMessage}</p>
+                 </div>
+               )}
+ 
+               <button
+                 type="submit"
+                 disabled={isSubmitting}
+-                style={{
+-                  background:
+-                    "linear-gradient(90deg, #9333ea 0%, #db2777 100%)",
+-                }}
+-                className="w-full md:w-auto hover:opacity-90 disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-300"
++                className="w-full md:w-auto bg-accent hover:bg-accent/90 disabled:opacity-50 text-accent-foreground font-semibold px-8 py-3 rounded-lg shadow-accent transition-all duration-300 active-scale"
+               >
+                 {isSubmitting ? (
+                   <span className="flex items-center gap-2">
+@@ -232,16 +228,10 @@ export default function Contact() {
+             transition={{ duration: 0.6, delay: 0.4 }}
+             className="space-y-6"
+           >
+-            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-lg hover:border-purple-500/30 transition-colors duration-300">
++            <div className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:border-accent/40 transition-colors duration-300">
+               <div className="flex items-center gap-4 mb-4">
+-                <div
+-                  style={{
+-                    background:
+-                      "linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)",
+-                  }}
+-                  className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+-                >
+-                  <Users className="w-6 h-6 text-white" />
++                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-accent/10 border border-accent/20">
++                  <Users className="w-6 h-6 text-accent" />
+                 </div>
+                 <h3 className="font-semibold text-foreground text-lg">
+                   Join Our Community
+@@ -258,7 +248,7 @@ export default function Contact() {
+               >
+                 <Button
+                   variant="outline"
+-                  className="w-full border-purple-500/30 hover:bg-purple-500/10 hover:border-purple-500/50 transition-all"
++                  className="w-full hover:bg-accent/10 hover:border-accent/50 transition-all"
+                 >
+                   <MessageSquare className="w-4 h-4 mr-2" />
+                   Join Discord
+diff --git a/src/pages/EventsList.tsx b/src/pages/EventsList.tsx
+index 08ce620..5e7336c 100644
+--- a/src/pages/EventsList.tsx
++++ b/src/pages/EventsList.tsx
+@@ -91,7 +91,7 @@ export default function EventsList() {
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.6 }}
+           >
+-            <h1 className="text-4xl md:text-7xl font-bold text-foreground mb-4">
++            <h1 className="text-4xl md:text-6xl font-display font-bold text-foreground mb-4">
+               All Events
+             </h1>
+             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
+diff --git a/tailwind.config.ts b/tailwind.config.ts
+index 704b4a6..e1dcce8 100644
+--- a/tailwind.config.ts
++++ b/tailwind.config.ts
+@@ -48,22 +48,19 @@ export default {
+           DEFAULT: "hsl(var(--card))",
+           foreground: "hsl(var(--card-foreground))",
+         },
+-        cyan: "hsl(var(--accent-cyan))",
+-        pink: "hsl(var(--accent-pink))",
+-        yellow: "hsl(var(--accent-yellow))",
+-      },
+-      backgroundImage: {
+-        'gradient-primary': 'var(--gradient-primary)',
+-        'gradient-subtle': 'var(--gradient-subtle)',
+-        'gradient-hero': 'var(--gradient-hero)',
+       },
+       boxShadow: {
+-        'card': 'var(--shadow-card)',
+-        'card-hover': 'var(--shadow-card-hover)',
+-        'glow': 'var(--shadow-glow)',
+-        'glow-purple': 'var(--shadow-glow-purple)',
+-        'glow-cyan': 'var(--shadow-glow-cyan)',
+-        'glow-pink': 'var(--shadow-glow-pink)',
++        sm: 'var(--shadow-sm)',
++        DEFAULT: 'var(--shadow-md)',
++        lg: 'var(--shadow-lg)',
++        accent: 'var(--shadow-accent)',
++        'glow-purple': 'var(--shadow-accent)',
++        'glow-cyan': 'var(--shadow-accent)',
++        'glow-pink': 'var(--shadow-accent)',
++      },
++      fontFamily: {
++        display: ["'Space Grotesk'", "sans-serif"],
++        body: ["'Manrope'", "sans-serif"],
+       },
+       borderRadius: {
+         lg: "var(--radius)",
+@@ -108,9 +105,9 @@ export default {
+           "100%": { backgroundPosition: "200% 0" },
+         },
+         "hover-ripple": {
+-          "0%": { boxShadow: "0 0 0 0 rgba(168, 85, 247, 0.7)" },
+-          "70%": { boxShadow: "0 0 0 20px rgba(168, 85, 247, 0)" },
+-          "100%": { boxShadow: "0 0 0 0 rgba(168, 85, 247, 0)" },
++          "0%": { boxShadow: "0 0 0 0 hsl(32 82% 58% / 0.5)" },
++          "70%": { boxShadow: "0 0 0 20px hsl(32 82% 58% / 0)" },
++          "100%": { boxShadow: "0 0 0 0 hsl(32 82% 58% / 0)" },
+         },
+         "scale-bloom": {
+           "0%": { transform: "scale(1)", filter: "blur(0px)" },

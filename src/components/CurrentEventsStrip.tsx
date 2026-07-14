@@ -165,7 +165,7 @@ export default function CurrentEventsStrip() {
                 key={index}
                 className={`h-2 w-2 rounded-full transition-all duration-500 ${
                   index === currentIndex 
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 scale-125' 
+                    ? 'bg-accent scale-125' 
                     : 'bg-muted'
                 }`}
               />
@@ -218,11 +218,11 @@ function EmptyEventsState() {
         >
           {/* Decorative icon */}
           <motion.div
-            className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20"
+            className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/10 border border-accent/20"
             // animate={{ scale: [1, 1.05, 1], rotate: [0, 5, 0] }}
             // transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
-            <Mail className="w-10 h-10 text-purple-400" />
+            <Mail className="w-10 h-10 text-accent" />
           </motion.div>
 
           <h2 className="text-4xl md:text-5xl font-display font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/60">
@@ -253,7 +253,7 @@ function EmptyEventsState() {
                 }}
                 disabled={isSubmitted || isLoading}
                 whileFocus={{ scale: 1.02 }}
-                className="flex-1 px-6 py-3 rounded-2xl bg-card border border-border/50 text-foreground placeholder-muted-foreground focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 disabled:opacity-50"
+                className="flex-1 px-6 py-3 rounded-2xl bg-card border border-border/50 text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all duration-300 disabled:opacity-50"
               />
               <motion.button
                 type="submit"

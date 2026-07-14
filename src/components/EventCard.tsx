@@ -70,7 +70,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
   if (compact) {
     return (
       <div className="flex-shrink-0 w-[85vw] sm:w-[350px] md:w-[380px] snap-center">
-        <Card className="h-full border-primary/20 bg-card/80 backdrop-blur-sm hover:border-primary transition-all duration-300 hover:shadow-lg">
+        <Card className="h-full border-border bg-card hover:border-accent/50 transition-all duration-300 hover:shadow-lg hover-lift">
           <div className="relative h-48 overflow-hidden rounded-t-lg">
             <img
               src={imgSrc}
@@ -78,29 +78,29 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             />
             {isEnded && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-                <span className="text-white border-4 border-red-500 text-red-500 font-black tracking-widest text-2xl uppercase px-3 py-1.5 rounded-lg transform -rotate-12 select-none shadow-2xl">
+              <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center z-10">
+                <span className="text-foreground border-2 border-foreground/40 bg-background/80 font-semibold tracking-widest text-sm uppercase px-3 py-1.5 rounded-lg select-none">
                   Ended
                 </span>
               </div>
             )}
             <Badge
               variant="secondary"
-              className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm border-primary/30"
+              className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm border-border"
             >
               {Array.isArray(event.type) ? (
                 <div className="flex flex-wrap gap-1">
                   {event.type.map((t) => (
                     <Badge
                       key={t}
-                      className="bg-purple-600/90 hover:bg-purple-600 text-[10px] px-2 py-0"
+                      className="bg-accent/90 hover:bg-accent text-accent-foreground text-[10px] px-2 py-0"
                     >
                       {t}
                     </Badge>
                   ))}
                 </div>
               ) : (
-                <Badge className="bg-purple-600/90 hover:bg-purple-600 text-[10px] px-2 py-0">
+                <Badge className="bg-accent/90 hover:bg-accent text-accent-foreground text-[10px] px-2 py-0">
                   {event.type}
                 </Badge>
               )}
@@ -128,8 +128,8 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
               </div>
             )}
             <div className="flex items-center gap-2 text-xs">
-              <Clock className={`h-3 w-3 ${isEnded ? "text-red-500" : "text-primary"}`} />
-              <span className={`font-mono ${isEnded ? "text-red-500 font-bold" : "text-primary"}`}>
+              <Clock className={`h-3 w-3 ${isEnded ? "text-destructive" : "text-accent"}`} />
+              <span className={`font-mono ${isEnded ? "text-destructive font-semibold" : "text-accent"}`}>
                 {isEnded
                   ? "Ended"
                   : countdown.isExpired
@@ -152,7 +152,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
   }
 
   return (
-    <Card className="overflow-hidden h-full flex flex-col group border-border/50 hover:border-primary/50 transition-all duration-300">
+    <Card className="overflow-hidden h-full flex flex-col group border-border hover:border-accent/50 transition-all duration-300 hover-lift">
       <div className="relative h-48 overflow-hidden">
         <img
           src={imgSrc}
@@ -160,22 +160,22 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         {isEnded && (
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-            <span className="text-white border-4 border-red-500 text-red-500 font-black tracking-widest text-3xl uppercase px-4 py-2 rounded-lg transform -rotate-12 select-none shadow-2xl">
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center z-10">
+            <span className="text-foreground border-2 border-foreground/40 bg-background/80 font-semibold tracking-widest text-xl uppercase px-4 py-2 rounded-lg select-none">
               Ended
             </span>
           </div>
         )}
         <Badge
           variant="secondary"
-          className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border-primary/30"
+          className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border-border"
         >
           {Array.isArray(event.type) ? (
             <div className="flex flex-wrap gap-1">
               {event.type.map((t) => (
                 <Badge
                   key={t}
-                  className="bg-purple-600 text-white border-0 text-[10px] px-2 py-0"
+                  className="bg-accent text-accent-foreground border-0 text-[10px] px-2 py-0"
                 >
                   {t}
                 </Badge>
@@ -186,7 +186,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
           )}
         </Badge>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-          <div className={`flex items-center gap-2 text-sm font-mono ${isEnded ? "text-red-400" : "text-primary"}`}>
+          <div className={`flex items-center gap-2 text-sm font-mono ${isEnded ? "text-destructive" : "text-accent"}`}>
             <Clock className="h-4 w-4" />
             {isEnded
               ? "Event Ended"
@@ -198,7 +198,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
       </div>
 
       <CardHeader>
-        <CardTitle className="text-2xl group-hover:text-primary transition-colors">
+        <CardTitle className="text-2xl font-display group-hover:text-accent transition-colors">
           {event.title}
         </CardTitle>
         <CardDescription>{event.short_blurb}</CardDescription>
@@ -230,7 +230,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
             <Badge
               key={tag}
               variant="outline"
-              className="text-xs border-primary/30 whitespace-nowrap"
+              className="text-xs border-border whitespace-nowrap"
             >
               {tag}
             </Badge>
@@ -245,7 +245,7 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
         </Button>
         <Button
           variant="outline"
-          className="flex-1 border-primary/30 hover:bg-primary/10"
+          className="flex-1 hover:bg-accent/10 hover:border-accent/50"
           disabled={isEnded}
           asChild={!isEnded}
         >

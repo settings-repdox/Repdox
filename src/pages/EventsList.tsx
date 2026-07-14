@@ -91,7 +91,7 @@ export default function EventsList() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-7xl font-bold text-foreground mb-4">
+            <h1 className="text-4xl md:text-6xl font-display font-bold text-foreground mb-4">
               All Events
             </h1>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-4">

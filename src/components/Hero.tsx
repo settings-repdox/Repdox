@@ -12,39 +12,31 @@ export default function Hero() {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-subtle"
     >
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 opacity-[0.4]"
+        style={{
+          backgroundImage:
+            "linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+          maskImage: "radial-gradient(ellipse 60% 50% at 50% 30%, black, transparent)",
+          WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 50% 30%, black, transparent)",
+        }}
+      />
       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 backdrop-blur-sm border border-border mb-8">
-          <Sparkles className="w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-foreground">
+        <div className="eyebrow inline-flex px-4 py-2 rounded-full bg-card border border-border mb-8">
+          <Sparkles className="w-3.5 h-3.5 text-accent" />
+          <span className="normal-case tracking-normal text-foreground/80 font-medium">
             Next-Gen Event Platform
           </span>
         </div>
 
-        <h1
-          className="text-4xl sm:text-5xl md:text-8xl font-display font-bold mb-6 leading-tight"
-          style={{
-            backgroundClip: "text",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundImage: "linear-gradient(to bottom, hsl(var(--foreground)), hsl(var(--foreground)), hsl(var(--foreground) / 0.4))",
-            filter: "drop-shadow(0 0 4px rgba(168, 85, 247, 0.15))",
-          }}
-        >
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold mb-6 leading-[1.05] text-foreground">
           Think. Build.
           <br />
-          <span
-            style={{
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundImage: "linear-gradient(to right, hsl(168, 70%, 55%), hsl(331, 70%, 65%), hsl(204, 70%, 60%))",
-              filter: "drop-shadow(0 0 8px rgba(168, 85, 247, 0.2))",
-            }}
-          >
-            Transform.
-          </span>
+          <span className="text-accent">Transform.</span>
         </h1>
 
         <p className="text-lg md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed px-4 md:px-0">
@@ -60,7 +52,7 @@ export default function Hero() {
               scale: 1.05,
             }}
             whileTap={{ scale: 0.95 }}
-            className="group relative overflow-hidden bg-primary text-primary-foreground px-8 py-6 text-lg rounded-2xl font-semibold transition-all duration-300 hover:shadow-glow-purple"
+            className="group relative overflow-hidden bg-accent text-accent-foreground px-8 py-6 text-lg rounded-xl font-semibold transition-all duration-300 hover:shadow-accent"
           >
             <span className="relative z-10 flex items-center gap-2">
               View Events
@@ -75,7 +67,7 @@ export default function Hero() {
               scale: 1.05,
             }}
             whileTap={{ scale: 0.95 }}
-            className="group relative px-8 py-6 text-lg rounded-2xl font-semibold text-foreground bg-background border-2 border-foreground/20 transition-all duration-300 hover:shadow-glow-cyan hover:border-foreground/60"
+            className="group relative px-8 py-6 text-lg rounded-xl font-semibold text-foreground bg-transparent border border-border transition-all duration-300 hover:border-accent/60 hover:bg-accent/5"
           >
             <span className="relative z-10 flex items-center gap-2">
               Join Community
@@ -98,7 +90,7 @@ export default function Hero() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-card rounded-2xl p-8 max-w-md w-full border border-border"
+              className="bg-card rounded-2xl p-8 max-w-md w-full border border-border shadow-lg"
             >
               <h2 className="text-2xl font-display font-bold mb-4 text-foreground">
                 Join Our Community
@@ -110,7 +102,7 @@ export default function Hero() {
                 href="https://discord.gg/y9kRMNn49K"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full bg-primary text-primary-foreground px-6 py-3 rounded-lg text-center font-semibold hover:bg-primary/90 transition-colors duration-300"
+                className="block w-full bg-accent text-accent-foreground px-6 py-3 rounded-lg text-center font-semibold hover:bg-accent/90 transition-colors duration-300"
               >
                 Open Discord Invite
               </a>
