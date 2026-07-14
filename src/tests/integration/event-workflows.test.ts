@@ -212,9 +212,8 @@ describe("Event Lifecycle Workflow", () => {
         event_id: "gaming-event-123",
       });
 
-      const tournament = await gamingService.ensureTournamentForEvent(
-        "gaming-event-123",
-      );
+      const tournament =
+        await gamingService.ensureTournamentForEvent("gaming-event-123");
       expect(tournament.id).toBe("new-tournament");
     });
   });

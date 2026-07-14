@@ -192,7 +192,3 @@ describe("DI Container Integration", () => {
     });
   });
 });
-      expect(() => resolveService("RegistrationService")).toThrow();
-    });
-  });
-});

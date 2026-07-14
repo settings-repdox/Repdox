@@ -73,10 +73,7 @@ class MockEventService {
     });
   }
 
-  async updateEvent(
-    id: string,
-    updates: Partial<EventDTO>,
-  ): Promise<EventDTO> {
+  async updateEvent(id: string, updates: Partial<EventDTO>): Promise<EventDTO> {
     return this.repo.update(id, updates);
   }
 
@@ -403,7 +400,10 @@ describe("EventService", () => {
       mockRepo.getById.mockResolvedValue(draftEvent);
       mockRepo.update.mockResolvedValue(publishedEvent);
 
-      const result = await service.transitionLifecycle("event-123", "published");
+      const result = await service.transitionLifecycle(
+        "event-123",
+        "published",
+      );
 
       expect(result.status).toBe("published");
     });
