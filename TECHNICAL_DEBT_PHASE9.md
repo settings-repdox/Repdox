@@ -6,18 +6,21 @@
 ## What Was Done
 
 ### ✅ Consolidated DTOs (Single Source of Truth)
+
 - `src/shared/dtos/event.dto.ts` now comprehensive with all EventDTO fields
 - `src/domains/events/dtos/event.dto.ts` re-exports from shared
 - `src/domains/gaming/dtos/tournament.dto.ts` created for gaming types
 - Gaming service imports now use domain DTO instead of legacy tournamentService
 
 ### ✅ Centralized Service Initialization
+
 - `registerDefaults()` moved to `src/App.tsx` (single app-level call in useEffect)
 - Removed 9 redundant `registerDefaults()` imports and calls
 - Cleaned 13 files: AddEvent, EventDetail, EventRegister, EventTeams, EventTournament, MyEvents, Profile, OrganizerRegistrations, OrganizerTeams, adminService, profileService, eventImages, tournamentService
 - All pages/components now use consistent `resolveService()` pattern
 
 ### ✅ Build & Verification
+
 - Production build successful (7.06s, 2311 modules)
 - No compilation errors
 - Dependency rules verified compliant

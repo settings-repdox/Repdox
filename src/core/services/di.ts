@@ -19,3 +19,7 @@ export function resolveService<T>(key: string): T {
 export function replaceService<T>(key: string, impl: T): void {
   registry.set(key, impl);
 }
+
+export function clearServices(): void {
+  registry.clear();
+}
