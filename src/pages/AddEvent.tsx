@@ -30,10 +30,11 @@ import {
   CheckCircle2,
   User as UserIcon,
 } from "lucide-react";
-import eventService from "@/lib/eventService";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { ensureTournamentForEvent } from "@/lib/tournamentService";
 import FileUpload from "@/components/ui/File_upload";
-
 import EventBuilderExtensions from "@/components/EventBuilder/EventBuilderExtensions";
 import LivePreview from "@/components/EventBuilder/LivePreview";
 import EventCardPreview from "@/components/EventBuilder/EventCardPreview";
@@ -47,6 +48,10 @@ import {
   Select,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+
+registerDefaults();
+
+const eventServiceCore = () => resolveService<IEventService>("EventService");
 
 // Suggested tags based on common event categories
 const SUGGESTED_TAGS = [
@@ -84,6 +89,8 @@ export default function AddEvent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditMode = !!slug;
+  const [event, setEvent] = useState<any | null>(null);
+  const eventService = eventServiceCore();
 
   const [loading, setLoading] = useState(false);
   const [loadingEvent, setLoadingEvent] = useState(true);
@@ -230,210 +237,188 @@ export default function AddEvent() {
           return;
         }
 
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("user_profiles")
           .select("*")
           .eq("user_id", user.id)
           .single();
 
+        if (profileError) throw profileError;
+
         if (!profile) {
           setProfileComplete(false);
           setMissingFields(["Full profile record"]);
-        } else {
-          const fields = [
-            { key: "full_name", label: "Full Name", value: profile.full_name },
-            {
-              key: "date_of_birth",
-              label: "Date of Birth",
-              value: profile.date_of_birth,
-            },
-            { key: "bio", label: "Bio", value: profile.bio },
-            {
-              key: "avatar_url",
-              label: "Profile Picture",
-              value: profile.avatar_url,
-            },
-            { key: "job_title", label: "Job Title", value: profile.job_title },
-          ];
-
-          const missing = fields.filter(
-            (field) => !field.value || field.value.toString().trim() === "",
-          );
-
-          if (missing.length > 0) {
-            setProfileComplete(false);
-            setMissingFields(missing.map((f) => f.label));
-          } else {
-            setProfileComplete(true);
-          }
-        }
-      } catch (err) {
-        console.error("Profile check error:", err);
-      } finally {
-        if (!isEditMode) setLoadingEvent(false);
-      }
-    };
-
-    checkProfileAndLoad();
-  }, [navigate, isEditMode]);
-
-  // Load event data if in edit mode
-  useEffect(() => {
-    if (!isEditMode || !slug) return;
-
-    const loadEvent = async () => {
-      try {
-        const { data: event, error } = await supabase
-          .from("events")
-          .select("*")
-          .eq("slug", slug)
-          .single();
-
-        if (error) throw error;
-
-        // Check if user owns this event or is admin
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        const isAdminUser = user?.email
-          ? ADMIN_EMAILS.includes(user.email.toLowerCase())
-          : false;
-        if (event.created_by !== user?.id && !isAdminUser) {
-          toast({
-            title: "Permission Denied",
-            description: "You don't have permission to edit this event",
-            variant: "destructive",
-          });
-          navigate("/events");
           return;
         }
 
-        setEventId(event.id);
+        const fields = [
+          { key: "full_name", label: "Full Name", value: profile.full_name },
+          {
+            key: "date_of_birth",
+            label: "Date of Birth",
+            value: profile.date_of_birth,
+          },
+          { key: "bio", label: "Bio", value: profile.bio },
+          {
+            key: "avatar_url",
+            label: "Profile Picture",
+            value: profile.avatar_url,
+          },
+          { key: "job_title", label: "Job Title", value: profile.job_title },
+        ];
 
-        // Parse dates
-        const startDate = new Date(event.start_at);
-        const endDate = new Date(event.end_at);
-        const regDeadline = new Date(event.registration_deadline);
+        const missing = fields.filter(
+          (field) => !field.value || field.value.toString().trim() === "",
+        );
 
-        // Populate form
-        setForm({
-          title: event.title || "",
-          slug: event.slug || "",
-          type: String(event.type || "Hackathon"),
-          format: String(event.format || "Offline"),
-          start_date: startDate.toISOString().split("T")[0],
-          start_time: startDate.toTimeString().slice(0, 5),
-          end_date: endDate.toISOString().split("T")[0],
-          end_time: endDate.toTimeString().slice(0, 5),
-          registration_start_date: "",
-          registration_start_time: "00:00",
-          registration_deadline_date: regDeadline.toISOString().split("T")[0],
-          registration_deadline_time: regDeadline.toTimeString().slice(0, 5),
-          check_in_start_date: event.check_in_start
-            ? new Date(event.check_in_start).toISOString().split("T")[0]
-            : "",
-          check_in_start_time: event.check_in_start
-            ? new Date(event.check_in_start).toTimeString().slice(0, 5)
-            : "00:00",
-          check_in_end_date: event.check_in_end
-            ? new Date(event.check_in_end).toISOString().split("T")[0]
-            : "",
-          check_in_end_time: event.check_in_end
-            ? new Date(event.check_in_end).toTimeString().slice(0, 5)
-            : "23:59",
-          location: event.location || "",
-          short_blurb: event.short_blurb || "",
-          long_description: event.long_description || "",
-          overview: event.overview || "",
-          rules: event.rules || "",
-          registration_link: event.registration_link || "",
-          discord_invite: event.discord_invite || "",
-          instagram_handle: event.instagram_handle || "",
-        });
-
-        // Set tags
-        if (event.tags) setTags(event.tags);
-
-        // attempt to set cover image if event provides one (some events may use different property names)
-        const getEventCover = (ev: unknown): string | null => {
-          if (!ev || typeof ev !== "object") return null;
-          const e = ev as Record<string, unknown>;
-          if (typeof e["cover_url"] === "string")
-            return e["cover_url"] as string;
-          if (typeof e["image_url"] === "string")
-            return e["image_url"] as string;
-          if (typeof e["cover"] === "string") return e["cover"] as string;
-          return null;
-        };
-        setCoverUrl(getEventCover(event));
-
-        // Set prizes
-        if (event.prizes && Array.isArray(event.prizes)) {
-          setPrizeText(event.prizes.join("\n"));
+        if (missing.length > 0) {
+          setProfileComplete(false);
+          setMissingFields(missing.map((f) => f.label));
+          return;
         }
 
-        // Set FAQs
-        if (event.faqs && Array.isArray(event.faqs)) {
-          const loadedFaqs = (
-            event.faqs as Array<{ question?: string; answer?: string }>
-          ).map((f, idx: number) => ({
-            id: `faq-${idx}`,
-            question: f?.question || "",
-            answer: f?.answer || "",
-          }));
-          if (loadedFaqs.length > 0) {
-            setFaqs(loadedFaqs);
-            setShowFaqs(true);
-            // add to section order
-            setSectionOrder((s) => (s.includes("FAQs") ? s : [...s, "FAQs"]));
+        setProfileComplete(true);
+
+        if (isEditMode && slug) {
+          const eventData = await eventServiceCore().getEventBySlug(slug);
+          if (!eventData) {
+            throw new Error("Event not found");
           }
-        }
 
-        // Load schedules
-        const { data: schedules } = await supabase
-          .from("event_schedules")
-          .select("*")
-          .eq("event_id", event.id)
-          .order("start_at", { ascending: true });
+          const isAdminUser = user?.email
+            ? ADMIN_EMAILS.includes(user.email.toLowerCase())
+            : false;
+          if (eventData.created_by !== user?.id && !isAdminUser) {
+            toast({
+              title: "Permission Denied",
+              description: "You don't have permission to edit this event",
+              variant: "destructive",
+            });
+            navigate("/events");
+            return;
+          }
 
-        if (schedules && schedules.length > 0) {
-          const seen = new Set<string>();
-          const scheduleLines: string[] = [];
+          setEvent(eventData);
+          setEventId(eventData.id);
 
-          schedules.forEach((s) => {
-            const start = s.start_at
-              ? new Date(s.start_at).toISOString().slice(0, 19) + "Z"
-              : "";
-            const line = `${start} | ${s.title} | ${s.description || ""}`;
-            if (!seen.has(line)) {
-              seen.add(line);
-              scheduleLines.push(line);
-            }
+          const startDate = new Date(eventData.start_at);
+          const endDate = new Date(eventData.end_at);
+          const regDeadline = new Date(eventData.registration_deadline);
+
+          setForm({
+            title: eventData.title || "",
+            slug: eventData.slug || "",
+            type: String(eventData.type || "Hackathon"),
+            format: String(eventData.format || "Offline"),
+            start_date: startDate.toISOString().split("T")[0],
+            start_time: startDate.toTimeString().slice(0, 5),
+            end_date: endDate.toISOString().split("T")[0],
+            end_time: endDate.toTimeString().slice(0, 5),
+            registration_start_date: "",
+            registration_start_time: "00:00",
+            registration_deadline_date: regDeadline.toISOString().split("T")[0],
+            registration_deadline_time: regDeadline.toTimeString().slice(0, 5),
+            check_in_start_date: eventData.check_in_start
+              ? new Date(eventData.check_in_start).toISOString().split("T")[0]
+              : "",
+            check_in_start_time: eventData.check_in_start
+              ? new Date(eventData.check_in_start).toTimeString().slice(0, 5)
+              : "00:00",
+            check_in_end_date: eventData.check_in_end
+              ? new Date(eventData.check_in_end).toISOString().split("T")[0]
+              : "",
+            check_in_end_time: eventData.check_in_end
+              ? new Date(eventData.check_in_end).toTimeString().slice(0, 5)
+              : "23:59",
+            location: eventData.location || "",
+            short_blurb: eventData.short_blurb || "",
+            long_description: eventData.long_description || "",
+            overview: eventData.overview || "",
+            rules: eventData.rules || "",
+            registration_link: eventData.registration_link || "",
+            discord_invite: eventData.discord_invite || "",
+            instagram_handle: eventData.instagram_handle || "",
           });
 
-          setScheduleText(scheduleLines.join("\n"));
-          setSectionOrder((s) => (s.includes("Agenda") ? s : [...s, "Agenda"]));
-        }
+          if (eventData.tags) setTags(eventData.tags);
 
-        // Load teams
-        const { data: teams } = await supabase
-          .from("event_teams")
-          .select("*")
-          .eq("event_id", event.id);
+          const getEventCover = (ev: unknown): string | null => {
+            if (!ev || typeof ev !== "object") return null;
+            const e = ev as Record<string, unknown>;
+            if (typeof e["cover_url"] === "string")
+              return e["cover_url"] as string;
+            if (typeof e["image_url"] === "string")
+              return e["image_url"] as string;
+            if (typeof e["cover"] === "string") return e["cover"] as string;
+            return null;
+          };
+          setCoverUrl(getEventCover(eventData));
 
-        if (teams && teams.length > 0) {
-          const seen = new Set<string>();
-          const teamLines: string[] = [];
+          if (eventData.prizes && Array.isArray(eventData.prizes)) {
+            setPrizeText(eventData.prizes.join("\n"));
+          }
 
-          teams.forEach((t) => {
-            const line = `${t.name} | ${t.description || ""} | ${t.contact_email || ""}`;
-            if (!seen.has(line)) {
-              seen.add(line);
-              teamLines.push(line);
+          if (eventData.faqs && Array.isArray(eventData.faqs)) {
+            const loadedFaqs = (
+              eventData.faqs as Array<{ question?: string; answer?: string }>
+            ).map((f, idx: number) => ({
+              id: `faq-${idx}`,
+              question: f?.question || "",
+              answer: f?.answer || "",
+            }));
+            if (loadedFaqs.length > 0) {
+              setFaqs(loadedFaqs);
+              setShowFaqs(true);
+              setSectionOrder((s) => (s.includes("FAQs") ? s : [...s, "FAQs"]));
             }
-          });
+          }
 
-          setTeamsText(teamLines.join("\n"));
+          const { data: schedules } = await supabase
+            .from("event_schedules")
+            .select("*")
+            .eq("event_id", eventData.id)
+            .order("start_at", { ascending: true });
+
+          if (schedules && schedules.length > 0) {
+            const seen = new Set<string>();
+            const scheduleLines: string[] = [];
+
+            schedules.forEach((s) => {
+              const start = s.start_at
+                ? new Date(s.start_at).toISOString().slice(0, 19) + "Z"
+                : "";
+              const line = `${start} | ${s.title} | ${s.description || ""}`;
+              if (!seen.has(line)) {
+                seen.add(line);
+                scheduleLines.push(line);
+              }
+            });
+
+            setScheduleText(scheduleLines.join("\n"));
+            setSectionOrder((s) =>
+              s.includes("Agenda") ? s : [...s, "Agenda"],
+            );
+          }
+
+          const { data: teams } = await supabase
+            .from("event_teams")
+            .select("*")
+            .eq("event_id", eventData.id);
+
+          if (teams && teams.length > 0) {
+            const seen = new Set<string>();
+            const teamLines: string[] = [];
+
+            teams.forEach((t) => {
+              const line = `${t.name} | ${t.description || ""} | ${t.contact_email || ""}`;
+              if (!seen.has(line)) {
+                seen.add(line);
+                teamLines.push(line);
+              }
+            });
+
+            setTeamsText(teamLines.join("\n"));
+          }
         }
       } catch (err: unknown) {
         console.error("Failed to load event:", err);
@@ -449,9 +434,8 @@ export default function AddEvent() {
       }
     };
 
-    loadEvent();
-  }, [isEditMode, slug, navigate]);
-
+    checkProfileAndLoad();
+  }, [isEditMode, slug, navigate, eventService, toast]);
   const onChange = (k: keyof typeof form, v: string | string[]) =>
     setForm((s) => ({ ...s, [k]: v }));
 

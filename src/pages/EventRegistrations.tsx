@@ -5,29 +5,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users, Download, Activity, Search } from "lucide-react";
 import OrganizerRegistrations from "@/components/OrganizerRegistrations";
-import eventService from "@/lib/eventService";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { ADMIN_EMAILS } from "@/lib/adminService";
+import { resolveService } from "@/core/services/di";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
+
+const eventServiceCore = () => resolveService<IEventService>("EventService");
 
 export default function EventRegistrations() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
-  const { data: event, isLoading, error } = useQuery({
+  const {
+    data: event,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["event", slug],
     queryFn: async () => {
-      const { data, error } = await eventService.getEventBySlug(slug);
-      if (error || !data) throw new Error("Event not found");
+      if (!slug) throw new Error("Event slug is required");
+      const eventData = await eventServiceCore().getEventBySlug(slug);
+      if (!eventData) throw new Error("Event not found");
 
-      const { data: { user } } = await supabase.auth.getUser();
-      const isOwner = user && data.created_by === user.id;
-      const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const isOwner = user && eventData.created_by === user.id;
+      const isAdmin = user?.email
+        ? ADMIN_EMAILS.includes(user.email.toLowerCase())
+        : false;
 
       if (!isOwner && !isAdmin) {
         throw new Error("Unauthorized");
       }
-      return data;
+      return eventData;
     },
     retry: false,
   });
@@ -46,7 +58,9 @@ export default function EventRegistrations() {
   if (error || !event) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        <h1 className="text-4xl font-bold mb-4">Event Not Found or Unauthorized</h1>
+        <h1 className="text-4xl font-bold mb-4">
+          Event Not Found or Unauthorized
+        </h1>
         <Link to="/my-events">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -66,11 +80,18 @@ export default function EventRegistrations() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-2">
                 <Link to={`/events/${event.slug}`}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-accent/10 hover:bg-accent/20" aria-label="Action">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-accent/10 hover:bg-accent/20"
+                    aria-label="Action"
+                  >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 </Link>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Registration Dashboard</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Registration Dashboard
+                </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
                 {event.title}
@@ -82,7 +103,7 @@ export default function EventRegistrations() {
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"

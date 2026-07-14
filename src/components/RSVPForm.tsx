@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle2, Clock } from "lucide-react";
-import eventService, { RSVPResponse } from "@/lib/eventService";
 import { supabase } from "@/integrations/supabase/client";
+
+export type RSVPResponse = "attending" | "not_attending" | "maybe";
 
 interface RSVPFormProps {
   eventId: string;
@@ -28,20 +35,36 @@ export default function RSVPForm({
   const [email, setEmail] = useState(initialEmail || "");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [existingResponse, setExistingResponse] = useState<RSVPResponse | null>(null);
+  const [existingResponse, setExistingResponse] = useState<RSVPResponse | null>(
+    null,
+  );
   const [rsvpOpen, setRsvpOpen] = useState(true);
 
   // Check if RSVP window is open and if user has already responded
   useEffect(() => {
     const checkRSVPStatus = async () => {
       try {
-        // Check if RSVP window is open
-        const isOpen = await eventService.isRSVPWindowOpen(eventId);
-        setRsvpOpen(isOpen);
+        const { data: eventData } = await supabase
+          .from("events")
+          .select("rsvp_enabled, rsvp_start_date, rsvp_end_date")
+          .eq("id", eventId)
+          .single();
 
-        // Check if user has already responded
+        if (eventData?.rsvp_enabled && eventData.rsvp_end_date) {
+          const isOpen = new Date() < new Date(eventData.rsvp_end_date);
+          setRsvpOpen(isOpen);
+        } else {
+          setRsvpOpen(false);
+        }
+
         if (initialEmail) {
-          const existing = await eventService.getUserRSVPResponse(eventId, initialEmail);
+          const { data: existing } = await supabase
+            .from("rsvp_responses")
+            .select("*")
+            .eq("event_id", eventId)
+            .eq("email", initialEmail)
+            .single();
+
           if (existing) {
             setExistingResponse(existing.response as RSVPResponse);
             setResponse(existing.response as RSVPResponse);
@@ -81,7 +104,9 @@ export default function RSVPForm({
 
     try {
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       const payload = {
         event_id: eventId,
@@ -91,7 +116,14 @@ export default function RSVPForm({
         notes: notes || undefined,
       };
 
-      await eventService.submitRSVP(payload);
+      await supabase.from("rsvp_responses").upsert({
+        event_id: eventId,
+        email,
+        user_id: user?.id,
+        response: response as RSVPResponse,
+        notes,
+        responded_at: new Date().toISOString(),
+      });
 
       setSubmitted(true);
       toast({
@@ -112,7 +144,9 @@ export default function RSVPForm({
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to submit RSVP. Please try again.",
+          error instanceof Error
+            ? error.message
+            : "Failed to submit RSVP. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -127,10 +161,12 @@ export default function RSVPForm({
           <div className="flex items-start space-x-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <Clock className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="font-semibold text-amber-900">RSVP window closed</h3>
+              <h3 className="font-semibold text-amber-900">
+                RSVP window closed
+              </h3>
               <p className="text-sm text-amber-800 mt-1">
-                The RSVP deadline for this event has passed. If you have questions, please contact
-                the event organizer.
+                The RSVP deadline for this event has passed. If you have
+                questions, please contact the event organizer.
               </p>
             </div>
           </div>
@@ -148,7 +184,8 @@ export default function RSVPForm({
             <div>
               <h3 className="font-semibold text-green-900">RSVP Submitted</h3>
               <p className="text-sm text-green-800 mt-1">
-                Thank you for confirming your attendance. We'll see you at {eventTitle}!
+                Thank you for confirming your attendance. We'll see you at{" "}
+                {eventTitle}!
               </p>
             </div>
           </div>
@@ -164,8 +201,8 @@ export default function RSVPForm({
         <CardDescription>
           {existingResponse ? (
             <>
-              You previously responded as <strong>{existingResponse}</strong>. You can update your
-              response below.
+              You previously responded as <strong>{existingResponse}</strong>.
+              You can update your response below.
             </>
           ) : (
             "Let us know if you're planning to attend this event"
@@ -193,7 +230,10 @@ export default function RSVPForm({
           {/* RSVP Response Options */}
           <div className="space-y-3">
             <Label className="text-base font-medium">My Response</Label>
-            <RadioGroup value={response} onValueChange={(val) => setResponse(val as RSVPResponse)}>
+            <RadioGroup
+              value={response}
+              onValueChange={(val) => setResponse(val as RSVPResponse)}
+            >
               <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-purple-50 cursor-pointer">
                 <RadioGroupItem value="attending" id="attending" />
                 <Label
@@ -206,7 +246,10 @@ export default function RSVPForm({
 
               <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-purple-50 cursor-pointer">
                 <RadioGroupItem value="maybe" id="maybe" />
-                <Label htmlFor="maybe" className="flex-1 cursor-pointer font-medium text-amber-700">
+                <Label
+                  htmlFor="maybe"
+                  className="flex-1 cursor-pointer font-medium text-amber-700"
+                >
                   ? Maybe
                 </Label>
               </div>

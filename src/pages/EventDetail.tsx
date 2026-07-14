@@ -51,7 +51,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import eventService from "@/lib/eventService";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
+
+registerDefaults();
+
+const registrationService = () =>
+  resolveService<IRegistrationService>("RegistrationService");
+const eventService = () => resolveService<IEventService>("EventService");
 import OrganizerRegistrations from "@/components/OrganizerRegistrations";
 import { getSignedUrl } from "@/lib/storageService";
 import { getEventImage } from "@/lib/eventImages";
@@ -59,7 +68,6 @@ import type { Database } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import AddToCalendar from "@/components/AddToCalendar";
 import RecentlyViewedEvents from "@/components/RecentlyViewedEvents";
-import { getRegistrationTableName } from "@/lib/utils";
 import { isGamingEvent } from "@/lib/tournamentService";
 
 export default function EventDetail() {
@@ -74,8 +82,8 @@ export default function EventDetail() {
   } = useQuery({
     queryKey: ["event", slug],
     queryFn: async () => {
-      const { data, error } = await eventService.getEventBySlug(slug);
-      if (error || !data) throw new Error("Event not found");
+      const data = await eventService().getEventBySlug(slug || "");
+      if (!data) throw new Error("Event not found");
 
       // --- LOGIC START: EXPIRED ACCESS CONTROL ---
       const now = new Date();
@@ -125,26 +133,13 @@ export default function EventDetail() {
       setUser(currentUser);
 
       if (currentUser && event?.id) {
-        const tableName = getRegistrationTableName(event);
-        const { data: reg } = await supabase
-          .from(tableName as "event_registrations")
-          .select("id")
-          .eq("event_id", event.id)
-          .eq("user_id", currentUser.id)
-          .maybeSingle();
-
-        if (reg) {
-          setIsRegistered(true);
-        } else if (tableName !== "event_registrations") {
-          // Fallback check in central table
-          const { data: centralReg } = await supabase
-            .from("event_registrations")
-            .select("id")
-            .eq("event_id", event.id)
-            .eq("user_id", currentUser.id)
-            .maybeSingle();
-          if (centralReg) setIsRegistered(true);
-        }
+        const registration =
+          await registrationService().fetchEventRegistrationByUser(
+            event.id,
+            currentUser.id,
+            event.slug,
+          );
+        setIsRegistered(Boolean(registration));
       }
     };
     checkUserStatus();
@@ -176,7 +171,7 @@ export default function EventDetail() {
     (async () => {
       try {
         if (event?.id) {
-          const counts = await eventService.countRegistrationsByRole(
+          const counts = await registrationService().countRegistrationsByRole(
             event.id,
             event.slug,
           );
@@ -208,7 +203,7 @@ export default function EventDetail() {
     if (!event?.id) return;
 
     try {
-      await eventService.deleteEvent(event.id);
+      await eventService().deleteEvent(event.id);
       toast({
         title: "Event deleted",
         description: "Your event has been deleted successfully",
@@ -389,38 +384,18 @@ export default function EventDetail() {
     queryKey: ["event_registrations_all", event?.id],
     queryFn: async () => {
       if (!event?.id) return [];
-      interface Registration {
-        id: string;
-        name: string | null;
-        email: string | null;
-        user_id: string | null;
-        message: string | null;
-        team_id: string | null;
-      }
-      let allData: Registration[] = [];
-
-      // Try fetching from the dynamic table
-      const { data, error } = await supabase
-        .from(tableName as "event_registrations")
-        .select("id, name, email, user_id, message, team_id")
-        .eq("event_id", event.id);
-
-      if (!error && data) {
-        allData = (data as Registration[]).map((r) => r);
-      }
-
-      // If dynamic table is different from the central one, check the central one too
-      if (tableName !== "event_registrations") {
-        const { data: fallbackData } = await supabase
-          .from("event_registrations")
-          .select("id, name, email, user_id, message, team_id")
-          .eq("event_id", event.id);
-        if (fallbackData) {
-          allData = [...allData, ...(fallbackData as Registration[])];
-        }
-      }
-
-      return allData;
+      const rows = await registrationService().fetchEventRegistrations(
+        event.id,
+        event.slug,
+      );
+      return rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        user_id: row.userId,
+        message: row.message,
+        team_id: row.teamId,
+      }));
     },
     enabled: !!event?.id && activeTab === "teams",
   });

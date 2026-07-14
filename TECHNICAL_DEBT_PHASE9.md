@@ -1,0 +1,40 @@
+# Technical Debt Report — Phase 9 (Repository Cleanup)
+
+Generated: 2026-07-15
+
+Summary
+
+- Found legacy compatibility layers (`src/lib/eventService.ts`) used across many UI, scripts, and functions.
+- Direct Supabase table usage of `event_registrations` and dynamic per-event tables is present in server scripts and some functions.
+- Several files fallback to legacy queries when core services are unavailable (deferred compatibility behavior).
+- Infrastructure and domain boundaries largely respected for new Phase 7/8 work, but legacy code still permeates.
+
+Key findings (examples)
+
+- `src/lib/eventService.ts`: compatibility shim used by pages/components (EventDetail, Profile, OrganizerTeams, EventRegister, etc.).
+- Direct table queries: `event_registrations` appears in `repdox-discord-bot/index.ts`, `scripts/sync-teams.ts`, `functions/export-registrations-xlsx/index.ts`, `api/events/send-rsvp-emails.ts`, and others.
+- Dynamic table helpers: `getRegistrationTableName` in `src/lib/utils.ts` used widely as a fallback.
+- Legacy scripts and tools referencing direct tables: `sync-teams.ts`, `scratch.js`, `registration-portal/main.js`.
+
+Counts
+
+- Files referencing `event_registrations` or dynamic registration tables: 30+ (see repo search for exact list).
+
+Recommendations (Phase 9 roadmap)
+
+1. Replace all imports of `src/lib/eventService.ts` with direct `resolveService('RegistrationService')` or `EventService` usage where appropriate.
+2. Remove `src/lib/eventService.ts` only after all callers are migrated and tests passing.
+3. Consolidate direct `.from('event_registrations')` queries into `RegistrationService` APIs; leave server-side scripts until migrated.
+4. Standardize DTOs: create central `src/shared/dtos/index.ts` exports and update imports to use `@/shared/dtos` consistently.
+5. Standardize logging: adopt the existing app logger (if present) or add a minimal `src/core/logger.ts` and replace console outputs in migrated files.
+6. Remove obsolete folders: review `scratch.js`, legacy portal code, and any duplicated services under `src/lib/` after migration.
+7. Run automated verifiers (`src/infrastructure/verifyArchitecture.ts`, `src/domains/production/verifyDependencies.ts`) and fix violations.
+
+Automated cleanup approach
+
+- I added a non-destructive dry-run script `scripts/phase9-dry-run.ts` which lists replacements and files to change; run with `--apply` to make edits.
+
+Next steps
+
+- Run the dry-run script and review the proposed edits.
+- Migrate callers incrementally per-module and run tests between batches.

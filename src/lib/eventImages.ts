@@ -21,6 +21,10 @@ const filenameMap: Record<string, string> = {
   "event-gaming.jpg": eventGaming,
 };
 
+import type { IAssetService } from "@/core/services/interfaces/IAssetService";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+
 /**
  * Synchronous function to get event image URL
  * First checks local assets, then constructs Supabase URL
@@ -39,22 +43,30 @@ export function getEventImage(imageUrl?: string | null): string | undefined {
 
   // Clean the path for Supabase
   let cleanPath = imageUrl;
-  
+
   // Remove leading slash
   if (cleanPath.startsWith("/")) {
     cleanPath = cleanPath.substring(1);
   }
-  
+
   // Remove 'event-images/' prefix if accidentally included
   if (cleanPath.startsWith("event-images/")) {
     cleanPath = cleanPath.replace("event-images/", "");
   }
 
-  // Get public URL from Supabase storage
-  const { data } = supabase.storage.from("event-images").getPublicUrl(cleanPath);
-  
-  // Log for debugging
-  
+  // Try AssetService first, fallback to Supabase public URL
+  try {
+    registerDefaults();
+    const asset = resolveService<IAssetService>("AssetService");
+    const pub = asset.getPublicUrl("event-images", cleanPath);
+    if (pub) return pub;
+  } catch (e) {
+    // ignore and fallback to supabase
+  }
+
+  const { data } = supabase.storage
+    .from("event-images")
+    .getPublicUrl(cleanPath);
   return data.publicUrl;
 }
 
@@ -63,10 +75,10 @@ export function getEventImage(imageUrl?: string | null): string | undefined {
  * Use this when you need to handle private buckets
  */
 export async function getEventImageUrl(
-  imageUrl?: string | null
+  imageUrl?: string | null,
 ): Promise<string | undefined> {
   if (!imageUrl) return undefined;
-  
+
   // If it's already an absolute URL (http/https), just return it
   if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
 
@@ -78,40 +90,45 @@ export async function getEventImageUrl(
 
   // Clean the path for Supabase
   let cleanPath = imageUrl;
-  
+
   // Remove leading slash
   if (cleanPath.startsWith("/")) {
     cleanPath = cleanPath.substring(1);
   }
-  
+
   // Remove 'event-images/' prefix if accidentally included
   if (cleanPath.startsWith("event-images/")) {
     cleanPath = cleanPath.replace("event-images/", "");
   }
 
+  // Prefer AssetService if available
   try {
-    // First, try to get public URL (works if bucket is public or has RLS allowing SELECT)
+    registerDefaults();
+    const asset = resolveService<IAssetService>("AssetService");
+    const pub = asset.getPublicUrl("event-images", cleanPath);
+    if (pub) return pub;
+    const signed = await asset.createSignedUrl("event-images", cleanPath, 3600);
+    return signed;
+  } catch (error) {
+    // Fallback to direct Supabase APIs
+  }
+
+  try {
     const { data: publicData } = supabase.storage
       .from("event-images")
       .getPublicUrl(cleanPath);
-    
-    if (publicData?.publicUrl) {
-      return publicData.publicUrl;
-    }
+    if (publicData?.publicUrl) return publicData.publicUrl;
 
-    // If public URL doesn't work, try signed URL (for private buckets)
     const { data: signedData, error } = await supabase.storage
       .from("event-images")
-      .createSignedUrl(cleanPath, 3600); // 1 hour expiry
-
+      .createSignedUrl(cleanPath, 3600);
     if (error) {
-      console.error('[getEventImageUrl] Error creating signed URL:', error);
+      console.error("[getEventImageUrl] Error creating signed URL:", error);
       return undefined;
     }
-
     return signedData?.signedUrl;
   } catch (error) {
-    console.error('[getEventImageUrl] Exception:', error);
+    console.error("[getEventImageUrl] Exception:", error);
     return undefined;
   }
 }
@@ -122,7 +139,7 @@ export async function getEventImageUrl(
  */
 export async function validateImageUrl(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url, { method: 'HEAD' });
+    const response = await fetch(url, { method: "HEAD" });
     return response.ok;
   } catch {
     return false;

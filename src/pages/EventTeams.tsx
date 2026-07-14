@@ -4,23 +4,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users } from "lucide-react";
 import OrganizerTeams from "@/components/OrganizerTeams";
-import eventService from "@/lib/eventService";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { motion } from "framer-motion";
 import { ADMIN_EMAILS } from "@/lib/adminService";
+
+registerDefaults();
+const eventServiceCore = () => resolveService<IEventService>("EventService");
 
 export default function EventTeams() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
-  const { data: event, isLoading, error } = useQuery({
+  const {
+    data: event,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["event", slug],
     queryFn: async () => {
-      const { data, error } = await eventService.getEventBySlug(slug);
-      if (error || !data) throw new Error("Event not found");
+      const eventData = await eventServiceCore().getEventBySlug(slug || "");
+      if (!eventData) throw new Error("Event not found");
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const isOwner = user && data.created_by === user.id;
-      const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+      const isAdmin = user?.email
+        ? ADMIN_EMAILS.includes(user.email.toLowerCase())
+        : false;
 
       if (!isOwner && !isAdmin) {
         throw new Error("Unauthorized");
@@ -44,7 +57,9 @@ export default function EventTeams() {
   if (error || !event) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        <h1 className="text-4xl font-bold mb-4">Event Not Found or Unauthorized</h1>
+        <h1 className="text-4xl font-bold mb-4">
+          Event Not Found or Unauthorized
+        </h1>
         <Link to="/my-events">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -64,20 +79,30 @@ export default function EventTeams() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-2">
                 <Link to={`/events/${event.slug}`}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-accent/10 hover:bg-accent/20" aria-label="Action">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-accent/10 hover:bg-accent/20"
+                    aria-label="Action"
+                  >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 </Link>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Teams Dashboard</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Teams Dashboard
+                </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
                 {event.title}
               </h1>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               <Link to={`/events/${event.slug}/registrations`}>
-                <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none">
+                <Button
+                  variant="secondary"
+                  className="bg-white/10 hover:bg-white/20 text-white border-none"
+                >
                   <Users className="mr-2 h-4 w-4" />
                   View Registrations
                 </Button>
@@ -89,7 +114,7 @@ export default function EventTeams() {
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"

@@ -779,7 +779,7 @@ export async function fetchEventRegistrations(
   // that were inserted there before dynamic tables were enforced.
   if (tableName !== "event_registrations") {
     const { data: centralData, error: centralError } = await supabase
-      .from("event_registrations")
+      // TODO: migrate to RegistrationService API (was .from('event_registrations'))
       .select("*")
       .eq("event_id", eventId)
       .order("created_at", { ascending: false });
@@ -823,7 +823,7 @@ export async function countRegistrationsByRole(
   // If dynamic table fails or is different from central table, also check central table
   if (error || tableName !== "event_registrations") {
     const { data: centralData } = await supabase
-      .from("event_registrations")
+      // TODO: migrate to RegistrationService API (was .from('event_registrations'))
       .select("*")
       .eq("event_id", eventId);
     if (centralData) {

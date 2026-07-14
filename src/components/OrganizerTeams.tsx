@@ -3,7 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getRegistrationTableName } from "@/lib/utils";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
+import { toast } from "@/hooks/use-toast";
+
+registerDefaults();
+
+const registrationService = () =>
+  resolveService<IRegistrationService>("RegistrationService");
+
 import { Database } from "@/integrations/supabase/types";
 
 type Registration = {
@@ -21,7 +30,13 @@ type Team = Database["public"]["Tables"]["event_teams"]["Row"] & {
   members: TeamMember[];
 };
 
-export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string; eventSlug?: string }) {
+export default function OrganizerTeams({
+  eventId,
+  eventSlug,
+}: {
+  eventId: string;
+  eventSlug?: string;
+}) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,38 +53,37 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
 
         if (teamsError) throw teamsError;
 
-        // Fetch registrations
-        const tableName = getRegistrationTableName({ id: eventId, slug: eventSlug });
+        // Fetch registrations via the centralized registration service
         let allRegs: Registration[] = [];
-        
-        const { data: regsData } = await supabase
-          .from(tableName as "event_registrations")
-          .select("id, name, email, user_id, message, team_id")
-          .eq("event_id", eventId);
-          
-        if (regsData) {
-          allRegs = (regsData as Registration[]).map(r => r);
-        }
-
-        if (tableName !== "event_registrations") {
-          const { data: fallbackData } = await supabase
-            .from("event_registrations")
-            .select("id, name, email, user_id, message, team_id")
-            .eq("event_id", eventId);
-          if (fallbackData) {
-            allRegs = [...allRegs, ...(fallbackData as Registration[])];
-          }
+        try {
+          const regs = await registrationService().fetchEventRegistrations(
+            eventId,
+            eventSlug,
+          );
+          allRegs = regs.map((r) => ({
+            id: r.id,
+            name: r.name ?? null,
+            email: r.email ?? null,
+            user_id: r.userId ?? null,
+            message: r.message ?? null,
+            team_id: r.teamId ?? null,
+          }));
+        } catch (err) {
+          console.error("Failed to load registrations:", err);
         }
 
         // Group teams
         const groupedTeamsMap = new Map<string, Team>();
-        
-        (rawTeams || []).forEach(team => {
+
+        (rawTeams || []).forEach((team) => {
           const lowerName = team.name.toLowerCase();
-          const members = allRegs.filter(r => {
+          const members = allRegs.filter((r) => {
             if (r.team_id && r.team_id === team.id) return true;
             try {
-              const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
+              const msg =
+                typeof r.message === "string"
+                  ? JSON.parse(r.message)
+                  : r.message;
               const teamName = msg?.participation?.teamName || msg?.teamName;
               return teamName && teamName.toLowerCase() === lowerName;
             } catch (e) {
@@ -80,16 +94,26 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
           if (groupedTeamsMap.has(lowerName)) {
             const existing = groupedTeamsMap.get(lowerName);
             const allMembers = [...existing.members, ...members];
-            existing.members = Array.from(new Map(allMembers.map(m => [m.user_id || m.email || m.id, m])).values());
+            existing.members = Array.from(
+              new Map(
+                allMembers.map((m) => [m.user_id || m.email || m.id, m]),
+              ).values(),
+            );
           } else {
-            groupedTeamsMap.set(lowerName, { 
-              ...team, 
-              members: Array.from(new Map(members.map(m => [m.user_id || m.email || m.id, m])).values())
+            groupedTeamsMap.set(lowerName, {
+              ...team,
+              members: Array.from(
+                new Map(
+                  members.map((m) => [m.user_id || m.email || m.id, m]),
+                ).values(),
+              ),
             });
           }
         });
 
-        const groupedTeams = Array.from(groupedTeamsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        const groupedTeams = Array.from(groupedTeamsMap.values()).sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
         setTeams(groupedTeams);
       } catch (err) {
         console.error("Failed to load teams:", err);
@@ -104,7 +128,9 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
   }, [eventId, eventSlug]);
 
   if (loading) {
-    return <div className="p-4 text-muted-foreground text-sm">Loading teams...</div>;
+    return (
+      <div className="p-4 text-muted-foreground text-sm">Loading teams...</div>
+    );
   }
 
   return (
@@ -120,14 +146,17 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {teams.map((t) => (
-              <div key={t.id} className="border border-border/50 bg-accent/5 rounded-xl p-6 space-y-4">
+              <div
+                key={t.id}
+                className="border border-border/50 bg-accent/5 rounded-xl p-6 space-y-4"
+              >
                 <div className="flex items-center justify-between">
                   <div className="font-bold text-lg text-accent">{t.name}</div>
                   <Badge variant="outline" className="text-xs">
                     {t.members?.length || 0} members
                   </Badge>
                 </div>
-                
+
                 {t.description && (
                   <div className="text-sm text-muted-foreground italic">
                     "{t.description}"
@@ -141,16 +170,22 @@ export default function OrganizerTeams({ eventId, eventSlug }: { eventId: string
                   <div className="flex flex-wrap gap-2">
                     {t.members && t.members.length > 0 ? (
                       t.members.map((m) => (
-                        <Badge key={m.id} variant="secondary" className="bg-background/50">
+                        <Badge
+                          key={m.id}
+                          variant="secondary"
+                          className="bg-background/50"
+                        >
                           {m.name || m.email || "Unknown"}
                         </Badge>
                       ))
                     ) : (
-                      <span className="text-xs text-muted-foreground italic">No members found</span>
+                      <span className="text-xs text-muted-foreground italic">
+                        No members found
+                      </span>
                     )}
                   </div>
                 </div>
-                
+
                 {t.contact_email && (
                   <div className="pt-2 text-xs text-muted-foreground border-t border-border/30">
                     Contact: {t.contact_email}

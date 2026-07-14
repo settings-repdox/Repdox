@@ -1,10 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, CheckCircle2, XCircle, HelpCircle, Download } from "lucide-react";
-import eventService from "@/lib/eventService";
+import {
+  Loader2,
+  Mail,
+  CheckCircle2,
+  XCircle,
+  HelpCircle,
+  Download,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 
 interface RSVPAnalyticsProps {
@@ -28,7 +41,10 @@ interface RSVPResponse {
   responded_at: string;
 }
 
-export default function RSVPAnalytics({ eventId, eventTitle }: RSVPAnalyticsProps) {
+export default function RSVPAnalytics({
+  eventId,
+  eventTitle,
+}: RSVPAnalyticsProps) {
   const { toast } = useToast();
   const [summary, setSummary] = useState<RSVPSummary | null>(null);
   const [responses, setResponses] = useState<RSVPResponse[]>([]);
@@ -43,14 +59,33 @@ export default function RSVPAnalytics({ eventId, eventTitle }: RSVPAnalyticsProp
   const loadRSVPData = async () => {
     try {
       setLoading(true);
+      const { data: rsvpData, error } = await supabase
+        .from("rsvp_responses")
+        .select("*")
+        .eq("event_id", eventId)
+        .order("responded_at", { ascending: false });
 
-      // Fetch RSVP summary
-      const summaryData = await eventService.getRSVPSummary(eventId);
-      setSummary(summaryData);
+      if (error) throw error;
 
-      // Fetch detailed responses
-      const responsesData = await eventService.fetchRSVPResponses(eventId);
-      setResponses(responsesData as unknown as RSVPResponse[]);
+      const responses = (rsvpData || []) as RSVPResponse[];
+      setResponses(responses);
+
+      const total = responses.length;
+      const attending = responses.filter(
+        (r) => r.response === "attending",
+      ).length;
+      const notAttending = responses.filter(
+        (r) => r.response === "not_attending",
+      ).length;
+      const maybe = responses.filter((r) => r.response === "maybe").length;
+
+      setSummary({
+        total_responses: total,
+        attending,
+        not_attending: notAttending,
+        maybe,
+        response_rate: total > 0 ? attending / total : 0,
+      });
     } catch (error) {
       console.error("Error loading RSVP data:", error);
       toast({
@@ -74,20 +109,32 @@ export default function RSVPAnalytics({ eventId, eventTitle }: RSVPAnalyticsProp
 
     try {
       setSendingEmails(true);
-      const result = await eventService.sendRSVPEmails(eventId);
+      const response = await fetch("/api/events/send-rsvp-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId }),
+      });
 
+      if (!response.ok) {
+        throw new Error("Failed to send RSVP emails");
+      }
+
+      const result = await response.json();
       if (result.success) {
         toast({
           title: "Success",
           description: `Sent ${result.emails_sent} RSVP emails (${result.failed} failed)`,
         });
         setEmailsSent(true);
+      } else {
+        throw new Error(result.message || "Email send failed");
       }
     } catch (error) {
       console.error("Error sending RSVP emails:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send RSVP emails",
+        description:
+          error instanceof Error ? error.message : "Failed to send RSVP emails",
         variant: "destructive",
       });
     } finally {
@@ -104,7 +151,6 @@ export default function RSVPAnalytics({ eventId, eventTitle }: RSVPAnalyticsProp
       return;
     }
 
-    // Convert to CSV
     const headers = ["Email", "Response", "Notes", "Responded At"];
     const rows = responses.map((r) => [
       r.email,
@@ -114,7 +160,7 @@ export default function RSVPAnalytics({ eventId, eventTitle }: RSVPAnalyticsProp
     ]);
 
     const csv = [headers, ...rows].map((row) =>
-      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
     );
 
     const blob = new Blob([csv.join("\n")], { type: "text/csv" });
@@ -150,7 +196,6 @@ export default function RSVPAnalytics({ eventId, eventTitle }: RSVPAnalyticsProp
 
   return (
     <div className="space-y-4">
-      {/* RSVP Summary */}
       <Card>
         <CardHeader>
           <CardTitle>RSVP Summary</CardTitle>
@@ -160,156 +205,84 @@ export default function RSVPAnalytics({ eventId, eventTitle }: RSVPAnalyticsProp
           {total === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500 mb-4">No RSVP responses yet</p>
-              <Button onClick={handleSendEmails} disabled={sendingEmails} size="lg">
-                {sendingEmails && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button
+                onClick={handleSendEmails}
+                disabled={sendingEmails}
+                size="lg"
+              >
+                {sendingEmails && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 <Mail className="mr-2 h-4 w-4" />
                 Send RSVP Emails
               </Button>
             </div>
           ) : (
             <>
-              {/* Response Rate */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Response Rate</span>
-                  <span className="text-lg font-bold text-purple-600">{responseRate}%</span>
+                  <span className="text-lg font-bold text-purple-600">
+                    {responseRate}%
+                  </span>
                 </div>
                 <Progress value={responseRate} className="h-2" />
                 <p className="text-xs text-gray-500 mt-1">
                   {total} responses received
                 </p>
               </div>
-
-              {/* Response Breakdown */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Attending */}
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Attending</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Attending
+                    </span>
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                   </div>
-                  <p className="text-3xl font-bold text-green-700">{summary?.attending || 0}</p>
+                  <p className="text-3xl font-bold text-green-700">
+                    {summary?.attending || 0}
+                  </p>
                   {total > 0 && (
                     <p className="text-xs text-gray-600 mt-2">
-                      {Math.round(((summary?.attending || 0) / total) * 100)}% of responses
+                      {Math.round(((summary?.attending || 0) / total) * 100)}%
+                      of responses
                     </p>
                   )}
                 </div>
-
-                {/* Maybe */}
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Maybe</span>
-                    <HelpCircle className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <p className="text-3xl font-bold text-amber-700">{summary?.maybe || 0}</p>
-                  {total > 0 && (
-                    <p className="text-xs text-gray-600 mt-2">
-                      {Math.round(((summary?.maybe || 0) / total) * 100)}% of responses
-                    </p>
-                  )}
-                </div>
-
-                {/* Not Attending */}
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Not Attending</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Not attending
+                    </span>
                     <XCircle className="h-4 w-4 text-red-600" />
                   </div>
                   <p className="text-3xl font-bold text-red-700">
                     {summary?.not_attending || 0}
                   </p>
-                  {total > 0 && (
-                    <p className="text-xs text-gray-600 mt-2">
-                      {Math.round(((summary?.not_attending || 0) / total) * 100)}% of responses
-                    </p>
-                  )}
+                </div>
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">
+                      Maybe
+                    </span>
+                    <HelpCircle className="h-4 w-4 text-yellow-600" />
+                  </div>
+                  <p className="text-3xl font-bold text-yellow-700">
+                    {summary?.maybe || 0}
+                  </p>
                 </div>
               </div>
-
-              {/* Action Button */}
-              {!emailsSent && (
-                <Button
-                  onClick={handleSendEmails}
-                  disabled={sendingEmails}
-                  className="w-full"
-                  size="lg"
-                  variant="outline"
-                >
-                  {sendingEmails && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send RSVP Reminders
+              <div className="flex items-center justify-between">
+                <Badge variant="secondary">Responses: {total}</Badge>
+                <Button onClick={downloadResponses} size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download CSV
                 </Button>
-              )}
+              </div>
             </>
           )}
         </CardContent>
       </Card>
-
-      {/* RSVP Responses Table */}
-      {responses.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Individual Responses</CardTitle>
-                <CardDescription>{responses.length} attendees have responded</CardDescription>
-              </div>
-              <Button onClick={downloadResponses} size="sm" variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export CSV
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium">Email</th>
-                    <th className="text-left py-3 px-4 font-medium">Response</th>
-                    <th className="text-left py-3 px-4 font-medium">Responded</th>
-                    <th className="text-left py-3 px-4 font-medium">Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {responses.map((response) => (
-                    <tr key={response.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">{response.email}</td>
-                      <td className="py-3 px-4">
-                        {response.response === "attending" && (
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Attending
-                          </Badge>
-                        )}
-                        {response.response === "maybe" && (
-                          <Badge className="bg-amber-100 text-amber-800">
-                            <HelpCircle className="h-3 w-3 mr-1" />
-                            Maybe
-                          </Badge>
-                        )}
-                        {response.response === "not_attending" && (
-                          <Badge className="bg-red-100 text-red-800">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Not Attending
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-gray-500 text-xs">
-                        {new Date(response.responded_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 max-w-xs truncate">
-                        {response.notes || "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

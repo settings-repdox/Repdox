@@ -4,7 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import eventService from "@/lib/eventService";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { formatDate } from "@/lib/timeUtils";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +39,10 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { getEventImage } from "@/lib/eventImages";
 
+registerDefaults();
+
+const eventServiceCore = () => resolveService<IEventService>("EventService");
+
 export default function MyEvents() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -54,7 +60,7 @@ export default function MyEvents() {
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .eq("created_by", user.id);
+        .eq("created_by", user!.id);
 
       if (error) throw error;
 
@@ -106,7 +112,7 @@ export default function MyEvents() {
     if (!eventToDelete) return;
 
     try {
-      await eventService.deleteEvent(eventToDelete);
+      await eventService().deleteEvent(eventToDelete);
       toast({
         title: "Event deleted",
         description: "Your event has been deleted successfully",
@@ -234,7 +240,10 @@ export default function MyEvents() {
                             {event.title}
                           </CardTitle>
                           {!event.is_active && !isExpired && (
-                            <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                            <Badge
+                              variant="secondary"
+                              className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
+                            >
                               Pending Approval
                             </Badge>
                           )}

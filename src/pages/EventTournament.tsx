@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ADMIN_EMAILS } from "@/lib/adminService";
-import eventService from "@/lib/eventService";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import {
   ensureTournamentForEvent,
   getLiveMatchOverlayData,
@@ -68,10 +70,12 @@ export default function EventTournament() {
   } = useQuery({
     queryKey: ["event", slug],
     queryFn: async () => {
-      const { data, error } = await eventService.getEventBySlug(slug);
-      if (error || !data) throw new Error("Event not found");
-      return data;
+      if (!slug) return null;
+      const found = await eventServiceCore().getEventBySlug(slug);
+      if (!found) throw new Error("Event not found");
+      return found;
     },
+    enabled: !!slug,
     retry: false,
   });
 
@@ -334,15 +338,21 @@ export default function EventTournament() {
     if (!event?.id) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase
-        .from("events")
-        .update({ bracket_url: bracketUrlDraft.trim() || null } as Record<
-          string,
-          unknown
-        >)
-        .eq("id", event.id);
-
-      if (error) throw error;
+      // Prefer core EventService update; fall back to legacy supabase update
+      try {
+        await eventServiceCore().updateEvent(event.id, {
+          bracket_url: bracketUrlDraft.trim() || null,
+        } as any);
+      } catch (e) {
+        const { error } = await supabase
+          .from("events")
+          .update({ bracket_url: bracketUrlDraft.trim() || null } as Record<
+            string,
+            unknown
+          >)
+          .eq("id", event.id);
+        if (error) throw error;
+      }
 
       toast({
         title: "Bracket saved",

@@ -50,6 +50,14 @@ import {
   getUserAchievements,
   type Achievement,
 } from "@/lib/achievementService";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
+
+registerDefaults();
+
+const registrationService = () =>
+  resolveService<IRegistrationService>("RegistrationService");
 
 interface UserProfile {
   id: string;
@@ -381,13 +389,8 @@ export default function Profile() {
       const userIdToQuery = user?.id;
       if (!userIdToQuery) return;
 
-      const { data: registrations, error: regError } = await supabase
-        .from("event_registrations")
-        .select("*")
-        .eq("user_id", userIdToQuery)
-        .order("created_at", { ascending: false });
-
-      if (regError) throw regError;
+      const registrations =
+        await registrationService().fetchRegistrationsByUser(userIdToQuery);
 
       if (!registrations || registrations.length === 0) {
         setUserEvents([]);
@@ -397,16 +400,29 @@ export default function Profile() {
       const eventIds = Array.from(
         new Set(registrations.map((r) => r.event_id)),
       );
-      const { data: events, error: eventError } = await supabase
-        .from("events")
-        .select("*")
-        .in("id", eventIds);
-
-      if (eventError) throw eventError;
+      // Resolve event details via Event core when possible
+      const eventsResolved = await Promise.all(
+        eventIds.map((id) =>
+          import("@/core/services/registerDefaults")
+            .then((mod) => {
+              mod.registerDefaults();
+              return import("@/core/services/di").then((di) =>
+                di
+                  .resolveService("EventService")
+                  .getEvent(id)
+                  .catch(() => null),
+              );
+            })
+            .catch(() => null),
+        ),
+      );
 
       const merged = registrations.map((reg) => ({
         ...reg,
-        events: events.find((e) => e.id === reg.event_id) || null,
+        events:
+          (eventsResolved.find(
+            (e: any) => e && e.id === reg.event_id,
+          ) as any) || null,
       }));
 
       setUserEvents(merged);

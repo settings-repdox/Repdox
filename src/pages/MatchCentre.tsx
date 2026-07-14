@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ADMIN_EMAILS } from "@/lib/adminService";
-import eventService from "@/lib/eventService";
+import { resolveService } from "@/core/services/di";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import {
   getMatchCentreData,
   isGamingEvent,
@@ -86,9 +87,10 @@ export default function MatchCentre() {
   const { data: event, isLoading: eventLoading } = useQuery({
     queryKey: ["event", slug],
     queryFn: async () => {
-      const { data, error } = await eventService.getEventBySlug(slug);
-      if (error || !data) throw new Error("Event not found");
-      return data;
+      if (!slug) throw new Error("Event slug is required");
+      const eventData = await eventServiceCore().getEventBySlug(slug);
+      if (!eventData) throw new Error("Event not found");
+      return eventData;
     },
     retry: false,
   });
