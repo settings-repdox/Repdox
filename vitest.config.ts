@@ -8,6 +8,11 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/tests/setup.ts"],
+    env: {
+      VITE_SUPABASE_URL: "http://test-supabase.local",
+      VITE_SUPABASE_ANON_KEY: "test-anon-key",
+      VITE_API_URL: "http://test-api.local",
+    },
     include: ["src/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     exclude: [
       "node_modules",
@@ -16,10 +21,11 @@ export default defineConfig({
       ".git",
       ".cache",
       "src/tests/setup.ts",
+      "src/tests/e2e/**",
     ],
     coverage: {
       provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
+      reporter: ["text", "json", "json-summary", "html", "lcov"],
       exclude: [
         "node_modules/",
         "src/tests/",

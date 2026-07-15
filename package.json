@@ -6,13 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "verify:infra": "node --loader ts-node/esm -e \"import('./src/infrastructure/verifyArchitecture').then(m=>console.log(JSON.stringify(m.verifyInfrastructureIsolation(),null,2))).catch(e=>{console.error(e);process.exit(1)})\"",
-    "verify:production-deps": "node --loader ts-node/esm -e \"import('./src/domains/production/verifyDependencies').then(m=>m.verifyProductionDependencies().then(r=>console.log(JSON.stringify(r,null,2)))).catch(e=>{console.error(e);process.exit(1)})\"",
+    "verify:infra": "vitest run src/tests/architecture/infrastructure-isolation.test.ts",
+    "verify:production-deps": "vitest run src/tests/architecture/domain-service-registration.test.ts",
     "build:dev": "vite build --mode development",
     "build:analyze": "ANALYZE=true vite build",
     "lint": "eslint .",
     "test": "vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -91,11 +93,13 @@
   "devDependencies": {
     "@21st-extension/toolbar": "^0.5.14",
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^22.19.7",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
+    "@vitest/coverage-v8": "^1.6.1",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.39.2",
     "eslint-plugin-react-hooks": "^5.2.0",

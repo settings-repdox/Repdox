@@ -1,23 +1,21 @@
-## Phase 10: Testing Infrastructure - ESTABLISHMENT REPORT
+## Phase 10: Testing Infrastructure - COMPLETION REPORT
 
-**Status**: Testing infrastructure established for Phase 10 Testing phase
-**Date**: Phase 10 initiated after Phase 9 (Repository Cleanup - commit d1ac8fd)
-**Build Status**: ✅ Building (npm run build: 6.75s, no errors)
-**Tests Created**: ✅ 58 test cases across 5 test suites
+**Status**: ✅ Phase 10 objectives complete
+**Date**: Phase 10 initiated after Phase 9 (Repository Cleanup - commit d1ac8fd); completed in this pass
+**Build Status**: ✅ Building
+**Tests**: ✅ 90 tests passing across 8 Vitest suites, + 4 Playwright E2E specs written (execution requires local browser install — see below)
 
 ---
 
 ## PHASE 10 OBJECTIVES
 
-Phase 10: Testing has the following planned objectives:
-
 1. ✅ Unit tests infrastructure
 2. ✅ Integration tests infrastructure
-3. ✅ Mock infrastructure and utilities
-4. ✅ Service verification
-5. ⏳ End-to-end tests setup (pending)
-6. ⏳ Coverage report generation (pending)
-7. ⏳ Technical debt report finalization (pending)
+3. ✅ Mock infrastructure and utilities (now includes broadcast adapters)
+4. ✅ Service verification (all migrated domains — see Domain Service Verification Matrix below)
+5. ✅ End-to-end tests setup (Playwright config + specs; not executed in this sandboxed environment, see `TECHNICAL_DEBT_PHASE10.md`)
+6. ✅ Coverage report generation (`coverage/lcov-report/index.html`, `coverage/coverage-summary.json`)
+7. ✅ Technical debt report (`TECHNICAL_DEBT_PHASE10.md`)
 
 ---
 
@@ -266,147 +264,133 @@ export function clearServices(): void {
 
 ## TEST EXECUTION STATUS
 
-**Current Test Run Results**:
+**Current Test Run Results** (`npm test` / `vitest run`):
 
 ```
-✅ src/tests/setup.test.ts            (1 test)   PASSING
-✅ src/tests/domains/event.service.test.ts (10 tests)   PASSING
-⏳ src/tests/integration/di-container.test.ts (10 tests)   PENDING FIX
-⏳ src/tests/integration/event-workflows.test.ts (14 tests)   PENDING FIX
-⏳ src/tests/domains/registration.service.test.ts (11 tests)   PENDING FIX
-⏳ src/tests/domains/gaming.service.test.ts (13 tests)   PENDING FIX
+✅ src/tests/domains/event.service.test.ts             (9 tests)   PASSING
+✅ src/tests/domains/gaming.service.test.ts             (12 tests)  PASSING
+✅ src/tests/domains/registration.service.test.ts       (10 tests)  PASSING
+✅ src/tests/integration/di-container.test.ts           (10 tests)  PASSING
+✅ src/tests/integration/event-workflows.test.ts        (13 tests)  PASSING
+✅ src/tests/broadcast/broadcast-adapters.test.ts       (23 tests)  PASSING
+✅ src/tests/architecture/infrastructure-isolation.test.ts    (1 test)   PASSING
+✅ src/tests/architecture/domain-service-registration.test.ts (12 tests) PASSING
 ```
 
-**Total Tests Created**: 58 tests across 5 suites
-**Status**: Infrastructure complete, test refinement in progress
+**Total**: 90 tests across 8 suites, all passing.
+
+The `gaming.service.test.ts` / `registration.service.test.ts` "pending fix"
+status above was a duplicated-content syntax error (the entire test body had
+been pasted back in a second time, outside the outer `describe` block), not a
+logic problem with the tests — see `TECHNICAL_DEBT_PHASE10.md`.
+
+**E2E** (`npm run test:e2e`, Playwright): 4 specs written and confirmed valid
+via `npx playwright test --list`, not executed in this environment — needs
+`npx playwright install` and a dev server against seeded Supabase data. See
+`TECHNICAL_DEBT_PHASE10.md`.
 
 ---
 
 ## DOMAIN SERVICE VERIFICATION MATRIX
 
-| Domain        | Service             | Interface            | Mock | Tests | Status     |
-| ------------- | ------------------- | -------------------- | ---- | ----- | ---------- |
-| Events        | EventService        | IEventService        | ✅   | 10    | ✅ Passing |
-| Gaming        | GamingService       | IGamingService       | ✅   | 13    | ⏳ Pending |
-| Registrations | RegistrationService | IRegistrationService | ✅   | 11    | ⏳ Pending |
-| Core          | DI Container        | -                    | ✅   | 10    | ⏳ Pending |
-| Integration   | Workflows           | -                    | ✅   | 14    | ⏳ Pending |
+| Domain        | Service                | Interface                | Mock | Tests | Status     |
+| ------------- | ------------------------ | --------------------------- | ---- | ----- | ---------- |
+| Events        | EventService              | IEventService                | ✅   | 9     | ✅ Passing |
+| Gaming        | GamingService              | IGamingService                | ✅   | 12    | ✅ Passing |
+| Registrations | RegistrationService        | IRegistrationService          | ✅   | 10    | ✅ Passing |
+| Core          | DI Container                | -                            | ✅   | 10    | ✅ Passing |
+| Integration   | Workflows                   | -                            | ✅   | 13    | ✅ Passing |
+| Broadcast     | 7 adapters + registry       | I*Adapter (7 interfaces)      | ✅   | 23    | ✅ Passing |
+| Architecture  | Infra isolation             | -                            | ✅   | 1     | ✅ Passing |
+| Architecture  | All 10 registered services  | -                            | ✅   | 12    | ✅ Passing |
+
+Every service in `src/core/services/registerDefaults.ts` (Auth, User,
+Permission, Notification, Analytics, Asset, Event, Gaming, Registration,
+Production) now resolves through the DI container per
+`domain-service-registration.test.ts` — the direct replacement for the old
+`verify:production-deps` script.
 
 ---
 
 ## TECHNICAL DEBT ITEMS IDENTIFIED IN PHASE 10
 
-1. **Test Execution Issues** (Minor):
-   - Some mock services need method binding refinement
-   - Environment variable setup timing needs adjustment
-   - clearServices() export verification needed
+See `TECHNICAL_DEBT_PHASE10.md` for the full, current writeup (what was fixed
+this pass, what's still open, and a suggested order for Phase 11+). Summary:
 
-2. **Future Test Coverage Opportunities**:
-   - Component-level tests for React pages
-   - Hook tests for custom React hooks
-   - API endpoint tests
-   - Supabase integration tests (with real DB in CI)
-   - Performance benchmarks
-
-3. **Mock Infrastructure Gaps**:
-   - Edge case mocking for error scenarios
-   - Network error simulation
-   - Rate limiting simulation
-   - Timeout scenarios
-
-4. **Documentation Needs**:
-   - Test writing guidelines
-   - Mock usage patterns
-   - Test organization standards
+- Fixed: duplicated test content causing 2 suites to fail to parse; broken
+  `verify:infra`/`verify:production-deps` scripts; Supabase env vars being
+  set too late for module-level `import.meta.env` reads.
+- Still open: E2E specs are written but not executed here (needs local
+  Playwright browser install + a dev server against seeded Supabase data);
+  whole-repo coverage is low (1.44%) because Phase 10 targeted the
+  domain/service/infra layers rather than pages/components; no
+  `clearAdapters()` on the infrastructure DI registry; no CI wiring yet.
 
 ---
 
-## NEXT STEPS FOR PHASE 10
+## NEXT STEPS
 
-### Immediate (Next Turn):
-
-1. Fix service instantiation in unit test files
-2. Verify clearServices export availability
-3. Run full test suite successfully
-4. Generate coverage report
-
-### Short Term (Phase 10 Completion):
-
-1. Add E2E tests using Cypress or Playwright
-2. Implement component-level tests for pages
-3. Add performance benchmarks
-4. Document test patterns and best practices
-
-### Long Term (Phase 11+):
-
-1. Expand test coverage to 80%+ across codebase
-2. Add continuous integration testing
-3. Implement contract testing for API boundaries
-4. Add security testing
+See `TECHNICAL_DEBT_PHASE10.md` → "Suggested order for Phase 11+" for the
+prioritized list (add `clearAdapters()`, wire CI, seed an E2E Supabase
+project, raise `*Impl.ts` coverage, add component tests for
+`EventRegister.tsx`).
 
 ---
 
 ## FILES CREATED/MODIFIED IN PHASE 10
 
-**New Files**:
+**New Files (this pass)**:
 
-- ✅ `src/tests/test-utils.ts` (300+ lines)
-- ✅ `src/tests/domains/event.service.test.ts` (300+ lines)
-- ✅ `src/tests/domains/gaming.service.test.ts` (350+ lines)
-- ✅ `src/tests/domains/registration.service.test.ts` (250+ lines)
-- ✅ `src/tests/integration/di-container.test.ts` (200+ lines)
-- ✅ `src/tests/integration/event-workflows.test.ts` (400+ lines)
-- ✅ `vitest.config.ts` (50+ lines)
+- ✅ `src/tests/architecture/infrastructure-isolation.test.ts`
+- ✅ `src/tests/architecture/domain-service-registration.test.ts`
+- ✅ `src/tests/broadcast/broadcast-test-utils.ts`
+- ✅ `src/tests/broadcast/broadcast-adapters.test.ts` (23 tests)
+- ✅ `playwright.config.ts`
+- ✅ `src/tests/e2e/smoke.spec.ts`
+- ✅ `src/tests/e2e/gaming-registration-form.spec.ts`
+- ✅ `TECHNICAL_DEBT_PHASE10.md`
 
-**Modified Files**:
+**Modified Files (this pass)**:
 
-- ✅ `src/tests/setup.test.ts` (updated with environment setup)
-- ✅ `src/core/services/di.ts` (added clearServices export)
+- ✅ `src/tests/domains/gaming.service.test.ts` (removed dangling duplicate content — see technical debt report)
+- ✅ `src/tests/domains/registration.service.test.ts` (same)
+- ✅ `vitest.config.ts` (added `test.env`, `json-summary` coverage reporter, excluded `src/tests/e2e/**`)
+- ✅ `package.json` (fixed `verify:infra`/`verify:production-deps`; added `test:e2e`, `test:coverage`)
 
-**Total Code Added**: ~1,900 lines of test code and infrastructure
+**Earlier pass** (original establishment — retained for history):
+
+- `src/tests/test-utils.ts`, `src/tests/domains/event.service.test.ts`,
+  `src/tests/integration/di-container.test.ts`,
+  `src/tests/integration/event-workflows.test.ts`, `src/tests/setup.ts`,
+  `src/core/services/di.ts` (`clearServices` export)
 
 ---
 
-## BUILD VERIFICATION
+## BUILD & TEST VERIFICATION
 
 ```
-✓ npm run build: 6.75s
-  - 2311 modules transformed
-  - No errors
-  - Large bundle warning (pre-existing)
-
-✓ npm test: Ready to execute
-  - Vitest configured
-  - jsdom environment ready
-  - Mock infrastructure complete
+✓ npm test (vitest run): 90 tests passing across 8 suites (~9-14s)
+✓ npm run test:coverage: coverage/lcov-report/index.html + coverage-summary.json generated
+✓ npm run verify:infra: passing (now runs src/tests/architecture/infrastructure-isolation.test.ts)
+✓ npm run verify:production-deps: passing (now runs src/tests/architecture/domain-service-registration.test.ts)
+✓ npx playwright test --list: 4 E2E tests discovered, config valid (not executed — see technical debt report)
 ```
 
 ---
 
 ## CONCLUSION
 
-Phase 10 Testing infrastructure has been successfully established with:
+Phase 10 Testing is complete:
 
-✅ **58 test cases** across 5 test suites
-✅ **Comprehensive mocking** for all domain services
-✅ **DI container** testing and verification
+✅ **90 tests passing** across 8 Vitest suites (up from 58 created / 32 passing)
+✅ **Comprehensive mocking** for all domain services, plus the 7 broadcast infrastructure adapters
+✅ **DI container** testing and verification, for both the core service registry and the infrastructure adapter registry
 ✅ **Integration workflows** for event lifecycle
-✅ **Test environment** with proper setup/teardown
-✅ **Vitest configuration** with coverage targets
+✅ **Architecture verification** for every migrated domain, replacing the previously-broken CLI scripts
+✅ **E2E test scaffolding** (Playwright) covering core navigation and a regression test for the gaming/hackathon registration form bug
+✅ **Coverage report** generated (1.44% whole-repo, 21.4% within Phase 10's target layers — see technical debt report for why and what's next)
+✅ **Technical debt report** (`TECHNICAL_DEBT_PHASE10.md`)
 
-The testing infrastructure is now ready to support:
-
-- Rapid test development
-- Regression testing
-- Continuous integration
-- Code coverage reporting
-- Service contract verification
-
-**Test Status**: Infrastructure complete, test execution being finalized
+**Test Status**: All existing tests passing. E2E requires local setup to execute.
 **Build Status**: Passing ✅
-**Ready for Coverage Report**: Next step after test execution fixes
-
----
-
-**Document Generated**: Phase 10 Testing Infrastructure Establishment
-**Next Document**: Phase 10 Testing Execution Results (after test run completion)
+**Coverage Report**: Generated — see `coverage/lcov-report/index.html`
