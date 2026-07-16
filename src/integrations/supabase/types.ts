@@ -47,6 +47,7 @@ export type Database = {
           registration_start: string | null;
           check_in_start: string | null;
           check_in_end: string | null;
+          bracket_url: string | null;
         };
         Insert: {
           created_at?: string | null;
@@ -80,6 +81,7 @@ export type Database = {
           registration_start?: string | null;
           check_in_start?: string | null;
           check_in_end?: string | null;
+          bracket_url?: string | null;
         };
         Update: {
           created_at?: string | null;
@@ -113,6 +115,7 @@ export type Database = {
           registration_start?: string | null;
           check_in_start?: string | null;
           check_in_end?: string | null;
+          bracket_url?: string | null;
         };
         Relationships: [];
       };

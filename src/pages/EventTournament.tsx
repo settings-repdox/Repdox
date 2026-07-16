@@ -345,13 +345,11 @@ export default function EventTournament() {
       try {
         await eventServiceCore().updateEvent(event.id, {
           bracket_url: bracketUrlDraft.trim() || null,
-        } as any);
+        });
       } catch (e) {
         const { error } = await supabase
           .from("events")
-          .update({ bracket_url: bracketUrlDraft.trim() || null } as Partial<
-            Database["public"]["Tables"]["events"]["Update"]
-          >)
+          .update({ bracket_url: bracketUrlDraft.trim() || null })
           .eq("id", event.id);
         if (error) throw error;
       }

@@ -51,7 +51,7 @@
 ```typescript
 - globals: true          // Global test API
 - environment: jsdom     // Browser environment for React tests
-- setupFiles: setup.test.ts
+- setupFiles: setup.ts
 - include: src/tests/**/*.{test,spec}.{js,ts,tsx,jsx}
 - exclude: node_modules, dist, .git, .cache
 - Coverage settings:
@@ -63,7 +63,7 @@
 
 **Installation**: `jsdom` added as dev dependency for browser environment
 
-### 3. TEST SETUP FILE (`src/tests/setup.test.ts`)
+### 3. TEST SETUP FILE (`src/tests/setup.ts`)
 
 **Purpose**: Global test setup and mocking before all tests run
 
@@ -324,7 +324,9 @@ this pass, what's still open, and a suggested order for Phase 11+). Summary:
   Playwright browser install + a dev server against seeded Supabase data);
   whole-repo coverage is low (1.44%) because Phase 10 targeted the
   domain/service/infra layers rather than pages/components; no
-  `clearAdapters()` on the infrastructure DI registry; no CI wiring yet.
+  `clearAdapters()` on the infrastructure DI registry; no CI runs the test
+  suite yet (a deploy-only workflow exists for two Edge Functions, but
+  nothing runs `npm test` — corrected in Phase 11).
 
 ---
 

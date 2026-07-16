@@ -23,7 +23,7 @@ Notes & Rationale
 Next steps (recommended)
 
 - Add unit tests for `GamingServiceImpl` using an injected/mock repository to avoid hitting Supabase during test runs.
-- Run the full test-suite and fix any remaining placeholder tests (e.g., `src/tests/setup.test.ts`).
+- Run the full test-suite and fix any remaining placeholder tests (e.g., `src/tests/setup.ts`).
 - Optionally extract Supabase queries into a `SupabaseGamingRepository` and let `GamingServiceImpl` lazily import it (improves testability further).
 
 Migration status

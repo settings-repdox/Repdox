@@ -111,10 +111,14 @@ green.
    when run with a seeded event. Same for `EventTournament.tsx`,
    `MatchCentre.tsx`, and the admin pages.
 
-6. **No CI wiring.** All of the above (`npm test`, `npm run test:coverage`,
-   `npm run verify:infra`, `npm run verify:production-deps`, `npm run
-   test:e2e`) are scripts a person has to run by hand. There's no GitHub
-   Actions/CI config in the repo yet to run them on push/PR.
+6. **No CI runs the test suite.** One GitHub Actions workflow exists
+   (`.github/workflows/deploy-send-verification.yml`), but it only deploys
+   two Edge Functions on push to `main` — it doesn't run tests, lint, or a
+   build check. `npm test`, `npm run test:coverage`, `npm run verify:infra`,
+   `npm run verify:production-deps`, and `npm run test:e2e` are all scripts
+   a person has to remember to run by hand before merging. (Corrected in
+   Phase 11 — this item previously said no CI configuration existed at
+   all, which was wrong; see `docs/rfc/rfc-0002-ci-and-e2e-seed-environment.md`.)
 
 ## Suggested order for Phase 11+
 
