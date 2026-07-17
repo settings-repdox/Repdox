@@ -28,7 +28,6 @@ This document outlines the standard framework for external institutions and orga
 ### 3. Timeline Commitments
 To ensure high-quality execution, the following lead times are required:
 *   **Hackathons:** 8–12 weeks.
-*   **Model UN (MUNs):** 6–8 weeks.
 *   **Workshops:** 2–4 weeks.
 
 ---

@@ -21,7 +21,7 @@ const team = [
   {
     name: "Urooj Fatima",
     role: "HR",
-    bio: "Expert event organizer and active contributor in the MUN circuit.",
+    bio: "Expert event organizer and active community contributor.",
     icon: ShieldCheck,
     gradient: "from-purple-400 to-pink-500",
     glow: "rgba(192, 132, 252, 0.3)"

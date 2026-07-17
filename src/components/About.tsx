@@ -41,7 +41,7 @@ export default function About() {
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             We're a youth-led movement empowering students and early-career professionals
-            through transformative events. From hackathons to Model UN conferences,
+            through transformative events. From hackathons to
             gaming tournaments to skill-building workshops—we create spaces where
             ambition meets opportunity.
           </p>

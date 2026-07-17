@@ -4,7 +4,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import eventHackathon from "@/assets/event-hackathon.jpg";
-import eventMUN from "@/assets/event-mun.jpg";
 import eventWorkshop from "@/assets/event-workshop.jpg";
 import eventGaming from "@/assets/event-gaming.jpg";
 
@@ -12,9 +11,6 @@ const filenameMap: Record<string, string> = {
   "hacksprint.jpg": eventHackathon,
   "hacksprint-2025.jpg": eventHackathon,
   "hackathon.jpg": eventHackathon,
-  "mun.jpg": eventMUN,
-  "event-mun.jpg": eventMUN,
-  "mun-challenge.jpg": eventMUN,
   "workshop.jpg": eventWorkshop,
   "event-workshop.jpg": eventWorkshop,
   "gaming.jpg": eventGaming,

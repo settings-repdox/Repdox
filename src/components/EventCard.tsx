@@ -48,7 +48,6 @@ export default function EventCard({ event, compact = false }: EventCardProps) {
       // Check for known local assets
       const isKnownAsset =
         event.image_url.includes("event-hackathon") ||
-        event.image_url.includes("event-mun") ||
         event.image_url.includes("event-workshop") ||
         event.image_url.includes("event-gaming");
 

@@ -2,12 +2,11 @@ import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Share2, Code2, Presentation, Mic2, Gamepad2, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles, Share2, Code2, Presentation, Gamepad2, ChevronDown } from "lucide-react";
 
 const categories = [
   { label: "Hackathons", icon: Code2 },
   { label: "Workshops", icon: Presentation },
-  { label: "Model UN", icon: Mic2 },
   { label: "Gaming", icon: Gamepad2 },
 ];
 
