@@ -41,15 +41,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Info,
-  Award,
 } from "lucide-react";
 import Dashboard from "./Dashboard";
 import EmailChangeModal from "@/components/EmailChangeModal";
-import AchievementCard from "@/components/AchievementCard";
-import {
-  getUserAchievements,
-  type Achievement,
-} from "@/lib/achievementService";
 import { resolveService } from "@/core/services/di";
 import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
 
@@ -98,7 +92,6 @@ const sections = [
   { id: "preferences", label: "Preferences", icon: Settings },
   { id: "personal", label: "Personal Info", icon: UserIcon },
   { id: "dashboard", label: "Dashboard", icon: Users },
-  { id: "achievements", label: "Achievements", icon: Award },
   { id: "professional", label: "Professional", icon: Briefcase },
   { id: "contact", label: "Contact", icon: Phone },
   { id: "security", label: "Security", icon: UserIcon },
@@ -145,14 +138,6 @@ export default function Profile() {
 
   const { percentage: completionPercentage, missing: missingFields } =
     calculateProfileCompletion();
-
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-
-  useEffect(() => {
-    if (user?.id) {
-      getUserAchievements(user.id).then(setAchievements);
-    }
-  }, [user?.id, profile]);
 
   // if a ?section= parameter is present, switch to it (dashboard only when viewing own profile)
   useEffect(() => {
@@ -1111,48 +1096,6 @@ export default function Profile() {
                             className="w-full pl-11 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
                           />
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeSection === "achievements" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-foreground mb-6">
-                    Your Achievements
-                  </h2>
-
-                  <div className="grid gap-3">
-                    {achievements
-                      .sort((a, b) => {
-                        if (a.unlocked === b.unlocked) return 0;
-                        return a.unlocked ? -1 : 1;
-                      })
-                      .map((achievement) => (
-                        <AchievementCard
-                          key={achievement.id}
-                          achievement={achievement}
-                        />
-                      ))}
-                  </div>
-
-                  <div className="mt-6 p-4 bg-accent/5 rounded-lg border border-accent/20">
-                    <h3 className="font-semibold text-sm mb-2">
-                      Achievement Stats
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Unlocked</p>
-                        <p className="text-2xl font-bold text-accent">
-                          {achievements.filter((a) => a.unlocked).length}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Total</p>
-                        <p className="text-2xl font-bold">
-                          {achievements.length}
-                        </p>
                       </div>
                     </div>
                   </div>

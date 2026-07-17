@@ -301,7 +301,6 @@ export default function EventDetail() {
 
       const isKnownAsset =
         event.image_url.includes("event-hackathon") ||
-        event.image_url.includes("event-mun") ||
         event.image_url.includes("event-workshop") ||
         event.image_url.includes("event-gaming") ||
         !event.image_url.includes("."); // internal vite assets often have hashes but maybe not extensions in some cases? No, usually they do.

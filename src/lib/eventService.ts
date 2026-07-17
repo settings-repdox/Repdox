@@ -657,7 +657,6 @@ export async function deleteEvent(eventId: string): Promise<void> {
         !event.image_url.startsWith("http") &&
         !event.image_url.startsWith("/assets/") &&
         !event.image_url.includes("event-hackathon") &&
-        !event.image_url.includes("event-mun") &&
         !event.image_url.includes("event-workshop") &&
         !event.image_url.includes("event-gaming");
 

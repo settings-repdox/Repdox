@@ -223,11 +223,6 @@ export default function Nav() {
           ariaLabel: "View Hackathons",
         },
         {
-          label: "Model UN",
-          href: "/events/model-un",
-          ariaLabel: "View Model UN Events",
-        },
-        {
           label: "Gaming Tournaments",
           href: "/events/gaming",
           ariaLabel: "View Gaming Tournaments",
