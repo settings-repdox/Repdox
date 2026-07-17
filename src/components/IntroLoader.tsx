@@ -1,154 +1,121 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Lightbulb, Terminal, Zap, Sparkles } from 'lucide-react';
-import CardSwap, { Card } from './reactbits/CardSwap';
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+
+const WORDS = ["Think.", "Build.", "Transform."];
+const WORD_DURATION_MS = 650;
+const HOLD_ON_LAST_MS = 700;
+const EXIT_DURATION_MS = 500;
 
 export default function IntroLoader({ onComplete }: { onComplete: () => void }) {
+  const prefersReducedMotion = useReducedMotion();
+  const [wordIndex, setWordIndex] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [countdown, setCountdown] = useState(5);
+
+  const totalSteps = WORDS.length;
 
   useEffect(() => {
-    if (countdown > 1 && !isExiting) {
-      const timer = setTimeout(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
+    if (prefersReducedMotion) {
+      // Skip the sequence entirely; show the final state briefly, then exit.
+      const timer = setTimeout(() => setIsExiting(true), 400);
       return () => clearTimeout(timer);
     }
-  }, [countdown, isExiting]);
+
+    if (wordIndex < totalSteps - 1) {
+      const timer = setTimeout(() => setWordIndex((i) => i + 1), WORD_DURATION_MS);
+      return () => clearTimeout(timer);
+    }
+
+    // Reached the last word — hold, then start exiting.
+    const timer = setTimeout(() => setIsExiting(true), HOLD_ON_LAST_MS);
+    return () => clearTimeout(timer);
+  }, [wordIndex, totalSteps, prefersReducedMotion]);
 
   useEffect(() => {
-    if (isExiting) {
-      const timer = setTimeout(() => {
-        onComplete();
-      }, 500); // Match zoom out transition duration
-      return () => clearTimeout(timer);
-    }
+    if (!isExiting) return;
+    const timer = setTimeout(onComplete, EXIT_DURATION_MS);
+    return () => clearTimeout(timer);
   }, [isExiting, onComplete]);
 
-  // When CardSwap transitions to the last card (index 3: "REPDOX")
-  const handleActiveCardChange = (idx: number) => {
-    setActiveIndex(idx);
-    if (idx === 3) {
-      // Hold on the final card for 1.0 second, then exit
-      const timer = setTimeout(() => {
-        setIsExiting(true);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  };
+  const progressPct = useMemo(
+    () => ((wordIndex + 1) / totalSteps) * 100,
+    [wordIndex, totalSteps],
+  );
 
   return (
-    <motion.div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black overflow-hidden"
+    <motion.div
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-background"
       animate={{ opacity: isExiting ? 0 : 1 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
+      transition={{ duration: EXIT_DURATION_MS / 1000, ease: "easeInOut" }}
     >
-      {/* Aurora glow background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+      {/* Same subtle grid + accent glow treatment as the Hero, so the intro
+          reads as the first frame of the site rather than a separate splash. */}
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-[0.4]"
+        style={{
+          backgroundImage:
+            "linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+          maskImage:
+            "radial-gradient(ellipse 60% 50% at 50% 50%, black, transparent)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 60% 50% at 50% 50%, black, transparent)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-gradient-subtle pointer-events-none"
+      />
+
+      <div className="relative flex flex-col items-center gap-10">
+        {/* Mark — same square + wordmark as Nav/Footer, so the brand is
+            established immediately rather than only appearing at the end. */}
         <motion.div
-          className="absolute w-[40vw] h-[150vh] bg-gradient-to-b from-transparent via-purple-600/20 to-transparent blur-[80px]"
-          animate={{
-            rotate: [0, 10, -10, 0],
-            scale: [1, 1.15, 0.85, 1],
-            opacity: [0.3, 0.6, 0.3]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute w-[30vw] h-[150vh] bg-gradient-to-b from-transparent via-pink-600/10 to-transparent blur-[100px]"
-          animate={{
-            rotate: [-10, 5, -15, -10],
-            scale: [0.9, 1.1, 0.9],
-          }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </div>
-
-      {/* CardSwap centered viewport */}
-      <div className="relative flex items-center justify-center" style={{ width: '380px', height: '320px', transform: 'translate(-10px, 10px)' }}>
-        <CardSwap
-          width={320}
-          height={240}
-          cardDistance={20}
-          verticalDistance={20}
-          delay={1000} // 1.0 second per swap for snappy intro
-          skewAmount={4}
-          easing="linear" // Use fast power1 transition (0.8s) instead of slow elastic
-          onActiveCardChange={handleActiveCardChange}
-          paused={activeIndex === 3 || isExiting}
-        >
-          {/* Card 1: Think */}
-          <Card className="flex flex-col items-center justify-center p-6 rounded-3xl bg-[#09090b]/90 border border-white/10 shadow-[0px_0px_40px_-10px_rgba(168,85,247,0.2)]">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-yellow-500/30 flex items-center justify-center mb-5">
-              <Lightbulb className="w-6 h-6 text-yellow-400" />
-            </div>
-            <h3 className="text-xl font-display font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-yellow-200 to-amber-200 uppercase mb-2">
-              THINK
-            </h3>
-            <p className="text-muted-foreground text-center text-xs max-w-[240px] leading-relaxed">
-              Imagine the possibilities. Conceptualize solutions for real-world problems.
-            </p>
-          </Card>
-
-          {/* Card 2: Build */}
-          <Card className="flex flex-col items-center justify-center p-6 rounded-3xl bg-[#09090b]/90 border border-white/10 shadow-[0px_0px_40px_-10px_rgba(59,130,246,0.2)]">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 flex items-center justify-center mb-5">
-              <Terminal className="w-6 h-6 text-blue-400" />
-            </div>
-            <h3 className="text-xl font-display font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-cyan-200 uppercase mb-2">
-              BUILD
-            </h3>
-            <p className="text-muted-foreground text-center text-xs max-w-[240px] leading-relaxed">
-              Hack and design. Turn concepts into fully functional code and systems.
-            </p>
-          </Card>
-
-          {/* Card 3: Transform */}
-          <Card className="flex flex-col items-center justify-center p-6 rounded-3xl bg-[#09090b]/90 border border-white/10 shadow-[0px_0px_40px_-10px_rgba(236,72,153,0.2)]">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/30 flex items-center justify-center mb-5">
-              <Zap className="w-6 h-6 text-pink-400 animate-pulse" />
-            </div>
-            <h3 className="text-xl font-display font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-pink-200 to-rose-200 uppercase mb-2">
-              TRANSFORM
-            </h3>
-            <p className="text-muted-foreground text-center text-xs max-w-[240px] leading-relaxed">
-              Inspire and lead. Make a lasting impact in the global tech community.
-            </p>
-          </Card>
-
-          {/* Card 4: REPDOX */}
-          <Card className="flex flex-col items-center justify-center p-6 rounded-3xl bg-[#0d0716] border border-purple-500/30 shadow-[0px_0px_50px_10px_rgba(168,85,247,0.3),_0px_0px_100px_20px_rgba(236,72,153,0.1)]">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-5 shadow-lg shadow-purple-500/30">
-              <Sparkles className="w-7 h-7 text-white" />
-            </div>
-            <h3 
-              className="text-3xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-300 to-pink-400 uppercase mb-2"
-              style={{ fontFamily: "'Syncopate', sans-serif" }}
-            >
-              REPDOX
-            </h3>
-            <p className="text-purple-300/80 text-center text-[10px] tracking-widest uppercase font-bold max-w-[240px] leading-relaxed">
-              Think. Build. Transform.
-            </p>
-          </Card>
-        </CardSwap>
-      </div>
-
-      {/* Countdown display */}
-      <div className="absolute bottom-12 flex flex-col items-center justify-center gap-1 select-none">
-        <span className="text-[10px] tracking-[0.3em] text-purple-400/60 font-bold uppercase">
-          Initializing
-        </span>
-        <motion.div
-          key={countdown}
-          initial={{ opacity: 0, y: 5 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -5 }}
-          className="text-2xl font-black font-display text-white tracking-[0.1em]"
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="flex items-center gap-2"
         >
-          {countdown}...
+          <span className="w-2.5 h-2.5 rounded-sm bg-accent" />
+          <span className="font-display text-lg font-bold tracking-[0.1em] text-foreground">
+            REPDOX
+          </span>
         </motion.div>
+
+        {/* Word sequence */}
+        <div className="h-16 flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={prefersReducedMotion ? "static" : wordIndex}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="font-display text-4xl sm:text-5xl font-bold text-foreground"
+            >
+              {prefersReducedMotion ? (
+                "Repdox"
+              ) : (
+                <>
+                  {WORDS[wordIndex].slice(0, -1)}
+                  <span className="text-accent">{WORDS[wordIndex].slice(-1)}</span>
+                </>
+              )}
+            </motion.span>
+          </AnimatePresence>
+        </div>
+
+        {/* Progress bar instead of a numeric countdown — quieter, and
+            visually continuous with the word sequence above it. */}
+        {!prefersReducedMotion && (
+          <div className="w-40 h-[3px] rounded-full bg-border overflow-hidden">
+            <motion.div
+              className="h-full bg-accent rounded-full"
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            />
+          </div>
+        )}
       </div>
     </motion.div>
   );
