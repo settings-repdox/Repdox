@@ -87,6 +87,29 @@ the technical plumbing (an SRT session, an OBS connection). Depends on
 `IEventService` (Pattern B, see `docs/architecture/service-contracts/README.md`)
 to associate broadcasts/replays with real events.
 
+## Tickets & Check-in (`src/domains/tickets`)
+
+See ADR 0007 for the full design. `TicketDTO`
+(`src/domains/tickets/dtos/ticket.dto.ts`): one row per confirmed
+registration once ticketing is enabled on the event, generated
+automatically by a database trigger. `status`
+(`VALID → USED` on check-in, or `→ CANCELLED` from either state — a
+cancelled ticket never becomes valid again). `qr_token` (256-bit random,
+the QR/URL credential) and `ticket_code` (shorter, human-typeable, less
+entropy by design) are two different fields with two different security
+properties — never treat them as interchangeable. Optional `gaming_meta`
+(team/game/IGN/seat/Discord/Steam ID) for Gaming events, shown to the
+scanner at check-in.
+
+`ticket_scans` is the full audit trail — every scan attempt (not just
+successful check-ins) is logged with its result
+(`VALID`/`DUPLICATE`/`CANCELLED`/`WRONG_EVENT`/`INVALID`), including scans
+that never matched a real ticket at all.
+
+`event_staff` grants scanner/dashboard access to volunteers without making
+them event co-owners — see ADR 0007's "Scanner authorization" section for
+why this is a separate table rather than reusing `events.created_by`.
+
 ## Cross-cutting: Auth / User / Permission / Notification / Analytics / Asset
 
 Not modeled as domains with their own DTOs in `src/domains/` — see

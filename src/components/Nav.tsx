@@ -297,6 +297,11 @@ export default function Nav() {
                 href: "/my-events",
                 ariaLabel: "My Events",
               },
+              {
+                label: "My Tickets",
+                href: "/my-tickets",
+                ariaLabel: "My Tickets",
+              },
               ...(isAdmin
                 ? [
                     {
@@ -475,6 +480,15 @@ export default function Nav() {
                       className="w-full text-left px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-accent/10 transition-colors"
                     >
                       My Events
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        navigate("/my-tickets");
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm text-foreground/80 hover:text-foreground hover:bg-accent/10 transition-colors"
+                    >
+                      My Tickets
                     </button>
                     {isAdmin && (
                       <>

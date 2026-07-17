@@ -210,3 +210,38 @@ duplicates of each other in the same way:
 
 See `docs/deployment/environment.md` for the full list with descriptions,
 consolidated across API routes, Edge Functions, and the frontend build.
+
+---
+
+## Ticketing & QR Check-in (`api/tickets/`)
+
+See ADR 0007 for the design writeup. All routes use the same
+`getSupabaseAdmin()`/`requireAuth()` helpers as above, plus a
+ticketing-specific `isAuthorizedTicketStaff()` check
+(`api/tickets/_utils.ts`) — event owner, global admin, or an explicit
+`event_staff` grant.
+
+| Route | Method | Auth | Purpose |
+|---|---|---|---|
+| `/api/tickets/get?token=` | GET | None — token is the credential | Resolve a ticket for the `/ticket/:token` page |
+| `/api/tickets/my` | GET | User | List the caller's own tickets (dashboard access) |
+| `/api/tickets/generate` | POST | Staff | Manually generate a ticket for one registration |
+| `/api/tickets/checkin` | POST | Staff, rate-limited | The scanner's core atomic check-in call |
+| `/api/tickets/sync` | POST | Staff | Batch-upload queued offline scans |
+| `/api/tickets/validate` | GET | Staff | Read-only "what would this token resolve to" check |
+| `/api/tickets/cancel` | POST | Staff | Revoke a ticket |
+| `/api/tickets/reissue` | POST | Staff | Cancel + issue a replacement ticket |
+| `/api/tickets/search` | GET | Staff | Admin dashboard participant/ticket-code search |
+| `/api/tickets/stats` | GET | Staff | Live attendance statistics |
+| `/api/tickets/manifest` | GET | Staff | Offline manifest download for the scanner PWA |
+| `/api/tickets/enable` | POST | Owner/admin | Turn ticketing on/off for an event, backfill tickets |
+| `/api/tickets/staff` | POST/DELETE | Owner/admin | Grant/revoke scanner access for a volunteer |
+
+Every mutation (`generate`, `checkin`, `sync`, `cancel`, `reissue`)
+delegates to a `SECURITY DEFINER` Postgres RPC
+(`supabase/migrations/202607160002_ticketing_rpc_functions.sql`) rather
+than a plain table write — see that migration's header comment and ADR
+0007 for why (mainly: `check_in_ticket()` must be atomic under concurrent
+scans of the same physical ticket, which two volunteers scanning the same
+QR code at the same gate at the same moment is a normal event-day
+occurrence for, not an edge case).

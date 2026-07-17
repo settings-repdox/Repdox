@@ -590,6 +590,16 @@ export default function EventDetail() {
                         </Button>
                       </Link>
                     )}
+                    <Link to={`/events/${event.slug}/tickets`}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-white/10 hover:bg-white/20 text-white border-none"
+                      >
+                        <Users className="mr-2 h-4 w-4" />
+                        Tickets
+                      </Button>
+                    </Link>
                     <Link to={`/events/${event.slug}/edit`}>
                       <Button variant="default" size="sm">
                         <Edit className="mr-2 h-4 w-4" />

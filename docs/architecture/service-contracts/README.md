@@ -46,6 +46,7 @@ Three domains keep their full contract self-contained:
 | `EventService` | `domains/events/interfaces/IEventService.ts` | `domains/events/impl/EventServiceImpl.ts` |
 | `GamingService` | `domains/gaming/interfaces/IGamingService.ts` | `domains/gaming/impl/GamingServiceImpl.ts` |
 | `ProductionService` | `domains/production/interfaces/IProductionService.ts` | `domains/production/impl/ProductionServiceImpl.ts` |
+| `TicketService` | `domains/tickets/interfaces/ITicketService.ts` | `domains/tickets/impl/TicketServiceImpl.ts` |
 
 This is the pattern ADR 0002 describes and the one new domains should
 follow (see Recommendation).
@@ -83,10 +84,10 @@ cross-cutting platform concerns (auth, permissions) where a
 `src/domains/<name>/interfaces/` for just the interface if a future domain
 needs to depend on it via the public-contract pattern.
 
-## All ten, for reference
+## All eleven, for reference
 
 Registered in `src/core/services/registerDefaults.ts`, verified resolvable
 by `src/tests/architecture/domain-service-registration.test.ts` (Phase 10):
 `AuthService`, `UserService`, `PermissionService`, `NotificationService`,
 `AnalyticsService`, `AssetService`, `EventService`, `GamingService`,
-`RegistrationService`, `ProductionService`.
+`RegistrationService`, `ProductionService`, `TicketService`.
