@@ -48,6 +48,8 @@ export type Database = {
           check_in_start: string | null;
           check_in_end: string | null;
           bracket_url: string | null;
+          ticketing_enabled: boolean;
+          ticket_gates: string[];
         };
         Insert: {
           created_at?: string | null;
@@ -82,6 +84,8 @@ export type Database = {
           check_in_start?: string | null;
           check_in_end?: string | null;
           bracket_url?: string | null;
+          ticketing_enabled?: boolean;
+          ticket_gates?: string[];
         };
         Update: {
           created_at?: string | null;
@@ -116,6 +120,8 @@ export type Database = {
           check_in_start?: string | null;
           check_in_end?: string | null;
           bracket_url?: string | null;
+          ticketing_enabled?: boolean;
+          ticket_gates?: string[];
         };
         Relationships: [];
       };
@@ -278,6 +284,171 @@ export type Database = {
           },
         ];
       };
+      tickets: {
+        Row: {
+          id: string;
+          event_id: string;
+          registration_id: string;
+          ticket_code: string;
+          qr_token: string;
+          status: "VALID" | "USED" | "CANCELLED";
+          ticket_type: "participant" | "volunteer" | "judge" | "sponsor" | "media" | "staff";
+          gaming_meta: Json | null;
+          checked_in_at: string | null;
+          checked_in_by: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          cancelled_reason: string | null;
+          reissued_from: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          registration_id: string;
+          ticket_code?: string;
+          qr_token?: string;
+          status?: "VALID" | "USED" | "CANCELLED";
+          ticket_type?: "participant" | "volunteer" | "judge" | "sponsor" | "media" | "staff";
+          gaming_meta?: Json | null;
+          checked_in_at?: string | null;
+          checked_in_by?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          cancelled_reason?: string | null;
+          reissued_from?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          registration_id?: string;
+          ticket_code?: string;
+          qr_token?: string;
+          status?: "VALID" | "USED" | "CANCELLED";
+          ticket_type?: "participant" | "volunteer" | "judge" | "sponsor" | "media" | "staff";
+          gaming_meta?: Json | null;
+          checked_in_at?: string | null;
+          checked_in_by?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          cancelled_reason?: string | null;
+          reissued_from?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tickets_event_id_fkey";
+            columns: ["event_id"];
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "tickets_registration_id_fkey";
+            columns: ["registration_id"];
+            referencedRelation: "event_registrations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticket_scans: {
+        Row: {
+          id: string;
+          ticket_id: string | null;
+          event_id: string;
+          scanned_token: string;
+          scanned_by: string | null;
+          device_id: string | null;
+          gate: string | null;
+          result: "VALID" | "DUPLICATE" | "INVALID" | "CANCELLED" | "WRONG_EVENT";
+          previous_check_in_at: string | null;
+          offline: boolean;
+          client_scan_id: string;
+          scanned_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ticket_id?: string | null;
+          event_id: string;
+          scanned_token: string;
+          scanned_by?: string | null;
+          device_id?: string | null;
+          gate?: string | null;
+          result: "VALID" | "DUPLICATE" | "INVALID" | "CANCELLED" | "WRONG_EVENT";
+          previous_check_in_at?: string | null;
+          offline?: boolean;
+          client_scan_id: string;
+          scanned_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ticket_id?: string | null;
+          event_id?: string;
+          scanned_token?: string;
+          scanned_by?: string | null;
+          device_id?: string | null;
+          gate?: string | null;
+          result?: "VALID" | "DUPLICATE" | "INVALID" | "CANCELLED" | "WRONG_EVENT";
+          previous_check_in_at?: string | null;
+          offline?: boolean;
+          client_scan_id?: string;
+          scanned_at?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticket_scans_ticket_id_fkey";
+            columns: ["ticket_id"];
+            referencedRelation: "tickets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticket_scans_event_id_fkey";
+            columns: ["event_id"];
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      event_staff: {
+        Row: {
+          id: string;
+          event_id: string;
+          user_id: string;
+          role: "organizer" | "volunteer" | "staff";
+          granted_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          user_id: string;
+          role?: "organizer" | "volunteer" | "staff";
+          granted_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          user_id?: string;
+          role?: "organizer" | "volunteer" | "staff";
+          granted_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_staff_event_id_fkey";
+            columns: ["event_id"];
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       event_schedules: {
         Row: {
           id: string;
@@ -421,7 +592,35 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      generate_ticket_for_registration: {
+        Args: { p_registration_id: string };
+        Returns: Database["public"]["Tables"]["tickets"]["Row"];
+      };
+      check_in_ticket: {
+        Args: {
+          p_qr_token: string;
+          p_event_id: string;
+          p_scanned_by: string;
+          p_client_scan_id: string;
+          p_device_id?: string | null;
+          p_gate?: string | null;
+          p_offline?: boolean;
+          p_scanned_at?: string;
+        };
+        Returns: Json;
+      };
+      cancel_ticket: {
+        Args: { p_ticket_id: string; p_cancelled_by: string; p_reason?: string | null };
+        Returns: Database["public"]["Tables"]["tickets"]["Row"];
+      };
+      reissue_ticket: {
+        Args: { p_ticket_id: string; p_reissued_by: string };
+        Returns: Database["public"]["Tables"]["tickets"]["Row"];
+      };
+      get_attendance_stats: {
+        Args: { p_event_id: string };
+        Returns: Json;
+      };
     };
     Enums: {
       event_format: "Online" | "Offline" | "Hybrid";

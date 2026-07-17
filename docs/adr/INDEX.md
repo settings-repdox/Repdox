@@ -12,6 +12,7 @@ reused, even if a later ADR supersedes an earlier one (mark the earlier one
 | 0004 | [Gaming domain extraction and the `bracket_url` schema gap](0004-gaming-domain-extraction-and-bracket-url-fix.md) | Accepted |
 | 0005 | [Broadcast infrastructure as swappable adapters](0005-broadcast-infrastructure-adapter-pattern.md) | Accepted (interfaces/pattern only — see adapter status table) |
 | 0006 | [Testing strategy: Vitest + Playwright](0006-testing-strategy-vitest-and-playwright.md) | Accepted |
+| 0007 | [Ticketing & QR check-in system](0007-ticketing-and-qr-checkin-system.md) | Accepted |
 
 ADRs 0002–0006 were written retroactively in Phase 11, documenting
 decisions actually made across Phases 2–10 that were never recorded at the

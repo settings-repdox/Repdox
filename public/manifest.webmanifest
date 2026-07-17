@@ -1,0 +1,14 @@
+{
+  "name": "Repdox",
+  "short_name": "Repdox",
+  "description": "Repdox event platform — includes the offline-capable ticket scanner.",
+  "start_url": "/scanner",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#141110",
+  "theme_color": "#141110",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" }
+  ]
+}

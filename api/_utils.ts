@@ -42,8 +42,23 @@ export async function verifyAuth(token: string): Promise<string | null> {
 }
 
 /**
- * Extract IP address from request headers
+ * Extracts and verifies the bearer token from an incoming request's
+ * Authorization header in one call. Returns the verified user id, or null
+ * if the header is missing/malformed or the token doesn't verify — callers
+ * should treat null as "respond 401", not distinguish the two cases (see
+ * verifyAuth's own doc comment on why a failed verification isn't logged
+ * with detail to the client).
  */
+export async function requireAuth(
+  headers: Record<string, string | string[] | undefined>,
+): Promise<string | null> {
+  const authHeader = headers.authorization;
+  if (!authHeader || typeof authHeader !== "string" || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+  const token = authHeader.slice(7);
+  return verifyAuth(token);
+}
 export function getClientIP(headers: Record<string, string | string[] | undefined>): string {
   const forwarded = headers["x-forwarded-for"];
   if (typeof forwarded === "string") {

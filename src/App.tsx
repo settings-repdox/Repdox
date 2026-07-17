@@ -53,6 +53,11 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const EventRegister = lazy(() => import("./pages/EventRegister"));
 const AdminEvents = lazy(() => import("./pages/AdminEvents"));
 const Volunteers = lazy(() => import("./pages/Volunteers"));
+const Ticket = lazy(() => import("./pages/Ticket"));
+const Scanner = lazy(() => import("./pages/Scanner"));
+const AdminTickets = lazy(() => import("./pages/AdminTickets"));
+const Badges = lazy(() => import("./pages/Badges"));
+const MyTickets = lazy(() => import("./pages/MyTickets"));
 const DiscordLink = lazy(() => import("./pages/DiscordLink"));
 const AdminVolunteers = lazy(() => import("./pages/AdminVolunteers"));
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -169,6 +174,42 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <EventTeams />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Ticketing & QR Check-in */}
+            {/* Public: reachable via a QR scan / emailed link without login — the token itself is the credential. */}
+            <Route path="/ticket/:token" element={<Ticket />} />
+            <Route
+              path="/my-tickets"
+              element={
+                <ProtectedRoute>
+                  <MyTickets />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scanner"
+              element={
+                <ProtectedRoute>
+                  <Scanner />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/:slug/tickets"
+              element={
+                <ProtectedRoute>
+                  <AdminTickets />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/:slug/badges"
+              element={
+                <ProtectedRoute>
+                  <Badges />
                 </ProtectedRoute>
               }
             />

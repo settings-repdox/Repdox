@@ -17,6 +17,18 @@ window.addEventListener("unhandledrejection", (event) => {
 
 console.log("App initializing...");
 
+// Registers the scanner's offline app-shell cache (see public/sw.js).
+// Safe to register globally — it only caches GET requests to /scanner and
+// /ticket/* pages, and never touches /api/* — so it has no effect on any
+// other page's behavior.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.warn("Service worker registration failed (offline scanning will be unavailable):", err);
+    });
+  });
+}
+
 try {
   const root = document.getElementById("root");
   if (!root) {

@@ -57,7 +57,8 @@ src/
 │   ├── events/        {dtos,interfaces,impl,__tests__}/
 │   ├── gaming/         {dtos,interfaces,impl}/
 │   ├── production/     {interfaces,impl}/
-│   └── registrations/  {impl}/  (interface lives in core — see service-contracts)
+│   ├── registrations/  {impl}/  (interface lives in core — see service-contracts)
+│   └── tickets/        {dtos,interfaces,impl,__tests__}/  (ADR 0007)
 ├── infrastructure/
 │   ├── di.ts                     Separate adapter registry (ADR 0003)
 │   ├── verifyArchitecture.ts     Isolation check, run as a Vitest test
