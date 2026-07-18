@@ -37,7 +37,7 @@ const supabase = getSupabaseAdmin();
  */
 async function getUserEmail(userId: string): Promise<string | null> {
   try {
-    const { data, error } = await supabase.auth.admin.getUser(userId);
+    const { data, error } = await supabase.auth.admin.getUserById(userId);
     return error ? null : data?.user?.email || null;
   } catch {
     return null;
