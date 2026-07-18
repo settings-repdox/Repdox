@@ -8,8 +8,8 @@
  * Request body: { ticket_id: uuid, reason?: string }
  * Response: { ticket: TicketDTO }
  */
-import { getSupabaseAdmin, requireAuth } from "../_utils";
-import { isAuthorizedTicketStaff } from "./_utils";
+import { getSupabaseAdmin, requireAuth } from "../_utils.js";
+import { isAuthorizedTicketStaff } from "./_utils.js";
 
 const supabase = getSupabaseAdmin();
 

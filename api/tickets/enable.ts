@@ -13,8 +13,8 @@
  * Request body: { event_id: uuid, enabled: boolean, gates?: string[] }
  * Response: { event_id, ticketing_enabled, backfilled_count }
  */
-import { getSupabaseAdmin, requireAuth } from "../_utils";
-import { isGlobalAdmin } from "./_utils";
+import { getSupabaseAdmin, requireAuth } from "../_utils.js";
+import { isGlobalAdmin } from "./_utils.js";
 
 const supabase = getSupabaseAdmin();
 

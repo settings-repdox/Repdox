@@ -9,8 +9,8 @@
  * Request body: { ticket_id: uuid }
  * Response: { ticket: TicketDTO }  (the NEW ticket)
  */
-import { getSupabaseAdmin, requireAuth } from "../_utils";
-import { isAuthorizedTicketStaff } from "./_utils";
+import { getSupabaseAdmin, requireAuth } from "../_utils.js";
+import { isAuthorizedTicketStaff } from "./_utils.js";
 
 const supabase = getSupabaseAdmin();
 

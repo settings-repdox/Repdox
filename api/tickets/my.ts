@@ -10,7 +10,7 @@
  *
  * Response: { tickets: TicketWithContext[] }
  */
-import { getSupabaseAdmin, requireAuth } from "../_utils";
+import { getSupabaseAdmin, requireAuth } from "../_utils.js";
 
 const supabase = getSupabaseAdmin();
 

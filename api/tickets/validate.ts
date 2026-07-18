@@ -13,8 +13,8 @@
  * Response: same shape as /api/tickets/checkin's response, minus any scan
  * log side effect.
  */
-import { getSupabaseAdmin, requireAuth } from "../_utils";
-import { isAuthorizedTicketStaff } from "./_utils";
+import { getSupabaseAdmin, requireAuth } from "../_utils.js";
+import { isAuthorizedTicketStaff } from "./_utils.js";
 
 const supabase = getSupabaseAdmin();
 

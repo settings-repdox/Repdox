@@ -20,8 +20,8 @@
  * HTTP error, so the client can distinguish "this one scan's token was
  * garbage" from "the whole sync request failed and should be retried."
  */
-import { getSupabaseAdmin, requireAuth } from "../_utils";
-import { isAuthorizedTicketStaff } from "./_utils";
+import { getSupabaseAdmin, requireAuth } from "../_utils.js";
+import { isAuthorizedTicketStaff } from "./_utils.js";
 
 const supabase = getSupabaseAdmin();
 const MAX_BATCH_SIZE = 500;

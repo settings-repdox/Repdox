@@ -10,8 +10,8 @@
  * POST body: { event_id: uuid, user_id: uuid, role?: 'organizer'|'volunteer'|'staff' }
  * DELETE body: { event_id: uuid, user_id: uuid }
  */
-import { getSupabaseAdmin, requireAuth } from "../_utils";
-import { isGlobalAdmin } from "./_utils";
+import { getSupabaseAdmin, requireAuth } from "../_utils.js";
+import { isGlobalAdmin } from "./_utils.js";
 
 const supabase = getSupabaseAdmin();
 

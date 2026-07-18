@@ -19,7 +19,7 @@
  * Response:
  * { ticket: TicketWithContext } or { error: string, code: 'not_found' }
  */
-import { getSupabaseAdmin } from "../_utils";
+import { getSupabaseAdmin } from "../_utils.js";
 
 const supabase = getSupabaseAdmin();
 

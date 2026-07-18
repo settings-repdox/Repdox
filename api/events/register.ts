@@ -28,7 +28,7 @@
  */
 
 import { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabaseAdmin, verifyAuth, getClientIP } from "../_utils";
+import { getSupabaseAdmin, verifyAuth, getClientIP } from "../_utils.js";
 
 const supabase = getSupabaseAdmin();
 
