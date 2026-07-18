@@ -172,7 +172,7 @@ const roleTheme = useMemo(() => {
   return { gradient: DEFAULT_INNER_GRADIENT, border: '#71C4FF' };
 }, [mode, eventRegistration]);
 
-const qrData = useMemo(() => {
+const   Data = useMemo(() => {
   // QR only used for event registration check-in. Do not expose profile URL via QR.
   if (mode === 'event' && eventRegistration) {
     // We only send the registration_id to keep the QR code simple and easy to scan.
