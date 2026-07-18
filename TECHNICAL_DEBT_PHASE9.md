@@ -30,6 +30,14 @@
 
 ## Previous Phase 9 Findings (Context)
 
+**Update (cleanup pass following Phase 11):** `src/lib/eventService.ts`,
+`scratch.js`, and `src/domains/production/verifyDependencies.ts` (all
+referenced below as still in use) have since been fully migrated away
+from and were deleted as dead code — a repo-wide audit found zero
+remaining imports of any of them. The findings below are kept for
+historical context on how the migration got to that point, not as a
+current-state description.
+
 - Found legacy compatibility layers (`src/lib/eventService.ts`) used across many UI, scripts, and functions.
 - Direct Supabase table usage of `event_registrations` and dynamic per-event tables is present in server scripts and some functions.
 - Several files fallback to legacy queries when core services are unavailable (deferred compatibility behavior).
@@ -37,10 +45,10 @@
 
 Key findings (examples)
 
-- `src/lib/eventService.ts`: compatibility shim used by pages/components (EventDetail, Profile, OrganizerTeams, EventRegister, etc.).
+- `src/lib/eventService.ts`: compatibility shim used by pages/components (EventDetail, Profile, OrganizerTeams, EventRegister, etc.) — since fully migrated off and deleted.
 - Direct table queries: `event_registrations` appears in `repdox-discord-bot/index.ts`, `scripts/sync-teams.ts`, `functions/export-registrations-xlsx/index.ts`, `api/events/send-rsvp-emails.ts`, and others.
 - Dynamic table helpers: `getRegistrationTableName` in `src/lib/utils.ts` used widely as a fallback.
-- Legacy scripts and tools referencing direct tables: `sync-teams.ts`, `scratch.js`, `registration-portal/main.js`.
+- Legacy scripts and tools referencing direct tables: `sync-teams.ts`, `scratch.js` (deleted — see update above), `registration-portal/main.js`.
 
 Counts
 
@@ -48,8 +56,8 @@ Counts
 
 Recommendations (Phase 9 roadmap)
 
-1. Replace all imports of `src/lib/eventService.ts` with direct `resolveService('RegistrationService')` or `EventService` usage where appropriate.
-2. Remove `src/lib/eventService.ts` only after all callers are migrated and tests passing.
+1. ~~Replace all imports of `src/lib/eventService.ts` with direct `resolveService('RegistrationService')` or `EventService` usage where appropriate.~~ Done — see update above.
+2. ~~Remove `src/lib/eventService.ts` only after all callers are migrated and tests passing.~~ Done.
 3. Consolidate direct `.from('event_registrations')` queries into `RegistrationService` APIs; leave server-side scripts until migrated.
 4. Standardize DTOs: create central `src/shared/dtos/index.ts` exports and update imports to use `@/shared/dtos` consistently.
 5. Standardize logging: adopt the existing app logger (if present) or add a minimal `src/core/logger.ts` and replace console outputs in migrated files.

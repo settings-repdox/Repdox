@@ -215,10 +215,17 @@ src/domains/gaming/dtos/tournament.dto.ts (gaming types)
 
 ## Remaining Technical Debt
 
+**Update (cleanup pass following Phase 11):** items 1 and 4 below
+(`src/lib/eventService.ts` still being used) and the "Verify Scripts" item
+are resolved — the verify scripts were fixed in Phase 10
+(`TECHNICAL_DEBT_PHASE10.md`), and a repo-wide audit found zero remaining
+imports of `src/lib/eventService.ts`, which has since been deleted as dead
+code. Kept below for historical context.
+
 ### Known Items (Below Phase 9 Scope)
 
-1. **TODO: Migrate RegistrationService API**
-   - Files: `src/lib/eventService.ts`, `src/domains/registrations/impl/RegistrationServiceImpl.ts`
+1. **~~TODO: Migrate RegistrationService API~~ — done**
+   - Files: ~~`src/lib/eventService.ts`~~ (deleted), `src/domains/registrations/impl/RegistrationServiceImpl.ts`
    - Issue: Some queries still use `.from('event_registrations')` directly
    - Impact: Minor, non-blocking
 
@@ -226,13 +233,12 @@ src/domains/gaming/dtos/tournament.dto.ts (gaming types)
    - Current: console.log throughout codebase
    - Recommendation: Implement structured logging in next phase
 
-3. **Verify Scripts**
-   - `verify:infra` and `verify:production-deps` scripts have path issues
-   - Should be fixed in Phase 10
+3. **~~Verify Scripts~~ — fixed in Phase 10**
+   - ~~`verify:infra` and `verify:production-deps` scripts have path issues~~
+   - See `TECHNICAL_DEBT_PHASE10.md` for the fix (both now run as Vitest tests)
 
-4. **Legacy Service Shims**
-   - `src/lib/eventService.ts` still used for backward compatibility
-   - Can be deprecated after all callers migrated
+4. **~~Legacy Service Shims~~ — resolved**
+   - ~~`src/lib/eventService.ts` still used for backward compatibility~~ — fully migrated off and deleted
 
 ---
 
@@ -259,13 +265,13 @@ src/domains/gaming/dtos/tournament.dto.ts (gaming types)
    - Replace console.log with logger calls
    - Add observability for service calls
 
-2. **Verification Scripts**
-   - Fix `verify:infra` and `verify:production-deps` path issues
-   - Add to CI/CD pipeline
+2. **Verification Scripts** — done in Phase 10
+   - ~~Fix `verify:infra` and `verify:production-deps` path issues~~
+   - Not yet done: add to CI/CD pipeline (see RFC 0002)
 
-3. **Legacy Service Cleanup**
-   - Audit remaining usage of `src/lib/eventService.ts`
-   - Migrate or deprecate in Phase 10
+3. **Legacy Service Cleanup** — done
+   - ~~Audit remaining usage of `src/lib/eventService.ts`~~
+   - ~~Migrate or deprecate in Phase 10~~ — migrated and deleted
 
 4. **RegistrationService Migration**
    - Move all `.from('event_registrations')` to RegistrationService API
