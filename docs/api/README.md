@@ -215,27 +215,39 @@ consolidated across API routes, Edge Functions, and the frontend build.
 
 ## Ticketing & QR Check-in (`api/tickets/`)
 
-See ADR 0007 for the design writeup. All routes use the same
-`getSupabaseAdmin()`/`requireAuth()` helpers as above, plus a
-ticketing-specific `isAuthorizedTicketStaff()` check
+See ADR 0007 for the design writeup. **All 13 actions below are served by
+a single Vercel Serverless Function**, `api/tickets/[action].ts`, using
+Vercel's dynamic-route-segment convention — not 13 separate files. This
+is a deployment-platform constraint, not a design choice: the Hobby plan
+caps a deployment at 12 Serverless Functions total, and the 13
+originally-separate route files exceeded that on their own, before even
+counting the 7 pre-existing routes elsewhere under `api/`. URLs are
+unaffected — `GET /api/tickets/get?token=X` still works exactly as
+listed below; Vercel transparently maps the `[action]` segment to
+whatever path segment the request actually used. If you need to add a
+new ticket action, add a `handleX` function and a `HANDLERS` entry inside
+`[action].ts` rather than a new file under `api/tickets/`.
+
+All actions use the same `getSupabaseAdmin()`/`requireAuth()` helpers as
+above, plus a ticketing-specific `isAuthorizedTicketStaff()` check
 (`api/tickets/_utils.ts`) — event owner, global admin, or an explicit
 `event_staff` grant.
 
-| Route | Method | Auth | Purpose |
+| Action (`?action=`) | Method | Auth | Purpose |
 |---|---|---|---|
-| `/api/tickets/get?token=` | GET | None — token is the credential | Resolve a ticket for the `/ticket/:token` page |
-| `/api/tickets/my` | GET | User | List the caller's own tickets (dashboard access) |
-| `/api/tickets/generate` | POST | Staff | Manually generate a ticket for one registration |
-| `/api/tickets/checkin` | POST | Staff, rate-limited | The scanner's core atomic check-in call |
-| `/api/tickets/sync` | POST | Staff | Batch-upload queued offline scans |
-| `/api/tickets/validate` | GET | Staff | Read-only "what would this token resolve to" check |
-| `/api/tickets/cancel` | POST | Staff | Revoke a ticket |
-| `/api/tickets/reissue` | POST | Staff | Cancel + issue a replacement ticket |
-| `/api/tickets/search` | GET | Staff | Admin dashboard participant/ticket-code search |
-| `/api/tickets/stats` | GET | Staff | Live attendance statistics |
-| `/api/tickets/manifest` | GET | Staff | Offline manifest download for the scanner PWA |
-| `/api/tickets/enable` | POST | Owner/admin | Turn ticketing on/off for an event, backfill tickets |
-| `/api/tickets/staff` | POST/DELETE | Owner/admin | Grant/revoke scanner access for a volunteer |
+| `get` | GET | None — token is the credential | Resolve a ticket for the `/ticket/:token` page |
+| `my` | GET | User | List the caller's own tickets (dashboard access) |
+| `generate` | POST | Staff | Manually generate a ticket for one registration |
+| `checkin` | POST | Staff, rate-limited | The scanner's core atomic check-in call |
+| `sync` | POST | Staff | Batch-upload queued offline scans |
+| `validate` | GET | Staff | Read-only "what would this token resolve to" check |
+| `cancel` | POST | Staff | Revoke a ticket |
+| `reissue` | POST | Staff | Cancel + issue a replacement ticket |
+| `search` | GET | Staff | Admin dashboard participant/ticket-code search |
+| `stats` | GET | Staff | Live attendance statistics |
+| `manifest` | GET | Staff | Offline manifest download for the scanner PWA |
+| `enable` | POST | Owner/admin | Turn ticketing on/off for an event, backfill tickets |
+| `staff` | POST/DELETE | Owner/admin | Grant/revoke scanner access for a volunteer |
 
 Every mutation (`generate`, `checkin`, `sync`, `cancel`, `reissue`)
 delegates to a `SECURITY DEFINER` Postgres RPC

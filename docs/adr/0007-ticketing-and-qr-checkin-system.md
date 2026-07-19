@@ -134,6 +134,18 @@ isn't sized for.
 
 ## Consequences
 
+- **Amendment**: the 13 `api/tickets/*.ts` routes described above were
+  originally separate files, one per action. The first production deploy
+  failed Vercel's Hobby-plan limit of 12 Serverless Functions per
+  deployment (13 ticket routes + 7 pre-existing routes = 20). They were
+  consolidated into a single dynamic-route file,
+  `api/tickets/[action].ts`, dispatching internally on `req.query.action`
+  — see its file header for the mechanics. URLs, request/response shapes,
+  and authorization logic are all unchanged; this was purely a
+  deployment-platform constraint, not a design change. New ticket actions
+  should be added as a new `handleX` function + `HANDLERS` entry inside
+  that file, not as a new file under `api/tickets/`.
+
 - Every requirement in the original task is implemented: enable ticketing
   per event, automatic + manual ticket generation, the participant ticket
   page (QR/download/print/dashboard access), the `/scanner` PWA (camera +
