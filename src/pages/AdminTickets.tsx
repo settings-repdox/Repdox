@@ -63,9 +63,29 @@ export default function AdminTickets() {
       } = await supabase.auth.getUser();
       const isOwner = user && eventData.created_by === user.id;
       const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
-      if (!isOwner && !isAdmin) throw new Error("Unauthorized");
 
-      return eventData;
+      // Staff/organizer-tier grantees can view this dashboard too (they're
+      // authorized server-side for search/stats/cancel/reissue — see
+      // api/tickets/_utils.ts's role hierarchy) — a scan-only "volunteer"
+      // grant is NOT enough to view the admin dashboard, matching the
+      // server-side minimum role those actions require.
+      let staffRole: "organizer" | "staff" | "volunteer" | null = null;
+      if (!isOwner && !isAdmin && user) {
+        const { data: staffRow } = await supabase
+          .from("event_staff")
+          .select("role")
+          .eq("event_id", eventData.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        staffRole = (staffRow?.role as typeof staffRole) ?? null;
+      }
+      const canViewDashboard = isOwner || isAdmin || staffRole === "organizer" || staffRole === "staff";
+      if (!canViewDashboard) throw new Error("Unauthorized");
+
+      // Only the owner/a global admin may change ticketing settings
+      // (enable/disable, gates) — matches api/tickets/[action].ts's
+      // "enable" handler, which is intentionally NOT staff-tier-gated.
+      return { ...eventData, canManageSettings: isOwner || isAdmin };
     },
     retry: false,
   });
@@ -202,14 +222,22 @@ export default function AdminTickets() {
         <div className="surface-card p-6 text-center">
           <Settings className="w-8 h-8 text-accent mx-auto mb-3" />
           <p className="text-foreground font-semibold mb-1">Ticketing isn't enabled for this event yet</p>
-          <p className="text-muted-foreground text-sm mb-4">
-            Turning it on generates tickets for every existing confirmed registration, and
-            automatically for every new one going forward.
-          </p>
-          <Button onClick={() => enableMutation.mutate(true)} disabled={enableMutation.isPending}>
-            {enableMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            Enable Ticketing
-          </Button>
+          {event.canManageSettings ? (
+            <>
+              <p className="text-muted-foreground text-sm mb-4">
+                Turning it on generates tickets for every existing confirmed registration, and
+                automatically for every new one going forward.
+              </p>
+              <Button onClick={() => enableMutation.mutate(true)} disabled={enableMutation.isPending}>
+                {enableMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Enable Ticketing
+              </Button>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              Only the event organiser can turn ticketing on for this event.
+            </p>
+          )}
         </div>
       ) : (
         <>

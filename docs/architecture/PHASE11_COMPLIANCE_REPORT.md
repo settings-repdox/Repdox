@@ -220,3 +220,46 @@ swappable implementations) for the pages that don't go through them.
 6. Everything in `TECHNICAL_DEBT_PHASE10.md`'s own priority list
    (`clearAdapters()`, raising `*Impl.ts` test coverage, component tests
    for `EventRegister.tsx`) remains open and unaffected by this phase.
+
+## Addendum (event_staff role enforcement work): `tsc --noEmit` was a no-op
+
+While implementing role-based access for the ticketing system, running
+`npx tsc --noEmit -p tsconfig.app.json` directly (rather than the bare
+`npx tsc --noEmit` used everywhere in this project's history, including
+throughout the ticketing system's original build and every "type-check
+clean" claim made about it) surfaced **70 pre-existing type errors**
+across 15 files, none related to the change being made at the time.
+
+Root cause: the repo-root `tsconfig.json` only declares project
+references (`tsconfig.app.json`, `tsconfig.node.json`) with no
+`files`/`include` of its own. Running `tsc --noEmit` against it directly,
+without `-b`/build mode, silently checks zero files and exits 0
+regardless of how many real errors exist in the referenced projects. This
+means **every previous "`npx tsc --noEmit` passed clean" claim in this
+project's history was true only in the sense that a no-op command
+succeeded** — it was never actually verifying the code compiled.
+`npm run build` doesn't substitute for this either — Vite's `build`
+transpiles via esbuild, which strips types without fully checking them.
+
+Fixed: added `npm run typecheck` (`tsc --noEmit -p tsconfig.app.json`) as
+the one command that actually performs a full check —
+`CONTRIBUTING.md` updated to require it before every PR, and to stop
+recommending bare `tsc --noEmit`.
+
+**Not fixed**: the 70 pre-existing errors themselves. They span
+`src/components/OrganizerRegistrations.tsx`, `src/components/ProfileCard.tsx`,
+`src/core/services/impl/{PermissionServiceImpl,UserServiceImpl}.ts`
+(both querying a `profiles` table that doesn't match the generated
+`Database` type — possibly meant to be `user_profiles`, unconfirmed),
+`src/domains/events/impl/SupabaseEventRepository.ts`, `src/lib/{adminService,
+eventImages,tournamentService}.ts`, `src/pages/{Contact,DiscordLink,
+MatchCentre,Profile}.tsx`, `src/shared/validation/index.ts`, and
+`src/tests/integration/event-workflows.test.ts`. None of these were
+touched by the ticketing/role-enforcement work — they're a separate,
+substantial pre-existing cleanup task. Given they've been invisible to
+every prior type-check for an unknown length of time without apparently
+causing runtime failures, they're likely either dead code paths, cases
+where the generated Supabase types have drifted from the real schema (a
+recurring theme — see the `events` table schema gap noted earlier in this
+report), or genuinely broken-but-unexercised code. Worth triaging as its
+own task, file by file, rather than bulk-fixing blind.

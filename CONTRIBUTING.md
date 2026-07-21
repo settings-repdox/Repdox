@@ -62,10 +62,24 @@ npm run dev
 ```bash
 npm test          # unit + integration + broadcast + architecture (~10-15s)
 npm run lint
-npm run build      # catches type errors the dev server won't
+npm run typecheck  # full TypeScript check — see note below on why this
+                    # has to be its own command, not folded into build
+npm run build
 ```
 
-All three should pass. If you touched anything under `src/infrastructure`,
+All four should pass. **Neither `npm run build` nor a bare `npx tsc
+--noEmit` reliably catches type errors** — `vite build` transpiles via
+esbuild without a full type-check, and `npx tsc --noEmit` run from the
+repo root is a silent no-op (the root `tsconfig.json` only has project
+references, no `files`/`include`, so without `-b`/build mode it checks
+nothing at all). This went unnoticed for a while — see
+`docs/architecture/PHASE11_COMPLIANCE_REPORT.md`'s addendum for how many
+pre-existing type errors it surfaced once someone actually ran
+`tsc -p tsconfig.app.json`. **`npm run typecheck` is the only command
+in this repo that actually performs a full type-check** — always run it,
+not `tsc --noEmit` by itself.
+
+If you touched anything under `src/infrastructure`,
 `src/core`, or cross-domain calls, also sanity-check
 `npm run verify:infra` and `npm run verify:production-deps` explicitly —
 they're now just aliases for specific Vitest files (ADR 0006) but are

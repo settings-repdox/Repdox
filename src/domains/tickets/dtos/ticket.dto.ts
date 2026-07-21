@@ -142,6 +142,13 @@ export interface OfflineManifest {
 
 export type EventStaffRole = "organizer" | "volunteer" | "staff";
 
+/** The four effective access levels for ticketing on a given event, in
+ * ascending order of privilege — mirrors api/tickets/_utils.ts's
+ * TicketAccessRole (kept in sync manually; the API layer can't import
+ * this file directly, see that file's header comment). "owner" covers
+ * both the event's actual creator and global admins. */
+export type TicketAccessRole = "volunteer" | "staff" | "organizer" | "owner";
+
 export interface EventStaffGrant {
   id: string;
   eventId: string;

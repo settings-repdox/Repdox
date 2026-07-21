@@ -8,6 +8,7 @@ import type {
   OfflineManifest,
   EventStaffGrant,
   EventStaffRole,
+  TicketAccessRole,
 } from "../dtos/ticket.dto";
 import type { ITicketService } from "../interfaces/ITicketService";
 import type { ITicketRepository } from "../interfaces/ITicketRepository";
@@ -117,25 +118,29 @@ export class TicketServiceImpl implements ITicketService {
     return [header.join(","), ...rows].join("\n");
   }
 
-  async isAuthorizedStaff(userId: string, eventId: string): Promise<boolean> {
-    if (!userId) return false;
+  async getAccessRole(userId: string, eventId: string): Promise<TicketAccessRole | null> {
+    if (!userId) return null;
 
     // Lazy import to avoid a hard dependency on core/services from a domain
     // module's happy path — only pulled in when actually needed.
-    // (Depending on another layer's *interface* is fine per the dependency
-    // rules; this just avoids a static top-of-file import cycle risk.)
     const { resolveService } = await import("@/core/services/di");
     type PermissionServiceShape = { isUserAdmin(userId?: string): Promise<boolean> };
     try {
       const permissionService = resolveService<PermissionServiceShape>("PermissionService");
-      if (await permissionService.isUserAdmin(userId)) return true;
+      if (await permissionService.isUserAdmin(userId)) return "owner";
     } catch {
       // PermissionService not registered (e.g. isolated unit test) — fall
       // through to the owner/staff checks, which don't depend on it.
     }
 
-    if (await this.repo.isEventOwner(userId, eventId)) return true;
-    return this.repo.isEventStaff(userId, eventId);
+    if (await this.repo.isEventOwner(userId, eventId)) return "owner";
+
+    const staffRole = await this.repo.getStaffRole(userId, eventId);
+    return staffRole ?? null;
+  }
+
+  async isAuthorizedStaff(userId: string, eventId: string): Promise<boolean> {
+    return (await this.getAccessRole(userId, eventId)) !== null;
   }
 
   async listEventStaff(eventId: string): Promise<EventStaffGrant[]> {

@@ -50,7 +50,7 @@ function makeMockRepo(): ITicketRepository {
     listConfirmedRegistrationIds: vi.fn(),
     isEventOwner: vi.fn(),
     listEventStaff: vi.fn(),
-    isEventStaff: vi.fn(),
+    getStaffRole: vi.fn(),
     grantStaffAccess: vi.fn(),
     revokeStaffAccess: vi.fn(),
   };
@@ -270,34 +270,55 @@ describe("TicketServiceImpl", () => {
     });
   });
 
-  describe("isAuthorizedStaff", () => {
-    it("returns false immediately for an empty user id, without querying the repository", async () => {
-      const result = await service.isAuthorizedStaff("", "event-1");
+  describe("getAccessRole / isAuthorizedStaff", () => {
+    it("returns null immediately for an empty user id, without querying the repository", async () => {
+      const role = await service.getAccessRole("", "event-1");
 
-      expect(result).toBe(false);
+      expect(role).toBeNull();
       expect(repo.isEventOwner).not.toHaveBeenCalled();
     });
 
-    it("authorizes the event owner", async () => {
+    it("resolves the event owner to the 'owner' role", async () => {
       (repo.isEventOwner as any).mockResolvedValue(true);
 
-      const result = await service.isAuthorizedStaff("owner-1", "event-1");
+      const role = await service.getAccessRole("owner-1", "event-1");
 
-      expect(result).toBe(true);
+      expect(role).toBe("owner");
     });
 
-    it("authorizes a granted staff member who is not the owner", async () => {
+    it.each(["organizer", "staff", "volunteer"] as const)(
+      "resolves a granted %s to that exact role, not just true/false",
+      async (grantedRole) => {
+        (repo.isEventOwner as any).mockResolvedValue(false);
+        (repo.getStaffRole as any).mockResolvedValue(grantedRole);
+
+        const role = await service.getAccessRole("staff-user-1", "event-1");
+
+        expect(role).toBe(grantedRole);
+      },
+    );
+
+    it("returns null for a user who is neither owner nor granted any staff role", async () => {
       (repo.isEventOwner as any).mockResolvedValue(false);
-      (repo.isEventStaff as any).mockResolvedValue(true);
+      (repo.getStaffRole as any).mockResolvedValue(null);
+
+      const role = await service.getAccessRole("random-user", "event-1");
+
+      expect(role).toBeNull();
+    });
+
+    it("isAuthorizedStaff is true for any non-null role, including the lowest tier", async () => {
+      (repo.isEventOwner as any).mockResolvedValue(false);
+      (repo.getStaffRole as any).mockResolvedValue("volunteer");
 
       const result = await service.isAuthorizedStaff("volunteer-1", "event-1");
 
       expect(result).toBe(true);
     });
 
-    it("denies a user who is neither owner nor staff nor admin", async () => {
+    it("isAuthorizedStaff is false when there is no access at all", async () => {
       (repo.isEventOwner as any).mockResolvedValue(false);
-      (repo.isEventStaff as any).mockResolvedValue(false);
+      (repo.getStaffRole as any).mockResolvedValue(null);
 
       const result = await service.isAuthorizedStaff("random-user", "event-1");
 

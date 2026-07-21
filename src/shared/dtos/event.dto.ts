@@ -44,6 +44,8 @@ export interface EventDTO {
   roles: Json | null;
   bracket_url?: string | null;
   bracket_link?: string | null;
+  ticketing_enabled?: boolean;
+  ticket_gates?: string[];
   cover_url?: string | null;
   coverImage?: string | null;
   game_name?: string | null;

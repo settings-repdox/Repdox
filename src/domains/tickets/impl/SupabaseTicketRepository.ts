@@ -10,6 +10,7 @@ import type {
   EventStaffGrant,
   EventStaffRole,
   ScanResult,
+  GamingTicketMeta,
 } from "../dtos/ticket.dto";
 import type { ITicketRepository } from "../interfaces/ITicketRepository";
 
@@ -29,7 +30,13 @@ interface RawTicketRow {
   qr_token: string;
   status: TicketDTO["status"];
   ticket_type: TicketDTO["ticket_type"];
-  gaming_meta?: TicketDTO["gaming_meta"];
+  // Raw from Supabase this is an untyped jsonb column (Json), not yet
+  // narrowed to GamingTicketMeta's shape — that narrowing happens in
+  // mapTicketRow() below, which is the one place that should ever cast
+  // it. Every call site that constructs a RawTicketRow from a real query
+  // result (as opposed to hand-building one) needs an `as RawTicketRow`
+  // cast for the same reason — see mapTicketRow()'s call sites.
+  gaming_meta?: unknown;
   checked_in_at?: string | null;
   checked_in_by?: string | null;
   cancelled_at?: string | null;
@@ -116,7 +123,7 @@ function mapTicketRow(row: RawTicketRow): TicketDTO {
     qr_token: row.qr_token,
     status: row.status,
     ticket_type: row.ticket_type,
-    gaming_meta: row.gaming_meta ?? null,
+    gaming_meta: normalizeGamingMeta(row.gaming_meta),
     checked_in_at: row.checked_in_at ?? null,
     checked_in_by: row.checked_in_by ?? null,
     cancelled_at: row.cancelled_at ?? null,
@@ -126,6 +133,21 @@ function mapTicketRow(row: RawTicketRow): TicketDTO {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+}
+
+/** Narrows the raw jsonb gaming_meta column (typed `Json`/`unknown` at the
+ * Supabase-client boundary, since there's no dedicated column-level type
+ * for it) down to GamingTicketMeta. A plain object with no non-string
+ * values is accepted as-is; anything else (null, an array, a primitive,
+ * or an object containing something that isn't a string) is treated as
+ * absent rather than trusted — this is a jsonb column with no schema
+ * enforcement, so malformed/unexpected content should degrade gracefully
+ * rather than propagate a shape the rest of the app doesn't expect. */
+function normalizeGamingMeta(value: unknown): GamingTicketMeta | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.some(([, v]) => v !== undefined && typeof v !== "string")) return null;
+  return value as GamingTicketMeta;
 }
 
 export class SupabaseTicketRepository implements ITicketRepository {
@@ -149,7 +171,7 @@ export class SupabaseTicketRepository implements ITicketRepository {
       p_scanned_at: request.scannedAt ?? new Date().toISOString(),
     });
     if (error) throw error;
-    return mapCheckInResponse(data);
+    return mapCheckInResponse(data as unknown as RawCheckInResponse);
   }
 
   async cancel(ticketId: string, cancelledBy: string, reason?: string): Promise<TicketDTO> {
@@ -180,13 +202,13 @@ export class SupabaseTicketRepository implements ITicketRepository {
       .eq("qr_token", token)
       .maybeSingle();
     if (error || !data) return null;
-    return this.mapWithContext(data);
+    return this.mapWithContext(data as unknown as RawTicketRow);
   }
 
   async getById(id: string): Promise<TicketDTO | null> {
     const { data, error } = await supabase.from("tickets").select("*").eq("id", id).maybeSingle();
     if (error || !data) return null;
-    return mapTicketRow(data);
+    return mapTicketRow(data as unknown as RawTicketRow);
   }
 
   async getByRegistrationId(registrationId: string): Promise<TicketDTO | null> {
@@ -233,7 +255,7 @@ export class SupabaseTicketRepository implements ITicketRepository {
     const { data, error } = await q;
     if (error || !data) return [];
 
-    let results = data.map((row: RawTicketRow) => this.mapWithContext(row));
+    let results = (data as unknown as RawTicketRow[]).map((row) => this.mapWithContext(row));
 
     if (query.query && query.query.trim()) {
       const term = query.query.trim().toLowerCase();
@@ -259,7 +281,7 @@ export class SupabaseTicketRepository implements ITicketRepository {
       remaining: raw?.remaining ?? 0,
       recentScans: (raw?.recent_scans ?? []).map((s: RawRecentScanRow) => ({
         id: s.id,
-        result: s.result,
+        result: s.result as ScanResult,
         scannedAt: s.scanned_at,
         gate: s.gate ?? null,
         deviceId: s.device_id ?? null,
@@ -276,7 +298,7 @@ export class SupabaseTicketRepository implements ITicketRepository {
       .eq("event_id", eventId)
       .neq("status", "CANCELLED");
     if (error || !data) return [];
-    return data.map((row: RawManifestRow) => ({
+    return (data as unknown as RawManifestRow[]).map((row) => ({
       qrToken: row.qr_token,
       ticketCode: row.ticket_code,
       status: row.status,
@@ -332,14 +354,15 @@ export class SupabaseTicketRepository implements ITicketRepository {
     }));
   }
 
-  async isEventStaff(userId: string, eventId: string): Promise<boolean> {
+  async getStaffRole(userId: string, eventId: string): Promise<EventStaffRole | null> {
     const { data, error } = await supabase
       .from("event_staff")
-      .select("id")
+      .select("role")
       .eq("event_id", eventId)
       .eq("user_id", userId)
       .maybeSingle();
-    return !error && !!data;
+    if (error || !data) return null;
+    return data.role as EventStaffRole;
   }
 
   async grantStaffAccess(

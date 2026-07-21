@@ -18,7 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import type { OfflineManifest, ScanResult } from "@/domains/tickets/dtos/ticket.dto";
+import type { OfflineManifest, ScanResult, GamingTicketMeta } from "@/domains/tickets/dtos/ticket.dto";
 import {
   saveManifest,
   getManifest,
@@ -44,7 +44,7 @@ interface ScanFeedback {
   participantName?: string;
   teamName?: string | null;
   ticketType?: string;
-  gamingMeta?: Record<string, string | undefined> | null;
+  gamingMeta?: GamingTicketMeta | null;
   previousCheckInAt?: string | null;
   previousScannedByName?: string | null;
   fromCache?: boolean;

@@ -21,7 +21,7 @@
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSupabaseAdmin, requireAuth } from "../_utils.js";
-import { isAuthorizedTicketStaff, isGlobalAdmin } from "./_utils.js";
+import { hasTicketAccess, isGlobalAdmin } from "./_utils.js";
 
 const supabase = getSupabaseAdmin();
 const MAX_SYNC_BATCH_SIZE = 500;
@@ -150,7 +150,7 @@ async function handleGenerate(req: VercelRequest, res: VercelResponse) {
     .maybeSingle();
   if (!registration) return res.status(404).json({ error: "Registration not found", code: "not_found" });
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, registration.event_id);
+  const authorized = await hasTicketAccess(supabase, userId, registration.event_id, "staff");
   if (!authorized) return res.status(403).json({ error: "Not authorized for this event", code: "forbidden" });
 
   const { data, error } = await supabase.rpc("generate_ticket_for_registration", {
@@ -186,7 +186,7 @@ async function handleCheckin(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "client_scan_id is required", code: "invalid_input" });
   }
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, event_id);
+  const authorized = await hasTicketAccess(supabase, userId, event_id, "volunteer");
   if (!authorized) {
     return res.status(403).json({ error: "Not authorized to scan tickets for this event", code: "forbidden" });
   }
@@ -247,7 +247,7 @@ async function handleSync(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, event_id);
+  const authorized = await hasTicketAccess(supabase, userId, event_id, "volunteer");
   if (!authorized) {
     return res.status(403).json({ error: "Not authorized to scan tickets for this event", code: "forbidden" });
   }
@@ -300,7 +300,7 @@ async function handleValidate(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "token and event_id are required", code: "invalid_input" });
   }
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, eventId);
+  const authorized = await hasTicketAccess(supabase, userId, eventId, "volunteer");
   if (!authorized) return res.status(403).json({ error: "Not authorized for this event", code: "forbidden" });
 
   const { data: ticket, error } = await supabase
@@ -340,7 +340,7 @@ async function handleCancel(req: VercelRequest, res: VercelResponse) {
   const { data: ticket } = await supabase.from("tickets").select("event_id").eq("id", ticket_id).maybeSingle();
   if (!ticket) return res.status(404).json({ error: "Ticket not found", code: "not_found" });
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, ticket.event_id);
+  const authorized = await hasTicketAccess(supabase, userId, ticket.event_id, "staff");
   if (!authorized) return res.status(403).json({ error: "Not authorized for this event", code: "forbidden" });
 
   const { data, error } = await supabase.rpc("cancel_ticket", {
@@ -369,7 +369,7 @@ async function handleReissue(req: VercelRequest, res: VercelResponse) {
   const { data: ticket } = await supabase.from("tickets").select("event_id").eq("id", ticket_id).maybeSingle();
   if (!ticket) return res.status(404).json({ error: "Ticket not found", code: "not_found" });
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, ticket.event_id);
+  const authorized = await hasTicketAccess(supabase, userId, ticket.event_id, "staff");
   if (!authorized) return res.status(403).json({ error: "Not authorized for this event", code: "forbidden" });
 
   const { data, error } = await supabase.rpc("reissue_ticket", {
@@ -397,7 +397,7 @@ async function handleSearch(req: VercelRequest, res: VercelResponse) {
 
   if (!eventId) return res.status(400).json({ error: "event_id is required", code: "invalid_input" });
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, eventId);
+  const authorized = await hasTicketAccess(supabase, userId, eventId, "staff");
   if (!authorized) return res.status(403).json({ error: "Not authorized for this event", code: "forbidden" });
 
   let query = supabase
@@ -449,7 +449,7 @@ async function handleStats(req: VercelRequest, res: VercelResponse) {
   const eventId = typeof req.query.event_id === "string" ? req.query.event_id : "";
   if (!eventId) return res.status(400).json({ error: "event_id is required", code: "invalid_input" });
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, eventId);
+  const authorized = await hasTicketAccess(supabase, userId, eventId, "staff");
   if (!authorized) return res.status(403).json({ error: "Not authorized for this event", code: "forbidden" });
 
   const { data, error } = await supabase.rpc("get_attendance_stats", { p_event_id: eventId });
@@ -470,7 +470,7 @@ async function handleManifest(req: VercelRequest, res: VercelResponse) {
   const eventId = typeof req.query.event_id === "string" ? req.query.event_id : "";
   if (!eventId) return res.status(400).json({ error: "event_id is required", code: "invalid_input" });
 
-  const authorized = await isAuthorizedTicketStaff(supabase, userId, eventId);
+  const authorized = await hasTicketAccess(supabase, userId, eventId, "volunteer");
   if (!authorized) return res.status(403).json({ error: "Not authorized for this event", code: "forbidden" });
 
   const { data: event } = await supabase.from("events").select("title, ticket_gates").eq("id", eventId).maybeSingle();

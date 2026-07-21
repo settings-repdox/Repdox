@@ -34,8 +34,12 @@ export interface ITicketRepository {
   listConfirmedRegistrationIds(eventId: string): Promise<string[]>;
 
   isEventOwner(userId: string, eventId: string): Promise<boolean>;
+  /** The caller's event_staff.role for this event, or null if they have no
+   * grant at all — does NOT account for ownership/admin (callers combine
+   * this with isEventOwner()). See TicketServiceImpl.getAccessRole() for
+   * the combined resolution used everywhere access actually gets checked. */
+  getStaffRole(userId: string, eventId: string): Promise<EventStaffRole | null>;
   listEventStaff(eventId: string): Promise<EventStaffGrant[]>;
-  isEventStaff(userId: string, eventId: string): Promise<boolean>;
   grantStaffAccess(eventId: string, userId: string, role: EventStaffRole, grantedBy: string): Promise<EventStaffGrant>;
   revokeStaffAccess(eventId: string, userId: string): Promise<void>;
 }

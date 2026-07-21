@@ -37,7 +37,23 @@ export default function Badges() {
       } = await supabase.auth.getUser();
       const isOwner = user && eventData.created_by === user.id;
       const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
-      if (!isOwner && !isAdmin) throw new Error("Unauthorized");
+
+      // Badge data comes from GET /api/tickets/search, which requires
+      // "staff" tier or above (see api/tickets/_utils.ts) — match that
+      // here rather than blocking a legitimately-authorized staff-tier
+      // grantee before they even reach the API call.
+      let staffRole: "organizer" | "staff" | "volunteer" | null = null;
+      if (!isOwner && !isAdmin && user) {
+        const { data: staffRow } = await supabase
+          .from("event_staff")
+          .select("role")
+          .eq("event_id", eventData.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        staffRole = (staffRow?.role as typeof staffRole) ?? null;
+      }
+      const canView = isOwner || isAdmin || staffRole === "organizer" || staffRole === "staff";
+      if (!canView) throw new Error("Unauthorized");
       return eventData;
     },
     retry: false,

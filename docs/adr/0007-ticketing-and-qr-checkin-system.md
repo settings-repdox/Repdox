@@ -167,14 +167,35 @@ isn't sized for.
   periodically while online, which `Scanner.tsx` does on event/gate
   selection and could be extended to a manual "refresh" button), not
   architectural.
-- **Known gap**: `event_staff`-granted volunteers currently get one flat
-  set of scanner permissions — there's no distinction between "can scan"
-  and "can also revoke/reissue tickets from the admin dashboard." The
-  `event_staff.role` column (`organizer`/`volunteer`/`staff`) exists for
-  future use here but isn't yet checked anywhere beyond "is this person
-  in the table at all" — `isAuthorizedStaff` and `isAuthorizedTicketStaff`
-  don't differentiate by role. Worth a follow-up RFC if finer-grained
-  permissions become necessary.
+- **Fixed** (originally a known gap): `event_staff`-granted volunteers
+  originally got one flat set of scanner permissions — no distinction
+  between "can scan" and "can also revoke/reissue tickets, view the
+  admin dashboard, or manage other people's access." The
+  `event_staff.role` column existed from day one but nothing checked it
+  beyond "is this person in the table at all." Fixed by introducing a
+  four-tier `TicketAccessRole` hierarchy
+  (`volunteer < staff < organizer < owner`, where "owner" covers both the
+  event creator and global admins) checked via
+  `api/tickets/_utils.ts`'s `hasTicketAccess()` server-side and
+  `TicketServiceImpl.getAccessRole()` in the domain layer, kept in sync
+  manually between the two for the same reason `isGlobalAdmin`/
+  `ADMIN_EMAILS` already are (see that file's header comment). Per-action
+  minimum role:
+  - **volunteer** (scan-only): `checkin`, `sync`, `validate`, `manifest`
+  - **staff** (scan + fix tickets + view dashboard): adds `generate`,
+    `cancel`, `reissue`, `search`, `stats`
+  - **organizer/owner** (full control): adds `enable` (ticketing
+    settings) and `staff` (grant/revoke other people's access) — these
+    two were already owner/admin-only from the start and weren't part of
+    the gap, since they never went through the flat event_staff check to
+    begin with.
+
+  `AdminTickets.tsx` and `Badges.tsx`'s client-side page gates were
+  updated to match — they previously only let the owner/a global admin
+  load the page at all, which (once the server-side fix landed) would
+  have *under*-allowed a legitimately-authorized staff-tier volunteer
+  rather than over-allowing anyone, but was still inconsistent with what
+  the API would actually let them do.
 - Following ADR 0002's dependency rules, no page imports
   `SupabaseTicketRepository` or `TicketServiceImpl` directly — pages use
   `resolveService<ITicketService>("TicketService")` or, for

@@ -8,6 +8,7 @@ import type {
   OfflineManifest,
   EventStaffGrant,
   EventStaffRole,
+  TicketAccessRole,
 } from "../dtos/ticket.dto";
 
 /** Public contract for the tickets domain — see
@@ -55,8 +56,20 @@ export interface ITicketService {
 
   exportAttendanceCsv(eventId: string): Promise<string>;
 
-  /** True if the user may access /scanner and /admin/tickets for this
-   * event — event owner, global admin, or an explicit event_staff grant. */
+  /** Resolves the caller's effective access level for an event's
+   * ticketing, or null if they have none — "owner" (event creator or
+   * global admin), "organizer"/"staff"/"volunteer" (from an event_staff
+   * grant), ranked in that descending order of privilege. This is the
+   * single source of truth callers should use to decide what UI/actions
+   * to allow; don't re-derive owner/admin/event_staff checks elsewhere. */
+  getAccessRole(userId: string, eventId: string): Promise<TicketAccessRole | null>;
+
+  /** Convenience shorthand for "does this user have ANY ticketing access
+   * at all for this event" (equivalent to
+   * `(await getAccessRole(userId, eventId)) !== null`). Reach for
+   * getAccessRole() directly instead when you need to distinguish
+   * scan-only volunteers from staff/organizer-level access — see the
+   * per-action role table in docs/api/README.md. */
   isAuthorizedStaff(userId: string, eventId: string): Promise<boolean>;
 
   listEventStaff(eventId: string): Promise<EventStaffGrant[]>;

@@ -229,25 +229,29 @@ new ticket action, add a `handleX` function and a `HANDLERS` entry inside
 `[action].ts` rather than a new file under `api/tickets/`.
 
 All actions use the same `getSupabaseAdmin()`/`requireAuth()` helpers as
-above, plus a ticketing-specific `isAuthorizedTicketStaff()` check
-(`api/tickets/_utils.ts`) — event owner, global admin, or an explicit
-`event_staff` grant.
+above, plus a ticketing-specific role hierarchy
+(`api/tickets/_utils.ts`'s `hasTicketAccess()`): **volunteer < staff <
+organizer < owner** (event creator and global admins both resolve to
+"owner"). Each action requires a *minimum* role, not just "any
+`event_staff` grant" — a scan-only volunteer grant, for example, cannot
+cancel a ticket or view the admin dashboard, even though it could before
+this was enforced (see ADR 0007's amendment for the history).
 
-| Action (`?action=`) | Method | Auth | Purpose |
+| Action (`?action=`) | Method | Minimum role | Purpose |
 |---|---|---|---|
 | `get` | GET | None — token is the credential | Resolve a ticket for the `/ticket/:token` page |
-| `my` | GET | User | List the caller's own tickets (dashboard access) |
-| `generate` | POST | Staff | Manually generate a ticket for one registration |
-| `checkin` | POST | Staff, rate-limited | The scanner's core atomic check-in call |
-| `sync` | POST | Staff | Batch-upload queued offline scans |
-| `validate` | GET | Staff | Read-only "what would this token resolve to" check |
-| `cancel` | POST | Staff | Revoke a ticket |
-| `reissue` | POST | Staff | Cancel + issue a replacement ticket |
-| `search` | GET | Staff | Admin dashboard participant/ticket-code search |
-| `stats` | GET | Staff | Live attendance statistics |
-| `manifest` | GET | Staff | Offline manifest download for the scanner PWA |
-| `enable` | POST | Owner/admin | Turn ticketing on/off for an event, backfill tickets |
-| `staff` | POST/DELETE | Owner/admin | Grant/revoke scanner access for a volunteer |
+| `my` | GET | Any authenticated user | List the caller's own tickets (dashboard access) |
+| `checkin` | POST | volunteer, rate-limited | The scanner's core atomic check-in call |
+| `sync` | POST | volunteer | Batch-upload queued offline scans |
+| `validate` | GET | volunteer | Read-only "what would this token resolve to" check |
+| `manifest` | GET | volunteer | Offline manifest download for the scanner PWA |
+| `generate` | POST | staff | Manually generate a ticket for one registration |
+| `cancel` | POST | staff | Revoke a ticket |
+| `reissue` | POST | staff | Cancel + issue a replacement ticket |
+| `search` | GET | staff | Admin dashboard participant/ticket-code search |
+| `stats` | GET | staff | Live attendance statistics |
+| `enable` | POST | owner (event creator or global admin only — not staff-tier) | Turn ticketing on/off for an event, backfill tickets |
+| `staff` | POST/DELETE | owner (same as above) | Grant/revoke scanner access for a volunteer |
 
 Every mutation (`generate`, `checkin`, `sync`, `cancel`, `reissue`)
 delegates to a `SECURITY DEFINER` Postgres RPC
