@@ -7,6 +7,7 @@ import type { IRegistrationService } from "@/core/services/interfaces/IRegistrat
 import type { RegistrationDTO } from "@/shared/dtos/registration.dto";
 import { toast } from "@/hooks/use-toast";
 import { formatDateTime } from "@/lib/timeUtils";
+import { getRegistrationTableName } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Trash2 } from "lucide-react";
 
@@ -45,7 +46,7 @@ export default function OrganizerRegistrations({
 
       // Fetch team names for registrations with team_id
       const teamIds = Array.from(
-        new Set(regs.map((r) => r.team_id).filter(Boolean)),
+        new Set(regs.map((r) => r.teamId).filter(Boolean)),
       ) as string[];
       if (teamIds.length > 0) {
         const { data: teams } = await supabase
@@ -110,7 +111,7 @@ export default function OrganizerRegistrations({
   };
 
   const getTeamName = (r: RegistrationRow) => {
-    if (r.team_id && teamMap[r.team_id]) return teamMap[r.team_id];
+    if (r.teamId && teamMap[r.teamId]) return teamMap[r.teamId];
 
     try {
       if (!r.message) return "-";
@@ -120,6 +121,34 @@ export default function OrganizerRegistrations({
     } catch (e) {
       return "-";
     }
+  };
+
+  // CSV/Markdown export — one row per registration, mirroring the columns
+  // already shown in the table below (name, team, status, registered date).
+  const csvEscape = (value: unknown) => {
+    const s = value === null || value === undefined ? "" : String(value);
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+
+  const generateCSV = (rows: RegistrationRow[]) => {
+    const header = ["Name", "Email", "Team", "Status", "Role", "Registered At"];
+    const lines = rows.map((r) =>
+      [r.name ?? "", r.email ?? "", getTeamName(r), r.status ?? "", r.role ?? "", r.createdAt]
+        .map(csvEscape)
+        .join(","),
+    );
+    return [header.join(","), ...lines].join("\n");
+  };
+
+  const generateMarkdown = (rows: RegistrationRow[]) => {
+    const header = "| Name | Email | Team | Status | Role | Registered At |";
+    const divider = "| --- | --- | --- | --- | --- | --- |";
+    const mdEscape = (value: unknown) => String(value ?? "").replace(/\|/g, "\\|");
+    const lines = rows.map(
+      (r) =>
+        `| ${mdEscape(r.name)} | ${mdEscape(r.email)} | ${mdEscape(getTeamName(r))} | ${mdEscape(r.status)} | ${mdEscape(r.role)} | ${mdEscape(formatDateTime(r.createdAt))} |`,
+    );
+    return [header, divider, ...lines].join("\n");
   };
 
   const handleSort = (key: string) => {
@@ -142,8 +171,8 @@ export default function OrganizerRegistrations({
       aVal = getTeamName(a).toLowerCase();
       bVal = getTeamName(b).toLowerCase();
     } else if (sortConfig.key === "created_at") {
-      aVal = new Date(a.created_at).getTime();
-      bVal = new Date(b.created_at).getTime();
+      aVal = new Date(a.createdAt).getTime();
+      bVal = new Date(b.createdAt).getTime();
     } else {
       const key = sortConfig.key as keyof RegistrationRow;
       aVal = String(a[key] || "").toLowerCase();
@@ -317,7 +346,7 @@ export default function OrganizerRegistrations({
                     {index + 1}
                   </td>
                   <td className="py-3 text-xs text-muted-foreground">
-                    {formatDateTime(r.created_at)}
+                    {formatDateTime(r.createdAt)}
                   </td>
                   <td className="py-3 font-medium">{r.name}</td>
                   <td className="py-3">

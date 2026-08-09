@@ -104,7 +104,7 @@ export default function DiscordLink() {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        class="max-w-md w-full bg-card border border-border/50 p-8 rounded-3xl shadow-2xl space-y-8"
+        className="max-w-md w-full bg-card border border-border/50 p-8 rounded-3xl shadow-2xl space-y-8"
       >
         <div className="flex justify-center">
           <div className="w-20 h-20 rounded-2xl bg-[#5865F2]/10 flex items-center justify-center">

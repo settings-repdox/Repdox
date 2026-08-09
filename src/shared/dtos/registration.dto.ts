@@ -23,4 +23,10 @@ export interface RegistrationDTO {
   expectedMembers?: number | null;
   editCount?: number | null;
   message?: string | null;
+  /** Legacy check-in flag on event_registrations, kept in sync by the
+   * ticketing system's check_in_ticket() RPC for backward compatibility
+   * with this DTO's consumers (see ADR 0007) — the tickets domain
+   * (src/domains/tickets) is the authoritative source for check-in
+   * status; this is a read-only mirror of it. */
+  checkInStatus?: string | null;
 }

@@ -146,6 +146,8 @@ export type Database = {
           instagram_url: string | null;
           portfolio_url: string | null;
           custom_links: Json | null;
+          discord_id: string | null;
+          discord_username: string | null;
         };
         Insert: {
           id?: string;
@@ -167,6 +169,8 @@ export type Database = {
           instagram_url?: string | null;
           portfolio_url?: string | null;
           custom_links?: Json | null;
+          discord_id?: string | null;
+          discord_username?: string | null;
         };
         Update: {
           id?: string;
@@ -188,6 +192,35 @@ export type Database = {
           instagram_url?: string | null;
           portfolio_url?: string | null;
           custom_links?: Json | null;
+          discord_id?: string | null;
+          discord_username?: string | null;
+        };
+        Relationships: [];
+      };
+      discord_link_requests: {
+        Row: {
+          id: string;
+          token: string;
+          discord_id: string;
+          discord_username: string;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          token: string;
+          discord_id: string;
+          discord_username: string;
+          expires_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          token?: string;
+          discord_id?: string;
+          discord_username?: string;
+          expires_at?: string;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -520,6 +553,48 @@ export type Database = {
         ];
       };
 
+      volunteer_applications: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string | null;
+          full_name: string;
+          email: string;
+          phone: string;
+          role_preference: string;
+          motivation: string;
+          status: "pending" | "interview" | "approved" | "rejected";
+          interview_time: string | null;
+          meet_link: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string | null;
+          full_name: string;
+          email: string;
+          phone: string;
+          role_preference: string;
+          motivation: string;
+          status?: "pending" | "interview" | "approved" | "rejected";
+          interview_time?: string | null;
+          meet_link?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string | null;
+          full_name?: string;
+          email?: string;
+          phone?: string;
+          role_preference?: string;
+          motivation?: string;
+          status?: "pending" | "interview" | "approved" | "rejected";
+          interview_time?: string | null;
+          meet_link?: string | null;
+        };
+        Relationships: [];
+      };
       profile_verifications: {
         Row: {
           id: string;

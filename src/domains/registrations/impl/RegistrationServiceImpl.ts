@@ -46,6 +46,7 @@ function normalizeRow(row: any): RegistrationDTO {
         : row.message
           ? JSON.stringify(row.message)
           : null,
+    checkInStatus: row.check_in_status ?? null,
   } as RegistrationDTO;
 }
 

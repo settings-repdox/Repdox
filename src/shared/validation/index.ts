@@ -23,9 +23,7 @@ export function validateDTO<T>(
 ): string[] {
   const errors: string[] = [];
   Object.keys(validators).forEach((k) => {
-    // @ts-expect-error dynamic access
     const validator = validators[k as keyof T];
-    // @ts-expect-error dynamic access
     const value = (dto as any)[k];
     if (validator && !validator(value)) errors.push(String(k));
   });

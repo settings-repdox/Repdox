@@ -5,15 +5,21 @@ import type { UserDTO } from "../../../shared/dtos/user.dto";
 export class UserServiceImpl implements IUserService {
   async getUser(id: string): Promise<UserDTO | null> {
     const { data, error } = await supabase
-      .from("profiles")
-      .select("id, display_name, email, avatar_url")
-      .eq("id", id)
+      .from("user_profiles")
+      .select("user_id, full_name, avatar_url")
+      .eq("user_id", id)
       .single();
     if (error || !data) return null;
     return {
-      id: data.id,
-      displayName: data.display_name || "",
-      email: data.email,
+      id: data.user_id,
+      displayName: data.full_name || "",
+      // user_profiles has no email column — email lives in auth.users,
+      // which requires the service-role admin API (server-side only) to
+      // look up by an arbitrary user id. Left undefined here rather than
+      // guessed at; callers that need another user's email should go
+      // through a server-side route (see api/tickets/_utils.ts's
+      // isGlobalAdmin for the admin-API pattern).
+      avatarUrl: data.avatar_url || undefined,
     };
   }
 

@@ -61,7 +61,7 @@ export default function Contact() {
       });
 
       // Handle empty or non-JSON responses
-      let data = {};
+      let data: { error?: string; message?: string; success?: boolean } = {};
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const text = await response.text();

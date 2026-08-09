@@ -126,7 +126,7 @@ export async function getVolunteerApplications(): Promise<
   VolunteerApplication[]
 > {
   const { data, error } = await supabase
-    .from("volunteer_applications" as any)
+    .from("volunteer_applications")
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -155,7 +155,7 @@ export async function updateVolunteerStatus(
   if (meetLink) updateData.meet_link = meetLink;
 
   const { error } = await supabase
-    .from("volunteer_applications" as any)
+    .from("volunteer_applications")
     .update(updateData)
     .eq("id", applicationId);
 

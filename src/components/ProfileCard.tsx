@@ -113,9 +113,9 @@ export interface UserData {
 }
 
 export interface EventRegistration {
-  role?: keyof typeof ROLE_THEMES;
-  check_in_status?: string;
-  registration_id?: string;
+  id?: string;
+  role?: string;
+  checkInStatus?: string | null;
   committee?: string;
   position?: string;
   country?: string;
@@ -224,17 +224,17 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
 
   const roleTheme = useMemo(() => {
     if (mode === "event" && eventRegistration?.role) {
-      return ROLE_THEMES[eventRegistration.role] || ROLE_THEMES.participant;
+      return ROLE_THEMES[eventRegistration.role as keyof typeof ROLE_THEMES] || ROLE_THEMES.participant;
     }
     return { gradient: DEFAULT_INNER_GRADIENT, border: "#71C4FF" };
   }, [mode, eventRegistration]);
 
-  const Data = useMemo(() => {
+  const qrData = useMemo(() => {
     // QR only used for event registration check-in. Do not expose profile URL via QR.
     if (mode === "event" && eventRegistration) {
-      // We only send the registration_id to keep the QR code simple and easy to scan.
+      // We only send the registration id to keep the QR code simple and easy to scan.
       // The admin scanner will use the selected event from its dropdown to find the table.
-      return eventRegistration.registration_id;
+      return eventRegistration.id;
     }
     return null;
   }, [mode, userData, eventRegistration, eventData]);
@@ -571,7 +571,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
             <span>{eventData?.type?.toUpperCase() || "EVENT"}</span>
           </div>
           <div className="status-badge">
-            {eventRegistration?.check_in_status === "checked_in" ? (
+            {eventRegistration?.checkInStatus === "checked_in" ? (
               <CheckCircle size={18} color="#4ade80" />
             ) : (
               <Clock size={18} color="#fbbf24" />
@@ -637,7 +637,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
             <span className="label" style={{ marginTop: "8px" }}>
               REG ID
             </span>
-            <span className="value">{eventRegistration?.registration_id}</span>
+            <span className="value">{eventRegistration?.id}</span>
           </div>
           {/* Render QR securely on the right side to prevent clipping */}
           {qrData && (
@@ -829,7 +829,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
                   Registration ID
                 </p>
                 <p className="font-mono text-lg text-black font-bold">
-                  {eventRegistration?.registration_id}
+                  {eventRegistration?.id}
                 </p>
               </div>
 

@@ -40,7 +40,7 @@ export class SupabaseEventRepository implements IEventRepository {
     const { data, error } = await supabase
       .from("events")
       .insert([
-        dto as Partial<Database["public"]["Tables"]["events"]["Insert"]>,
+        dto as unknown as Database["public"]["Tables"]["events"]["Insert"],
       ])
       .select()
       .single();

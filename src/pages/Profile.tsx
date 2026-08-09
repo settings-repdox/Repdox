@@ -46,6 +46,7 @@ import Dashboard from "./Dashboard";
 import EmailChangeModal from "@/components/EmailChangeModal";
 import { resolveService } from "@/core/services/di";
 import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 
 const registrationService = () =>
   resolveService<IRegistrationService>("RegistrationService");
@@ -73,12 +74,13 @@ interface UserProfile {
 
 interface RegistrationWithEvent {
   id: string;
-  user_id: string;
-  event_id: string;
+  userId?: string | null;
+  eventId: string;
   role?: string | null;
   status?: string | null;
   message?: string | null;
-  created_at: string;
+  createdAt: string;
+  checkInStatus?: string | null;
   events: {
     id: string;
     title: string;
@@ -359,7 +361,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (selectedEventId) {
-      const reg = userEvents.find((e) => e.event_id === selectedEventId);
+      const reg = userEvents.find((e) => e.eventId === selectedEventId);
       setSelectedEventReg(reg);
     } else {
       setSelectedEventReg(null);
@@ -380,7 +382,7 @@ export default function Profile() {
       }
 
       const eventIds = Array.from(
-        new Set(registrations.map((r) => r.event_id)),
+        new Set(registrations.map((r) => r.eventId)),
       );
       // Resolve event details via Event core when possible
       const eventsResolved = await Promise.all(
@@ -390,7 +392,7 @@ export default function Profile() {
               mod.registerDefaults();
               return import("@/core/services/di").then((di) =>
                 di
-                  .resolveService("EventService")
+                  .resolveService<IEventService>("EventService")
                   .getEvent(id)
                   .catch(() => null),
               );
@@ -403,7 +405,7 @@ export default function Profile() {
         ...reg,
         events:
           (eventsResolved.find(
-            (e: any) => e && e.id === reg.event_id,
+            (e: any) => e && e.id === reg.eventId,
           ) as any) || null,
       }));
 
@@ -1369,7 +1371,7 @@ export default function Profile() {
                           >
                             <option value="">Choose an event...</option>
                             {userEvents.map((evt) => (
-                              <option key={evt.id} value={evt.event_id}>
+                              <option key={evt.id} value={evt.eventId}>
                                 {evt.events?.title} -{" "}
                                 {evt.role?.replace("_", " ").toUpperCase()}
                               </option>

@@ -1,6 +1,10 @@
 import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";
+import type {
+  TournamentStatus,
+  TournamentRecord,
+} from "@/domains/gaming/dtos/tournament.dto";
 
 // Re-export types from domain DTO (Phase 9: consolidation)
 // DEPRECATED: import directly from @/domains/gaming/dtos/tournament.dto instead

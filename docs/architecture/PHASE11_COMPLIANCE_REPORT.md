@@ -246,20 +246,58 @@ the one command that actually performs a full check —
 `CONTRIBUTING.md` updated to require it before every PR, and to stop
 recommending bare `tsc --noEmit`.
 
-**Not fixed**: the 70 pre-existing errors themselves. They span
-`src/components/OrganizerRegistrations.tsx`, `src/components/ProfileCard.tsx`,
-`src/core/services/impl/{PermissionServiceImpl,UserServiceImpl}.ts`
-(both querying a `profiles` table that doesn't match the generated
-`Database` type — possibly meant to be `user_profiles`, unconfirmed),
-`src/domains/events/impl/SupabaseEventRepository.ts`, `src/lib/{adminService,
-eventImages,tournamentService}.ts`, `src/pages/{Contact,DiscordLink,
-MatchCentre,Profile}.tsx`, `src/shared/validation/index.ts`, and
-`src/tests/integration/event-workflows.test.ts`. None of these were
-touched by the ticketing/role-enforcement work — they're a separate,
-substantial pre-existing cleanup task. Given they've been invisible to
-every prior type-check for an unknown length of time without apparently
-causing runtime failures, they're likely either dead code paths, cases
-where the generated Supabase types have drifted from the real schema (a
-recurring theme — see the `events` table schema gap noted earlier in this
-report), or genuinely broken-but-unexercised code. Worth triaging as its
-own task, file by file, rather than bulk-fixing blind.
+**Update — all 70 fixed in a follow-up pass.** File-by-file triage (not a
+blind bulk fix) turned up a mix of real, previously-invisible bugs:
+
+- **Two live runtime bugs that would have crashed on use**:
+  `OrganizerRegistrations.tsx`'s CSV/Markdown export buttons called
+  `generateCSV`/`generateMarkdown`, which didn't exist anywhere in the
+  codebase — implemented now. `ProfileCard.tsx`'s QR code data came from
+  `const   Data = useMemo(...)` — literally a typo where "qr" had been
+  deleted from `qrData`, so every reference to `qrData` was a
+  `ReferenceError` waiting to happen. (This one recurred once after a
+  manual edit reverted it via an unrelated text change — refixed; if you
+  ever see the QR code silently not render on this page, check this
+  variable name first.)
+- **Two "profiles" vs. `user_profiles` mismatches**: `PermissionServiceImpl.ts`
+  and `UserServiceImpl.ts` both queried a `"profiles"` table that's never
+  existed in this schema — confirmed via `check_in_ticket()`'s RPC, which
+  successfully queries `user_profiles.full_name` elsewhere. Also surfaced:
+  `user_profiles` has no `email` column at all (email lives in
+  `auth.users`), so `isUserAdmin(userId)` for an arbitrary *other* user's
+  id can't actually be resolved client-side without the service-role
+  admin API — it now fails closed (not admin) for that case instead of
+  running a query that always silently returned false.
+- **Three more DTO-vs-schema drifts**, same root cause as `bracket_url`
+  (ADR 0004) and `ticketing_enabled` (this document, main body): `EventDTO`
+  was missing `ticketing_enabled`/`ticket_gates`; `RegistrationDTO` was
+  missing `checkInStatus` (needed for the ticketing backward-compat sync —
+  the repository wasn't even mapping the column into the DTO); the gaming
+  domain's `TournamentRecord`/`TournamentTeamRecord`/`TournamentMatchRecord`/
+  `TournamentMapRecord` were missing a dozen-plus fields
+  (`stream_platform`, `stage_label`, `map_status`, etc.) that
+  `MatchCentre.tsx` already used — all 25 of that file's errors were fixed
+  purely by correcting the DTOs it depends on, without touching the page
+  itself. Cross-checked against `supabase/migrations/*.sql` before adding
+  each field; two (`TournamentRecord.title`, `TournamentTeamRecord.region`)
+  have no migration evidence either way and are typed optional with an
+  explicit code comment saying so, rather than guessed at as confirmed.
+- **A genuinely missing table**: `discord_link_requests` (the Discord
+  account-linking flow) didn't exist in generated types at all — confirmed
+  real and live by cross-referencing `repdox-discord-bot/index.ts`'s own
+  code independently, then added via
+  `supabase/migrations/202607190001_document_discord_link_schema.sql`
+  (same "document what's already live" pattern as the `bracket_url` fix).
+  Same for `volunteer_applications`, which `adminService.ts` had already
+  worked around with an `as any` cast — removed now that it's typed.
+- **The rest** were narrower: `export type {...} from` re-exports don't
+  bring names into local scope for use in the same file
+  (`tournamentService.ts`); an object literal typed as `{}` doesn't widen
+  on reassignment (`Contact.tsx`); a `Partial<EventDTO>` can't satisfy a
+  Supabase `Insert` type's required fields at the type level even though
+  callers supply them at runtime (`SupabaseEventRepository.ts`); a couple
+  of stale `@ts-expect-error` directives and one test fixture missing a
+  field it was asserting on.
+
+Verified: `npm test` (139 passing, unchanged), `npm run typecheck` (0
+errors), `npm run build` (clean).

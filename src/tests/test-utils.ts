@@ -263,7 +263,7 @@ export function createMockAuthService() {
  * Test Data Builders
  */
 export const testDataBuilder = {
-  event: (overrides = {}) => ({
+  event: (overrides: Record<string, unknown> = {}) => ({
     id: "event-123",
     title: "Test Event",
     slug: "test-event",
@@ -279,6 +279,7 @@ export const testDataBuilder = {
     created_by: "user-123",
     is_active: true,
     tags: ["test", "event"],
+    status: undefined as string | undefined,
     ...overrides,
   }),
 

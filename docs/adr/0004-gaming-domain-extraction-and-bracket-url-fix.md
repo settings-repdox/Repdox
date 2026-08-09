@@ -82,14 +82,26 @@ documentation almost shipping a claim that didn't match reality.
   path** — see Gaps below.
 - The gaming domain's DTOs use `[key: string]: unknown` index signatures on
   every record type (`TournamentRecord`, `TournamentTeamRecord`,
-  `TournamentMatchRecord`). This was a pragmatic choice to avoid needing a
-  full migration/type audit of every column the esports schema uses, but it
-  means TypeScript won't catch a typo'd or genuinely-missing column the way
-  it would for a fully-typed interface — the exact class of bug that caused
-  the `bracket_url` incident in the first place. A stricter `IGamingService`
-  contract (dropping the index signature once the schema is fully audited)
-  is worth revisiting; not done in this pass to avoid scope creep beyond
-  the reported bug.
+  `TournamentMatchRecord`, `TournamentMapRecord`). This was a pragmatic
+  choice to avoid needing a full migration/type audit of every column the
+  esports schema uses, but it means TypeScript won't catch a typo'd or
+  genuinely-missing column the way it would for a fully-typed interface —
+  the exact class of bug that caused the `bracket_url` incident in the
+  first place, and the same class of bug that later caused all 25 of
+  `MatchCentre.tsx`'s type errors once `npm run typecheck` was actually
+  run correctly (see
+  `docs/architecture/PHASE11_COMPLIANCE_REPORT.md`'s addendum) — a dozen-
+  plus real, migration-confirmed columns (`stream_platform`, `stage_label`,
+  `map_status`, etc.) had never been added to these DTOs despite
+  `MatchCentre.tsx` already depending on them. Those specific fields are
+  now declared explicitly (with two exceptions —
+  `TournamentRecord.title`/`TournamentTeamRecord.region` — that have no
+  migration evidence and are commented as such). The index signatures
+  themselves remain, so this class of bug can still recur for any *new*
+  field a future page starts reading before it's added to the DTO — a
+  stricter contract that drops the index signature entirely is still
+  worth revisiting, just no longer blocked on "the schema is unaudited,"
+  since the audit above covers what's confirmed real as of this fix.
 - This incident is the concrete motivating example for the "verify
   documentation matches implementation" and schema-drift concerns raised in
   `docs/architecture/PHASE11_COMPLIANCE_REPORT.md` — the `events` table's
