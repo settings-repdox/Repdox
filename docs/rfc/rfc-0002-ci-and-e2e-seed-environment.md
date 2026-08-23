@@ -1,6 +1,9 @@
 # RFC 0002: CI Pipeline and a Seeded E2E Environment
 
-Status: **Open — proposed, not yet approved or scheduled**
+Status: **Partially resolved.** The CI-pipeline half (below) shipped as
+`.github/workflows/ci.yml` — see "CI" section for what actually landed
+vs. what was proposed. The seeded-E2E-environment half is still
+**open — proposed, not yet approved or scheduled**.
 Author: Phase 11 documentation pass
 Related: ADR 0006 (Testing Strategy), `TECHNICAL_DEBT_PHASE10.md`
 
@@ -9,13 +12,15 @@ Related: ADR 0006 (Testing Strategy), `TECHNICAL_DEBT_PHASE10.md`
 Phase 10 built a real test suite (90 Vitest tests, 4 Playwright E2E specs),
 but:
 
-1. **Nothing runs the test suite automatically.** One GitHub Actions
-   workflow exists (`.github/workflows/deploy-send-verification.yml`), but
-   it only deploys `functions/send-verification` and
+1. **~~Nothing runs the test suite automatically~~ — resolved.** One
+   GitHub Actions workflow existed
+   (`.github/workflows/deploy-send-verification.yml`), but it only
+   deployed `functions/send-verification` and
    `functions/export-registrations-xlsx` to Supabase on push to `main` —
-   it does not run `npm test`, `npm run lint`, or `npm run build`. There is
-   no CI job that runs the Vitest suite, the verify scripts, or a build
-   check on every push/PR.
+   it didn't run `npm run typecheck`, `npm test`, `npm run lint`, or `npm
+   run build`. A second workflow, `.github/workflows/ci.yml`, now does —
+   see "CI" section below for exactly what it runs and why lint is
+   non-blocking for now.
 2. **The E2E suite has never actually executed**, anywhere, because it
    needs (a) Playwright's browser binaries, downloaded from a CDN that
    isn't reachable from every environment this project might be developed
@@ -26,29 +31,41 @@ but:
 
 ## Proposal
 
-### CI
+### CI — **implemented**, with two deliberate deviations from the original proposal
 
-Add a **new** GitHub Actions workflow (`.github/workflows/ci.yml`) that on
-every push/PR to `main`:
+`.github/workflows/ci.yml` runs on every push/PR to `main`:
 
 1. `npm ci`
-2. `npm run lint`
-3. `npm test` (Vitest — unit, integration, broadcast, architecture; ~10-15s)
-4. `npm run build` (catches type errors and build breaks)
+2. `npm run typecheck` (added — wasn't in the original proposal below,
+   because `npm run typecheck` itself didn't exist yet when this RFC was
+   written; see `docs/architecture/PHASE11_COMPLIANCE_REPORT.md`'s
+   addendum for why bare `tsc --noEmit`/`npm run build` don't actually
+   catch type errors and this had to be a separate step)
+3. `npm test -- run` (Vitest — unit, integration, broadcast, architecture; ~15-20s)
+4. `npm run build`
+
+**Lint is a separate, non-blocking job** (`continue-on-error: true`),
+not a required step in the same job as originally proposed — the
+codebase has ~270 pre-existing lint errors as of this writing, so making
+it required would fail every PR immediately for reasons the PR author
+didn't cause. Flip it to required once that backlog is cleared.
+
+Original proposal, for reference (superseded by the above):
+
+~~1. `npm ci`~~
+~~2. `npm run lint`~~
+~~3. `npm test` (Vitest — unit, integration, broadcast, architecture; ~10-15s)~~
+~~4. `npm run build` (catches type errors and build breaks)~~
 
 This is separate and independent from the existing
-`.github/workflows/deploy-send-verification.yml`, which should keep
-deploying on its own trigger (paths under `functions/send-verification/**`
-and `functions/export-registrations-xlsx/**`) — no change proposed to
-that workflow here, other than possibly gating it behind the new CI job
-passing first, which is a nice-to-have, not required for this RFC.
+`.github/workflows/deploy-send-verification.yml`, which keeps deploying
+on its own trigger (paths under `functions/send-verification/**` and
+`functions/export-registrations-xlsx/**`) — unchanged.
 
-E2E (`npm run test:e2e`) is proposed as a **separate, non-blocking**
-workflow or job for now (see below), not part of the required checks —
-until the seed-data problem is solved, a flaky/skipped E2E job would just
-train people to ignore CI failures.
+E2E (`npm run test:e2e`) is **not** wired into `ci.yml` — still blocked
+on the seeded environment below, same reasoning as originally proposed.
 
-### Seeded E2E environment
+### Seeded E2E environment — still open
 
 Stand up a dedicated Supabase project (or use the Supabase CLI's local
 Postgres + `supabase start`) exclusively for E2E runs, with a seed script
@@ -90,14 +107,17 @@ e2e:
 
 ## Recommendation
 
-Both pieces (CI wiring for the fast Vitest suite, and the seeded E2E
-environment) — but the Vitest-CI half is small and can ship independently
-and immediately; the seeded-environment half is the larger, more open-ended
-piece and should be scoped as its own Phase 12 task once someone audits
-exactly what fixture data each planned E2E spec needs.
+~~Both pieces~~ — the CI half shipped (see above); only the seeded E2E
+environment remains, and it should stay scoped as its own task once
+someone audits exactly what fixture data each planned E2E spec needs —
+that scoping work hasn't happened yet.
 
 ## Next step if approved
 
-Convert to an ADR once approved, per `docs/rfc/rfc-process.md`. Split into
-two implementation tasks (CI wiring; E2E seed environment) since they have
-very different effort and can land independently.
+~~Convert to an ADR once approved, per `docs/rfc/rfc-process.md`. Split
+into two implementation tasks (CI wiring; E2E seed environment) since
+they have very different effort and can land independently.~~ CI wiring
+is done and didn't get its own ADR — it's small/mechanical enough that
+this RFC's own record of what shipped (above) serves as the decision
+record. The E2E seed environment remains open; convert *that* to an ADR
+once someone scopes and approves it.

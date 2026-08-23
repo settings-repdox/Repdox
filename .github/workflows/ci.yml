@@ -1,0 +1,68 @@
+name: CI
+
+# Runs on every push/PR to main. This is the fix for a real failure mode:
+# a local merge can silently revert someone else's fix (see the git
+# history around commit cace1eb for a concrete example — a merge
+# conflict resolution quietly undid a bug fix, and nothing caught it
+# until the next deploy). Without this workflow, the only thing
+# standing between a bad merge and production was someone remembering
+# to run `npm test`/`npm run typecheck`/`npm run build` by hand first.
+#
+# See docs/architecture/PHASE11_COMPLIANCE_REPORT.md and RFC 0002
+# (docs/rfc/rfc-0002-ci-and-e2e-seed-environment.md) for the fuller
+# writeup of why this didn't exist until now and what's still out of
+# scope (E2E — needs a seeded Supabase project, tracked separately).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test -- run
+
+      - name: Build
+        run: npm run build
+
+  lint:
+    name: Lint (non-blocking)
+    runs-on: ubuntu-latest
+    # Reported, not required — the codebase has ~270 pre-existing lint
+    # errors as of this workflow's introduction (mostly
+    # @typescript-eslint/no-explicit-any in api/ routes and test mocks,
+    # matching established-if-imperfect conventions documented in
+    # docs/architecture/PHASE11_COMPLIANCE_REPORT.md). Making this a
+    # required check today would fail on every PR for reasons the PR
+    # author didn't cause, which teaches people to ignore CI rather than
+    # trust it. Flip `continue-on-error` to `false` once that backlog is
+    # actually cleared, at which point this becomes a real regression
+    # gate instead of a status report.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint

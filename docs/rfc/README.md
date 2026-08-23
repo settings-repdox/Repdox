@@ -9,7 +9,7 @@ See `rfc-process.md` for workflow details.
 | # | Title | Status |
 |---|---|---|
 | 0001 | [Composition root location](rfc-0001-composition-root-location.md) | Open — proposed in Phase 11, not yet scheduled |
-| 0002 | [CI pipeline and seeded E2E environment](rfc-0002-ci-and-e2e-seed-environment.md) | Open — proposed in Phase 11, not yet scheduled |
+| 0002 | [CI pipeline and seeded E2E environment](rfc-0002-ci-and-e2e-seed-environment.md) | CI half shipped (`.github/workflows/ci.yml`); E2E seed environment still open |
 
 Once an RFC is approved, convert it to an ADR under `docs/adr/`, link the
 ADR number back into this table's Status column, and move the RFC file's

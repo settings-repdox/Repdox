@@ -59,6 +59,11 @@ npm run dev
 
 ## Before opening a PR
 
+`.github/workflows/ci.yml` runs `npm run typecheck`, `npm test`, and
+`npm run build` automatically on every push/PR — but don't rely on it to
+catch things for you; run these locally first so you're not waiting on
+CI to tell you something you could've caught in ten seconds:
+
 ```bash
 npm test          # unit + integration + broadcast + architecture (~10-15s)
 npm run lint

@@ -111,14 +111,15 @@ green.
    when run with a seeded event. Same for `EventTournament.tsx`,
    `MatchCentre.tsx`, and the admin pages.
 
-6. **No CI runs the test suite.** One GitHub Actions workflow exists
-   (`.github/workflows/deploy-send-verification.yml`), but it only deploys
-   two Edge Functions on push to `main` — it doesn't run tests, lint, or a
-   build check. `npm test`, `npm run test:coverage`, `npm run verify:infra`,
-   `npm run verify:production-deps`, and `npm run test:e2e` are all scripts
-   a person has to remember to run by hand before merging. (Corrected in
-   Phase 11 — this item previously said no CI configuration existed at
-   all, which was wrong; see `docs/rfc/rfc-0002-ci-and-e2e-seed-environment.md`.)
+6. **~~No CI runs the test suite~~ — resolved.** A second workflow,
+   `.github/workflows/ci.yml`, now runs `npm run typecheck`, `npm test --
+   run`, and `npm run build` as required checks on every push/PR to
+   `main`, plus `npm run lint` as a non-blocking report (the codebase has
+   ~270 pre-existing lint errors as of this writing — see
+   `docs/architecture/PHASE11_COMPLIANCE_REPORT.md` — making lint
+   required today would fail every PR for reasons the author didn't
+   cause). `.github/workflows/deploy-send-verification.yml` is unchanged
+   and still only handles its own two Edge Functions.
 
 ## Suggested order for Phase 11+
 
