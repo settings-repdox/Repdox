@@ -18,17 +18,20 @@ import {
   Sparkles,
   Clock,
 } from "lucide-react";
-import { isGamingEvent } from "@/lib/tournamentService";
 import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
+import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";
 
 registerDefaults();
 
 const registrationService = () =>
   resolveService<IRegistrationService>("RegistrationService");
 const eventService = () => resolveService<IEventService>("EventService");
+const userService = () => resolveService<IUserService>("UserService");
+const gamingService = () => resolveService<IGamingService>("GamingService");
 
 export default function EventRegister() {
   const { slug } = useParams();
@@ -87,7 +90,7 @@ export default function EventRegister() {
     null,
   );
   const [hasDraft, setHasDraft] = useState(false);
-  const isGaming = Boolean(eventMeta && isGamingEvent(eventMeta as any));
+  const isGaming = Boolean(eventMeta && gamingService().isGamingEvent(eventMeta as any));
 
   // Auto-save draft to local storage
   useEffect(() => {
@@ -165,84 +168,44 @@ export default function EventRegister() {
     const fetchEventAndRegistration = async () => {
       if (!slug) return;
 
-      // Fetch Event ID, Slug, Title, and Discord Invite via Event core when available
+      // Fetch Event ID, Slug, Title, and Discord Invite via the events domain service
       let currentEventId = null;
       let currentEventSlug = null;
+
+      const applyEventData = (data: {
+        id: string;
+        slug: string;
+        title: string;
+        discord_invite: string | null;
+        type: unknown;
+        tags: string[] | null;
+      }) => {
+        currentEventId = data.id;
+        currentEventSlug = data.slug;
+        setEventId(data.id);
+        setEventTitle(data.title);
+        setDiscordInvite(data.discord_invite ?? null);
+        setEventMeta({
+          type: data.type as string | string[] | null,
+          slug: data.slug,
+          title: data.title,
+          tags: data.tags ?? null,
+        });
+      };
+
       try {
         const eventData = await eventService().getEventBySlug(slug || "");
         if (eventData) {
-          currentEventId = eventData.id;
-          currentEventSlug = eventData.slug;
-          setEventId(eventData.id);
-          setEventTitle(eventData.title);
-          setDiscordInvite(eventData.discord_invite ?? null);
-          setEventMeta({
-            type: eventData.type as string | string[] | null,
-            slug: eventData.slug,
-            title: eventData.title,
-            tags: eventData.tags ?? null,
-          });
+          applyEventData(eventData);
         } else {
-          // fallback to legacy query
-          const { data: latest } = await supabase
-            .from("events")
-            .select("id, slug, title, discord_invite, type, tags")
-            .limit(1)
-            .single();
-          if (latest) {
-            currentEventId = latest.id;
-            currentEventSlug = latest.slug;
-            setEventId(latest.id);
-            setEventTitle(latest.title);
-            setDiscordInvite(latest.discord_invite ?? null);
-            setEventMeta({
-              type: latest.type as string | string[] | null,
-              slug: latest.slug,
-              title: latest.title,
-              tags: latest.tags ?? null,
-            });
-          }
+          // Fallback: no event matches this slug, grab the most recent event
+          const [latest] = await eventService().listEvents({ limit: 1 });
+          if (latest) applyEventData(latest);
         }
       } catch (e) {
-        // fallback to legacy query
-        const { data: eventData } = await supabase
-          .from("events")
-          .select("id, slug, title, discord_invite, type, tags")
-          .eq("slug", slug)
-          .maybeSingle();
-
-        if (eventData) {
-          currentEventId = eventData.id;
-          currentEventSlug = eventData.slug;
-          setEventId(eventData.id);
-          setEventTitle(eventData.title);
-          setDiscordInvite(eventData.discord_invite ?? null);
-          setEventMeta({
-            type: eventData.type as string | string[] | null,
-            slug: eventData.slug,
-            title: eventData.title,
-            tags: eventData.tags ?? null,
-          });
-        } else {
-          const { data: latest } = await supabase
-            .from("events")
-            .select("id, slug, title, discord_invite, type, tags")
-            .limit(1)
-            .single();
-          if (latest) {
-            currentEventId = latest.id;
-            currentEventSlug = latest.slug;
-            setEventId(latest.id);
-            setEventTitle(latest.title);
-            setDiscordInvite(latest.discord_invite ?? null);
-            setEventMeta({
-              type: latest.type as string | string[] | null,
-              slug: latest.slug,
-              title: latest.title,
-              tags: latest.tags ?? null,
-            });
-          }
-        }
+        // Fallback: the slug lookup itself failed, grab the most recent event
+        const [latest] = await eventService().listEvents({ limit: 1 });
+        if (latest) applyEventData(latest);
       }
 
       if (currentEventId) setTableName("event_registrations");
@@ -289,11 +252,7 @@ export default function EventRegister() {
             null;
 
           if (resolvedTeamId && !teamName) {
-            const { data: teamData } = await supabase
-              .from("event_teams")
-              .select("name")
-              .eq("id", resolvedTeamId)
-              .maybeSingle();
+            const teamData = await eventService().getTeamById(resolvedTeamId);
             if (teamData) teamName = teamData.name;
           }
 
@@ -409,12 +368,10 @@ export default function EventRegister() {
       ) {
         if (!formData.isJoiningExisting) {
           // Check if team name is already taken for this event
-          const { data: nameCheck } = await supabase
-            .from("event_teams")
-            .select("id")
-            .eq("event_id", eventId)
-            .ilike("name", formData.teamName.trim())
-            .maybeSingle();
+          const nameCheck = await eventService().findTeamByName(
+            eventId,
+            formData.teamName.trim(),
+          );
 
           if (nameCheck) {
             throw new Error(
@@ -422,31 +379,29 @@ export default function EventRegister() {
             );
           }
 
-          const { data: newTeam, error: teamError } = await supabase
-            .from("event_teams")
-            .insert([
-              {
-                event_id: eventId,
-                name: formData.teamName.trim(),
-                max_members: parseInt(formData.memberCount),
-              },
-            ])
-            .select()
-            .single();
-
-          if (teamError)
-            throw new Error("Could not create team: " + teamError.message);
+          let newTeam: { id: string } | null = null;
+          try {
+            newTeam = await eventService().createTeam({
+              eventId,
+              name: formData.teamName.trim(),
+              maxMembers: parseInt(formData.memberCount),
+            });
+          } catch (teamError) {
+            const msg =
+              teamError instanceof Error
+                ? teamError.message
+                : String(teamError);
+            throw new Error("Could not create team: " + msg);
+          }
           if (newTeam) {
             teamId = newTeam.id;
             isNewTeamCreated = true;
           }
         } else {
-          const { data: existingTeam } = await supabase
-            .from("event_teams")
-            .select("id")
-            .eq("event_id", eventId)
-            .ilike("name", formData.teamName.trim())
-            .maybeSingle();
+          const existingTeam = await eventService().findTeamByName(
+            eventId,
+            formData.teamName.trim(),
+          );
 
           if (!existingTeam) {
             throw new Error(
@@ -508,7 +463,7 @@ export default function EventRegister() {
 
       if (submitError) {
         if (isNewTeamCreated && teamId)
-          await supabase.from("event_teams").delete().eq("id", teamId);
+          await eventService().deleteTeam(teamId);
         const errMsg = (submitError as any)?.message || String(submitError);
         const errCode = (submitError as any)?.code;
         if (errCode === "23505" || errMsg.includes("unique")) {

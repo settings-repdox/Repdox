@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { IEventRepository } from "../interfaces/IEventRepository";
-import type { EventDTO } from "../dtos/event.dto";
+import type { EventDTO, EventScheduleDTO, EventTeamDTO } from "../dtos/event.dto";
 
 export class SupabaseEventRepository implements IEventRepository {
   async getById(id: string): Promise<EventDTO | null> {
@@ -61,6 +61,112 @@ export class SupabaseEventRepository implements IEventRepository {
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from("events").delete().eq("id", id);
+    if (error) throw error;
+  }
+
+  async listSchedulesByEventId(eventId: string): Promise<EventScheduleDTO[]> {
+    const { data, error } = await supabase
+      .from("event_schedules")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("start_at", { ascending: true });
+    if (error || !data) return [];
+    return data.map((s) => ({
+      id: s.id,
+      eventId: s.event_id,
+      title: s.title,
+      description: s.description,
+      startAt: s.start_at,
+    }));
+  }
+
+  async listTeamsByEventId(eventId: string): Promise<EventTeamDTO[]> {
+    const { data, error } = await supabase
+      .from("event_teams")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: true });
+    if (error || !data) return [];
+    return data.map((t) => ({
+      id: t.id,
+      eventId: t.event_id,
+      name: t.name,
+      description: t.description,
+      contactEmail: t.contact_email,
+      maxMembers: t.max_members,
+    }));
+  }
+
+  async findTeamByName(
+    eventId: string,
+    name: string,
+  ): Promise<EventTeamDTO | null> {
+    const { data, error } = await supabase
+      .from("event_teams")
+      .select("*")
+      .eq("event_id", eventId)
+      .ilike("name", name)
+      .maybeSingle();
+    if (error || !data) return null;
+    return {
+      id: data.id,
+      eventId: data.event_id,
+      name: data.name,
+      description: data.description,
+      contactEmail: data.contact_email,
+      maxMembers: data.max_members,
+    };
+  }
+
+  async getTeamById(teamId: string): Promise<EventTeamDTO | null> {
+    const { data, error } = await supabase
+      .from("event_teams")
+      .select("*")
+      .eq("id", teamId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return {
+      id: data.id,
+      eventId: data.event_id,
+      name: data.name,
+      description: data.description,
+      contactEmail: data.contact_email,
+      maxMembers: data.max_members,
+    };
+  }
+
+  async createTeam(payload: {
+    eventId: string;
+    name: string;
+    maxMembers?: number | null;
+  }): Promise<EventTeamDTO> {
+    const { data, error } = await supabase
+      .from("event_teams")
+      .insert([
+        {
+          event_id: payload.eventId,
+          name: payload.name,
+          max_members: payload.maxMembers ?? null,
+        },
+      ])
+      .select()
+      .single();
+    if (error || !data) throw error || new Error("Team creation failed");
+    return {
+      id: data.id,
+      eventId: data.event_id,
+      name: data.name,
+      description: data.description,
+      contactEmail: data.contact_email,
+      maxMembers: data.max_members,
+    };
+  }
+
+  async deleteTeam(teamId: string): Promise<void> {
+    const { error } = await supabase
+      .from("event_teams")
+      .delete()
+      .eq("id", teamId);
     if (error) throw error;
   }
 }

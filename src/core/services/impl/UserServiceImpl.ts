@@ -1,8 +1,25 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { IUserService } from "../interfaces/IUserService";
+import type { IUserService, UserProfileDTO } from "../interfaces/IUserService";
 import type { UserDTO } from "../../../shared/dtos/user.dto";
 
 export class UserServiceImpl implements IUserService {
+  async getUserProfile(id: string): Promise<UserProfileDTO | null> {
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("user_id, full_name, date_of_birth, bio, avatar_url, job_title")
+      .eq("user_id", id)
+      .single();
+    if (error || !data) return null;
+    return {
+      userId: data.user_id,
+      fullName: data.full_name,
+      dateOfBirth: data.date_of_birth,
+      bio: data.bio,
+      avatarUrl: data.avatar_url,
+      jobTitle: data.job_title,
+    };
+  }
+
   async getUser(id: string): Promise<UserDTO | null> {
     const { data, error } = await supabase
       .from("user_profiles")

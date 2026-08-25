@@ -13,17 +13,14 @@ import { toast } from "@/hooks/use-toast";
 import { ADMIN_EMAILS } from "@/lib/adminService";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
-import {
-  getMatchCentreData,
-  isGamingEvent,
-  updateTournamentMatch,
-  updateMatchMap,
-  upsertPlayerMatchStats,
-  updateTournamentStatus,
-  type MatchCentreData,
-} from "@/lib/tournamentService";
+import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
+import type { MatchCentreData } from "@/domains/gaming/dtos/tournament.dto";
 
 const eventServiceCore = () => resolveService<IEventService>("EventService");
+const gamingServiceCore = () =>
+  resolveService<IGamingService>("GamingService");
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
 import {
   ArrowLeft,
@@ -64,9 +61,9 @@ function buildEmbedUrl(
 export default function MatchCentre() {
   const { slug, matchId } = useParams();
   const navigate = useNavigate();
-  const [user, setUser] = useState<import("@supabase/supabase-js").User | null>(
-    null,
-  );
+  const [user, setUser] = useState<
+    import("@/shared/dtos/user.dto").UserDTO | null
+  >(null);
   const [stage, setStage] = useState("");
   const [matchFormat, setMatchFormat] = useState("BO3");
   const [statusDraft, setStatusDraft] = useState("upcoming");
@@ -106,7 +103,7 @@ export default function MatchCentre() {
     queryKey: ["match-centre", matchId],
     queryFn: async () => {
       if (!matchId) return null;
-      return getMatchCentreData(matchId);
+      return gamingServiceCore().getMatchCentreData(matchId);
     },
     enabled: !!matchId,
     retry: false,
@@ -120,14 +117,14 @@ export default function MatchCentre() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
+      const currentUser = await userServiceCore().getCurrentUser();
+      setUser(currentUser);
     };
     loadUser();
   }, []);
 
   useEffect(() => {
-    if (event && !isGamingEvent(event)) {
+    if (event && !gamingServiceCore().isGamingEvent(event)) {
       navigate(`/events/${event.slug}`, { replace: true });
     }
   }, [event, navigate]);
@@ -330,7 +327,7 @@ export default function MatchCentre() {
     if (!match?.id) return;
     setSubmitting(true);
     try {
-      await updateTournamentMatch(match.id, {
+      await gamingServiceCore().updateTournamentMatch(match.id, {
         match_status: statusDraft as any,
         stage_label: stage || null,
         match_format: matchFormat || null,
@@ -362,7 +359,7 @@ export default function MatchCentre() {
     if (!currentMatchData?.maps?.[0]?.id) return;
     setSubmitting(true);
     try {
-      await updateMatchMap(currentMatchData.maps[0].id, {
+      await gamingServiceCore().updateMatchMap(currentMatchData.maps[0].id, {
         map_name: mapName || currentMatchData.maps[0].map_name || "Ascent",
         team_a_score: Number(mapScoreA || 0),
         team_b_score: Number(mapScoreB || 0),
@@ -394,7 +391,7 @@ export default function MatchCentre() {
     );
   }
 
-  if (!event || !isGamingEvent(event) || !match) {
+  if (!event || !gamingServiceCore().isGamingEvent(event) || !match) {
     return null;
   }
 
@@ -970,7 +967,7 @@ export default function MatchCentre() {
                     disabled={!match || match.match_status === "live"}
                     onClick={() =>
                       match?.id &&
-                      updateTournamentMatch(match.id, {
+                      gamingServiceCore().updateTournamentMatch(match.id, {
                         match_status: "live" as any,
                       }).then(() => refetch())
                     }
@@ -983,7 +980,7 @@ export default function MatchCentre() {
                     disabled={!match || match.match_status === "live"}
                     onClick={() =>
                       match?.id &&
-                      updateTournamentMatch(match.id, {
+                      gamingServiceCore().updateTournamentMatch(match.id, {
                         match_status: "completed" as any,
                       }).then(() => refetch())
                     }

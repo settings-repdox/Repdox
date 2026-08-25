@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useCountdown } from "@/hooks/useCountdown";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,21 +53,23 @@ import {
 import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
+import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";
 
 registerDefaults();
 
 const registrationService = () =>
   resolveService<IRegistrationService>("RegistrationService");
 const eventService = () => resolveService<IEventService>("EventService");
+const userService = () => resolveService<IUserService>("UserService");
+const gamingService = () => resolveService<IGamingService>("GamingService");
 import OrganizerRegistrations from "@/components/OrganizerRegistrations";
 import { getSignedUrl } from "@/lib/storageService";
 import { getEventImage } from "@/lib/eventImages";
-import type { Database } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import AddToCalendar from "@/components/AddToCalendar";
 import RecentlyViewedEvents from "@/components/RecentlyViewedEvents";
-import { isGamingEvent } from "@/lib/tournamentService";
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -90,9 +91,7 @@ export default function EventDetail() {
       const isExpired = new Date(data.end_at) < now;
 
       // Check if the current user is the owner or admin
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = await userService().getCurrentUser();
       const isOwner = user && data.created_by === user.id;
       const isAdminUser = user?.email
         ? ADMIN_EMAILS.includes(user.email.toLowerCase())
@@ -117,9 +116,9 @@ export default function EventDetail() {
   const regCountdown = useCountdown(event?.registration_deadline || "");
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [user, setUser] = useState<import("@supabase/supabase-js").User | null>(
-    null,
-  );
+  const [user, setUser] = useState<
+    import("@/shared/dtos/user.dto").UserDTO | null
+  >(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [roleCounts, setRoleCounts] = useState<Record<string, number>>({});
@@ -127,9 +126,7 @@ export default function EventDetail() {
   // Check if current user owns this event OR is registered
   useEffect(() => {
     const checkUserStatus = async () => {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
+      const currentUser = await userService().getCurrentUser();
       setUser(currentUser);
 
       if (currentUser && event?.id) {
@@ -151,7 +148,7 @@ export default function EventDetail() {
     : false;
   const canManage = isOwner || isAdminUser;
   const isEnded = endCountdown.isExpired;
-  const isGaming = Boolean(event && isGamingEvent(event as any));
+  const isGaming = Boolean(event && gamingService().isGamingEvent(event as any));
   const bracketUrl =
     (
       event as
@@ -347,20 +344,14 @@ export default function EventDetail() {
     queryKey: ["event_schedules", event?.id],
     queryFn: async () => {
       if (!event?.id) return [];
-      const { data, error } = await supabase
-        .from("event_schedules")
-        .select("*")
-        .eq("event_id", event.id)
-        .order("start_at", { ascending: true });
-      if (error) throw error;
-      return data || [];
+      return eventService().listSchedules(event.id);
     },
     enabled: !!event?.id && activeTab === "schedule",
   });
 
   const schedules = Array.from(
     new Map(
-      rawSchedules.map((s) => [`${s.start_at}-${s.title}-${s.description}`, s]),
+      rawSchedules.map((s) => [`${s.startAt}-${s.title}-${s.description}`, s]),
     ).values(),
   );
 
@@ -368,13 +359,7 @@ export default function EventDetail() {
     queryKey: ["event_teams", event?.id],
     queryFn: async () => {
       if (!event?.id) return [];
-      const { data, error } = await supabase
-        .from("event_teams")
-        .select("*")
-        .eq("event_id", event.id)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data || [];
+      return eventService().listTeams(event.id);
     },
     enabled: !!event?.id && activeTab === "teams",
   });
@@ -771,13 +756,13 @@ export default function EventDetail() {
                         {schedules.map(
                           (s: {
                             id: string;
-                            start_at: string;
+                            startAt: string | null;
                             title: string;
-                            description?: string;
+                            description?: string | null;
                           }) => (
                             <li key={s.id} className="border rounded p-3">
                               <div className="text-sm text-muted-foreground">
-                                {s.start_at ? formatDateTime(s.start_at) : ""}
+                                {s.startAt ? formatDateTime(s.startAt) : ""}
                               </div>
                               <div className="font-medium">{s.title}</div>
                               {s.description && (

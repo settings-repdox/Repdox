@@ -1,5 +1,10 @@
 import type { IEventService } from "../interfaces/IEventService";
-import type { EventDTO, EventLifecycle } from "../dtos/event.dto";
+import type {
+  EventDTO,
+  EventLifecycle,
+  EventScheduleDTO,
+  EventTeamDTO,
+} from "../dtos/event.dto";
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft: ["published", "cancelled"],
@@ -73,5 +78,42 @@ export class EventServiceImpl implements IEventService {
       throw new Error(`Invalid lifecycle transition from ${from} to ${to}`);
     }
     return repo.update(id, { status: to } as Partial<EventDTO>);
+  }
+
+  async listSchedules(eventId: string): Promise<EventScheduleDTO[]> {
+    const repo = await this.getRepo();
+    return repo.listSchedulesByEventId(eventId);
+  }
+
+  async listTeams(eventId: string): Promise<EventTeamDTO[]> {
+    const repo = await this.getRepo();
+    return repo.listTeamsByEventId(eventId);
+  }
+
+  async findTeamByName(
+    eventId: string,
+    name: string,
+  ): Promise<EventTeamDTO | null> {
+    const repo = await this.getRepo();
+    return repo.findTeamByName(eventId, name);
+  }
+
+  async getTeamById(teamId: string): Promise<EventTeamDTO | null> {
+    const repo = await this.getRepo();
+    return repo.getTeamById(teamId);
+  }
+
+  async createTeam(payload: {
+    eventId: string;
+    name: string;
+    maxMembers?: number | null;
+  }): Promise<EventTeamDTO> {
+    const repo = await this.getRepo();
+    return repo.createTeam(payload);
+  }
+
+  async deleteTeam(teamId: string): Promise<void> {
+    const repo = await this.getRepo();
+    return repo.deleteTeam(teamId);
   }
 }

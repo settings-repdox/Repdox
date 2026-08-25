@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,28 +10,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ADMIN_EMAILS } from "@/lib/adminService";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
-import {
-  ensureTournamentForEvent,
-  getLiveMatchOverlayData,
-  isGamingEvent,
-  listTournamentMatches,
-  listTournamentTeams,
-  createTournamentTeam,
-  updateTournamentTeam,
-  updateTournamentMatch,
-  submitMatchResult,
-  subscribeToTournamentUpdates,
-  updateTournamentStatus,
-  type TournamentMatchRecord,
-  type TournamentRecord,
-  type TournamentTeamRecord,
-} from "@/lib/tournamentService";
+import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";
+import type {
+  TournamentMatchRecord,
+  TournamentRecord,
+  TournamentTeamRecord,
+} from "@/domains/gaming/dtos/tournament.dto";
 
 const eventServiceCore = () => resolveService<IEventService>("EventService");
+const gamingServiceCore = () =>
+  resolveService<IGamingService>("GamingService");
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
-import type { Database } from "@/integrations/supabase/types";
 import {
   ArrowLeft,
   CalendarClock,
@@ -49,9 +41,9 @@ import {
 export default function EventTournament() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [user, setUser] = useState<import("@supabase/supabase-js").User | null>(
-    null,
-  );
+  const [user, setUser] = useState<
+    import("@/shared/dtos/user.dto").UserDTO | null
+  >(null);
   const [teamName, setTeamName] = useState("");
   const [teamPlayers, setTeamPlayers] = useState("");
   const [teamLogo, setTeamLogo] = useState("");
@@ -84,13 +76,13 @@ export default function EventTournament() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
+      const currentUser = await userServiceCore().getCurrentUser();
+      setUser(currentUser);
     };
     loadUser();
   }, []);
 
-  const isGaming = useMemo(() => isGamingEvent(event), [event]);
+  const isGaming = useMemo(() => gamingServiceCore().isGamingEvent(event), [event]);
   const isOwner = Boolean(user && event?.created_by === user.id);
   const isAdminUser = Boolean(
     user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()),
@@ -105,7 +97,7 @@ export default function EventTournament() {
     queryKey: ["event_tournament", event?.id],
     queryFn: async () => {
       if (!event?.id) return null;
-      return ensureTournamentForEvent(event.id, { game_name: "Valorant" });
+      return gamingServiceCore().ensureTournamentForEvent(event.id, { game_name: "Valorant" });
     },
     enabled: !!event?.id,
     retry: false,
@@ -115,7 +107,7 @@ export default function EventTournament() {
     queryKey: ["tournament_teams", tournament?.id],
     queryFn: async () => {
       if (!tournament?.id) return [];
-      return listTournamentTeams(tournament.id);
+      return gamingServiceCore().listTournamentTeams(tournament.id);
     },
     enabled: !!tournament?.id,
   });
@@ -124,7 +116,7 @@ export default function EventTournament() {
     queryKey: ["tournament_matches", tournament?.id],
     queryFn: async () => {
       if (!tournament?.id) return [];
-      return listTournamentMatches(tournament.id);
+      return gamingServiceCore().listTournamentMatches(tournament.id);
     },
     enabled: !!tournament?.id,
   });
@@ -133,14 +125,14 @@ export default function EventTournament() {
     queryKey: ["tournament_overlay", tournament?.id],
     queryFn: async () => {
       if (!tournament?.id) return null;
-      return getLiveMatchOverlayData(tournament.id);
+      return gamingServiceCore().getLiveMatchOverlayData(tournament.id);
     },
     enabled: !!tournament?.id,
   });
 
   useEffect(() => {
     if (!tournament?.id) return;
-    const unsubscribe = subscribeToTournamentUpdates(tournament.id, () => {
+    const unsubscribe = gamingServiceCore().subscribeToTournamentUpdates(tournament.id, () => {
       refetchTournament();
       refetchTeams();
       refetchMatches();
@@ -230,7 +222,7 @@ export default function EventTournament() {
 
     setSubmitting(true);
     try {
-      await createTournamentTeam({
+      await gamingServiceCore().createTournamentTeam({
         tournamentId: tournament.id,
         teamName: teamName.trim(),
         captainId: user.id,
@@ -265,7 +257,7 @@ export default function EventTournament() {
     const seed = seedDrafts[teamId];
     if (seed === undefined) return;
     try {
-      await updateTournamentTeam(teamId, { team_seed: Number(seed) });
+      await gamingServiceCore().updateTournamentTeam(teamId, { team_seed: Number(seed) });
       toast({
         title: "Seed updated",
         description: "The team seed has been adjusted.",
@@ -285,7 +277,7 @@ export default function EventTournament() {
   const handleSetMatchTime = async (matchId: string) => {
     try {
       const value = matchTimeDrafts[matchId];
-      await updateTournamentMatch(matchId, {
+      await gamingServiceCore().updateTournamentMatch(matchId, {
         scheduled_time: value ? new Date(value).toISOString() : null,
       });
       toast({
@@ -319,7 +311,7 @@ export default function EventTournament() {
       return;
     }
     try {
-      await submitMatchResult(matchId, { teamAScore, teamBScore });
+      await gamingServiceCore().submitMatchResult(matchId, { teamAScore, teamBScore });
       toast({
         title: "Result submitted",
         description: "The bracket has been updated.",
@@ -341,18 +333,9 @@ export default function EventTournament() {
     if (!event?.id) return;
     setSubmitting(true);
     try {
-      // Prefer core EventService update; fall back to legacy supabase update
-      try {
-        await eventServiceCore().updateEvent(event.id, {
-          bracket_url: bracketUrlDraft.trim() || null,
-        });
-      } catch (e) {
-        const { error } = await supabase
-          .from("events")
-          .update({ bracket_url: bracketUrlDraft.trim() || null })
-          .eq("id", event.id);
-        if (error) throw error;
-      }
+      await eventServiceCore().updateEvent(event.id, {
+        bracket_url: bracketUrlDraft.trim() || null,
+      });
 
       toast({
         title: "Bracket saved",
@@ -807,7 +790,7 @@ export default function EventTournament() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() =>
-                                        updateTournamentMatch(match.id, {
+                                        gamingServiceCore().updateTournamentMatch(match.id, {
                                           match_status: "live",
                                         }).then(() => refetchMatches())
                                       }
@@ -818,7 +801,7 @@ export default function EventTournament() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() =>
-                                        updateTournamentMatch(match.id, {
+                                        gamingServiceCore().updateTournamentMatch(match.id, {
                                           match_status: "completed",
                                         }).then(() => refetchMatches())
                                       }
@@ -829,7 +812,7 @@ export default function EventTournament() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() =>
-                                        updateTournamentMatch(match.id, {
+                                        gamingServiceCore().updateTournamentMatch(match.id, {
                                           match_status: "disputed",
                                         }).then(() => refetchMatches())
                                       }
@@ -863,7 +846,7 @@ export default function EventTournament() {
               <Button
                 variant="outline"
                 onClick={() =>
-                  updateTournamentMatch(matches[0]?.id || "", {
+                  gamingServiceCore().updateTournamentMatch(matches[0]?.id || "", {
                     streamed_match: true,
                   }).catch(() => undefined)
                 }
@@ -873,7 +856,7 @@ export default function EventTournament() {
               <Button
                 variant="outline"
                 onClick={() =>
-                  updateTournamentMatch(matches[0]?.id || "", {
+                  gamingServiceCore().updateTournamentMatch(matches[0]?.id || "", {
                     streamed_match: false,
                   }).catch(() => undefined)
                 }
@@ -884,7 +867,7 @@ export default function EventTournament() {
                 <Button
                   variant="outline"
                   onClick={() =>
-                    updateTournamentStatus(tournament.id, "completed").then(
+                    gamingServiceCore().updateTournamentStatus(tournament.id, "completed").then(
                       () => refetchTournament(),
                     )
                   }

@@ -1,4 +1,9 @@
-import type { EventDTO, EventLifecycle } from "../dtos/event.dto";
+import type {
+  EventDTO,
+  EventLifecycle,
+  EventScheduleDTO,
+  EventTeamDTO,
+} from "../dtos/event.dto";
 
 export interface IEventService {
   getEventBySlug(slug: string): Promise<EventDTO | null>;
@@ -8,4 +13,14 @@ export interface IEventService {
   updateEvent(id: string, payload: Partial<EventDTO>): Promise<EventDTO>;
   deleteEvent(id: string): Promise<void>;
   transitionLifecycle(id: string, to: EventLifecycle): Promise<EventDTO>;
+  listSchedules(eventId: string): Promise<EventScheduleDTO[]>;
+  listTeams(eventId: string): Promise<EventTeamDTO[]>;
+  getTeamById(teamId: string): Promise<EventTeamDTO | null>;
+  findTeamByName(eventId: string, name: string): Promise<EventTeamDTO | null>;
+  createTeam(payload: {
+    eventId: string;
+    name: string;
+    maxMembers?: number | null;
+  }): Promise<EventTeamDTO>;
+  deleteTeam(teamId: string): Promise<void>;
 }

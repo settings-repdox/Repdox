@@ -2,7 +2,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { isUserAdmin } from "@/lib/adminService";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +32,8 @@ import {
 import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
-import { ensureTournamentForEvent } from "@/lib/tournamentService";
+import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
 import FileUpload from "@/components/ui/File_upload";
 import EventBuilderExtensions from "@/components/EventBuilder/EventBuilderExtensions";
 import LivePreview from "@/components/EventBuilder/LivePreview";
@@ -52,6 +52,9 @@ import { useToast } from "@/hooks/use-toast";
 registerDefaults();
 
 const eventServiceCore = () => resolveService<IEventService>("EventService");
+const gamingServiceCore = () =>
+  resolveService<IGamingService>("GamingService");
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
 // Suggested tags based on common event categories
 const SUGGESTED_TAGS = [
@@ -228,21 +231,13 @@ export default function AddEvent() {
     const checkProfileAndLoad = async () => {
       setLoadingEvent(true);
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const user = await userServiceCore().getCurrentUser();
         if (!user) {
           navigate("/signin");
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-
-        if (profileError) throw profileError;
+        const profile = await userServiceCore().getUserProfile(user.id);
 
         if (!profile) {
           setProfileComplete(false);
@@ -251,19 +246,19 @@ export default function AddEvent() {
         }
 
         const fields = [
-          { key: "full_name", label: "Full Name", value: profile.full_name },
+          { key: "full_name", label: "Full Name", value: profile.fullName },
           {
             key: "date_of_birth",
             label: "Date of Birth",
-            value: profile.date_of_birth,
+            value: profile.dateOfBirth,
           },
           { key: "bio", label: "Bio", value: profile.bio },
           {
             key: "avatar_url",
             label: "Profile Picture",
-            value: profile.avatar_url,
+            value: profile.avatarUrl,
           },
-          { key: "job_title", label: "Job Title", value: profile.job_title },
+          { key: "job_title", label: "Job Title", value: profile.jobTitle },
         ];
 
         const missing = fields.filter(
@@ -373,19 +368,17 @@ export default function AddEvent() {
             }
           }
 
-          const { data: schedules } = await supabase
-            .from("event_schedules")
-            .select("*")
-            .eq("event_id", eventData.id)
-            .order("start_at", { ascending: true });
+          const schedules = await eventServiceCore().listSchedules(
+            eventData.id,
+          );
 
           if (schedules && schedules.length > 0) {
             const seen = new Set<string>();
             const scheduleLines: string[] = [];
 
             schedules.forEach((s) => {
-              const start = s.start_at
-                ? new Date(s.start_at).toISOString().slice(0, 19) + "Z"
+              const start = s.startAt
+                ? new Date(s.startAt).toISOString().slice(0, 19) + "Z"
                 : "";
               const line = `${start} | ${s.title} | ${s.description || ""}`;
               if (!seen.has(line)) {
@@ -400,17 +393,14 @@ export default function AddEvent() {
             );
           }
 
-          const { data: teams } = await supabase
-            .from("event_teams")
-            .select("*")
-            .eq("event_id", eventData.id);
+          const teams = await eventServiceCore().listTeams(eventData.id);
 
           if (teams && teams.length > 0) {
             const seen = new Set<string>();
             const teamLines: string[] = [];
 
             teams.forEach((t) => {
-              const line = `${t.name} | ${t.description || ""} | ${t.contact_email || ""}`;
+              const line = `${t.name} | ${t.description || ""} | ${t.contactEmail || ""}`;
               if (!seen.has(line)) {
                 seen.add(line);
                 teamLines.push(line);
@@ -858,7 +848,7 @@ export default function AddEvent() {
         // Update existing event
         const updated = await eventServiceCore().updateEvent(eventId, payload);
         if (selectedEventType === "Gaming") {
-          await ensureTournamentForEvent(eventId, {
+          await gamingServiceCore().ensureTournamentForEvent(eventId, {
             game_name: form.game_name?.trim() || "Valorant",
           });
         }
@@ -880,7 +870,7 @@ export default function AddEvent() {
         // Create new event
         const created = await eventServiceCore().createEvent(payload);
         if (created?.id && selectedEventType === "Gaming") {
-          await ensureTournamentForEvent(created.id, {
+          await gamingServiceCore().ensureTournamentForEvent(created.id, {
             game_name: form.game_name?.trim() || "Valorant",
           });
         }
