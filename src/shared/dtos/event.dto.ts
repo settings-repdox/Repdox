@@ -1,7 +1,15 @@
 // Centralized Event DTO (Phase 9: consolidated from domain layer)
 import type { Json } from "@/integrations/supabase/types";
 
-export type EventType = "gaming" | "hackathon" | "workshop" | "other";
+// Matches the real Postgres `event_type` enum exactly (see
+// supabase/migrations for the enum definition, and
+// src/integrations/supabase/types.ts's `event_type` Enums entry).
+// Capitalized, and there is no "other" value in the database - a
+// previous version of this type was `"gaming" | "hackathon" |
+// "workshop" | "other"` (wrong case, plus a phantom "other" that
+// never existed), and was never used as a type annotation anywhere
+// in the codebase, so nothing depended on the wrong shape.
+export type EventType = "Hackathon" | "Workshop" | "Gaming";
 
 export type EventLifecycle =
   | "draft"
@@ -15,6 +23,17 @@ export interface EventDTO {
   id: string;
   title: string;
   slug: string;
+  // Deliberately Json, not EventType: `isGamingEvent()`
+  // (src/domains/gaming/impl/GamingServiceImpl.ts) does a defensive,
+  // case-insensitive substring match across category/type/slug/
+  // title/tags rather than a strict `=== "Gaming"` comparison,
+  // precisely because this field's real runtime values have not been
+  // reliably guaranteed to match the enum casing above. Do not narrow
+  // this to EventType without first confirming every write path only
+  // ever writes exactly "Hackathon" | "Workshop" | "Gaming" - a raw
+  // `event.type === "gaming"` (lowercase) comparison elsewhere in the
+  // codebase caused a real, user-reported bug; see
+  // docs/runbooks/incident-registration-form-wrong-fields.md.
   type: Json;
   format: Json;
   start_at: string;
