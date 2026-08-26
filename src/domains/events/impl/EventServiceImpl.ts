@@ -44,6 +44,8 @@ export class EventServiceImpl implements IEventService {
   async listEvents(opts?: {
     limit?: number;
     offset?: number;
+    activeOnly?: boolean;
+    createdBy?: string;
   }): Promise<EventDTO[]> {
     const repo = await this.getRepo();
     return repo.list(opts);

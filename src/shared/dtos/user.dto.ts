@@ -4,5 +4,6 @@ export interface UserDTO {
   id: string;
   displayName: string;
   email?: string;
+  emailConfirmedAt?: string | null;
   avatarUrl?: string;
 }

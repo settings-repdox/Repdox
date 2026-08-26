@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
+import type { UserDTO } from "@/shared/dtos/user.dto";
+import { getPublicUrl } from "@/lib/storageService";
 import { Button } from "@/components/ui/button";
 import {
   Bell,
@@ -10,6 +13,9 @@ import {
   Search,
 } from "lucide-react";
 import { getRelativeTime } from "@/lib/timeUtils";
+
+registerDefaults();
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
 interface UserProfile {
   id: string;
@@ -32,7 +38,7 @@ interface Notification {
 
 export default function Notifications() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserDTO | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "verified" | "mentions">(
     "all"
@@ -41,9 +47,7 @@ export default function Notifications() {
 
   useEffect(() => {
     const initializeNotifications = async () => {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
+      const currentUser = await userServiceCore().getCurrentUser();
 
       if (!currentUser) {
         navigate("/signin");
@@ -71,8 +75,7 @@ export default function Notifications() {
       cleanPath = cleanPath.substring(1);
     }
 
-    const { data } = supabase.storage.from("avatars").getPublicUrl(cleanPath);
-    return data.publicUrl;
+    return getPublicUrl(cleanPath, "avatars");
   };
 
   const loadNotifications = async (userId: string) => {

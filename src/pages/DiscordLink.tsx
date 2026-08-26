@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { resolveService } from "@/core/services/di";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
+import type { UserDTO } from "@/shared/dtos/user.dto";
 import { motion } from "framer-motion";
 import { Globe, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Helmet } from "react-helmet-async";
+
+registerDefaults();
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
 export default function DiscordLink() {
   const [searchParams] = useSearchParams();
@@ -14,7 +20,7 @@ export default function DiscordLink() {
   const [status, setStatus] = useState<"verifying" | "ready" | "success" | "error">("verifying");
   const [error, setError] = useState<string | null>(null);
   const [discordUser, setDiscordUser] = useState<{ id: string, username: string } | null>(null);
-  const [repdoxUser, setRepdoxUser] = useState<any>(null);
+  const [repdoxUser, setRepdoxUser] = useState<UserDTO | null>(null);
 
   useEffect(() => {
     async function verifyLink() {
@@ -25,29 +31,25 @@ export default function DiscordLink() {
       }
 
       // 1. Get Discord Request info
-      const { data: request, error: reqError } = await supabase
-        .from("discord_link_requests")
-        .select("*")
-        .eq("token", token)
-        .single();
+      const request = await userServiceCore().getDiscordLinkRequest(token);
 
-      if (reqError || !request) {
+      if (!request) {
         setStatus("error");
         setError("Invalid or expired linking token.");
         return;
       }
 
       // Check expiry
-      if (new Date(request.expires_at) < new Date()) {
+      if (new Date(request.expiresAt) < new Date()) {
         setStatus("error");
         setError("Linking token has expired. Please try /link again in Discord.");
         return;
       }
 
-      setDiscordUser({ id: request.discord_id, username: request.discord_username });
+      setDiscordUser({ id: request.discordId, username: request.discordUsername });
 
       // 2. Check Repdox Auth
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await userServiceCore().getCurrentUser();
       if (!user) {
         setStatus("ready");
         setRepdoxUser(null);
@@ -67,21 +69,14 @@ export default function DiscordLink() {
     setStatus("verifying");
     try {
       // 1. Update Profile
-      const { error: updateError } = await supabase
-        .from("user_profiles")
-        .update({
-          discord_id: discordUser.id,
-          discord_username: discordUser.username
-        })
-        .eq("user_id", repdoxUser.id);
-
-      if (updateError) throw updateError;
+      await userServiceCore().upsertProfile({
+        user_id: repdoxUser.id,
+        discord_id: discordUser.id,
+        discord_username: discordUser.username,
+      });
 
       // 2. Clean up request
-      await supabase
-        .from("discord_link_requests")
-        .delete()
-        .eq("token", token);
+      await userServiceCore().deleteDiscordLinkRequest(token);
 
       setStatus("success");
       toast({

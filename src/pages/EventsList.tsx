@@ -3,10 +3,16 @@ import { motion } from "framer-motion";
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { resolveService } from "@/core/services/di";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { useSearchParams } from "react-router-dom";
 import EventCard from "@/components/EventCard";
 import EventFilters from "@/components/EventFilters";
+
+registerDefaults();
+
+const eventService = () => resolveService<IEventService>("EventService");
 
 export default function EventsList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,14 +26,8 @@ export default function EventsList() {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('is_active', true)
-        .order('start_at', { ascending: true });
-      
-      if (error) throw error;
-      
+      const data = await eventService().listEvents({ activeOnly: true });
+
       const parsedEvents = (data || []).map(event => ({
         ...event,
         type: event.type as string | string[],

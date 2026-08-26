@@ -8,7 +8,12 @@ import type {
 export interface IEventService {
   getEventBySlug(slug: string): Promise<EventDTO | null>;
   getEvent(id: string): Promise<EventDTO | null>;
-  listEvents(opts?: { limit?: number; offset?: number }): Promise<EventDTO[]>;
+  listEvents(opts?: {
+    limit?: number;
+    offset?: number;
+    activeOnly?: boolean;
+    createdBy?: string;
+  }): Promise<EventDTO[]>;
   createEvent(payload: Partial<EventDTO>): Promise<EventDTO>;
   updateEvent(id: string, payload: Partial<EventDTO>): Promise<EventDTO>;
   deleteEvent(id: string): Promise<void>;

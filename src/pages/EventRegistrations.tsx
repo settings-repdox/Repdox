@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users, Download, Activity, Search } from "lucide-react";
 import OrganizerRegistrations from "@/components/OrganizerRegistrations";
@@ -10,8 +9,10 @@ import { Input } from "@/components/ui/input";
 import { ADMIN_EMAILS } from "@/lib/adminService";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
 
 const eventServiceCore = () => resolveService<IEventService>("EventService");
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
 export default function EventRegistrations() {
   const { slug } = useParams();
@@ -28,9 +29,7 @@ export default function EventRegistrations() {
       const eventData = await eventServiceCore().getEventBySlug(slug);
       if (!eventData) throw new Error("Event not found");
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = await userServiceCore().getCurrentUser();
       const isOwner = user && eventData.created_by === user.id;
       const isAdmin = user?.email
         ? ADMIN_EMAILS.includes(user.email.toLowerCase())

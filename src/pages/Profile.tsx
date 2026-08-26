@@ -3,7 +3,8 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
 import {
   uploadAvatar as uploadAvatarService,
   getAvatarSignedUrl,
@@ -22,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import ProfileCard from "@/components/ProfileCard";
-import type { User } from "@supabase/supabase-js";
+import type { UserDTO } from "@/shared/dtos/user.dto";
 import { Button } from "@/components/ui/button";
 import {
   Mail,
@@ -99,11 +100,15 @@ const sections = [
   { id: "security", label: "Security", icon: UserIcon },
 ];
 
+registerDefaults();
+
+const userService = () => resolveService<IUserService>("UserService");
+
 export default function Profile() {
   const navigate = useNavigate();
   const { refreshProfileStatus } = useAuth();
   const { userId } = useParams();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserDTO | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeSection, setActiveSection] = useState("personal");
   const [showEmailChangeModal, setShowEmailChangeModal] = useState(false);
@@ -234,26 +239,11 @@ export default function Profile() {
 
   const loadUserProfile = useCallback(async () => {
     try {
-      const {
-        data: { user: currentUser },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const currentUser = await userService().getCurrentUser();
 
       // VIEWING ANOTHER USER'S PROFILE
       if (userId) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
-
-        if (profileError && profileError.code !== "PGRST116") {
-          console.error(
-            "[Profile] Error loading other user profile:",
-            profileError,
-          );
-          throw profileError;
-        }
+        const profileData = await userService().getFullProfile(userId);
 
         if (profileData) {
           setProfile(profileData);
@@ -277,7 +267,7 @@ export default function Profile() {
         }
 
         // Set current user if available
-        if (!userError && currentUser) {
+        if (currentUser) {
           setUser(currentUser);
         }
 
@@ -295,7 +285,6 @@ export default function Profile() {
       }
 
       // VIEWING OWN PROFILE
-      if (userError) throw userError;
       if (!currentUser) {
         navigate("/signin");
         return;
@@ -303,15 +292,7 @@ export default function Profile() {
 
       setUser(currentUser);
 
-      const { data: profileData, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .single();
-
-      if (profileError && profileError.code !== "PGRST116") {
-        throw profileError;
-      }
+      const profileData = await userService().getFullProfile(currentUser.id);
 
       if (profileData) {
         setProfile(profileData);
@@ -331,15 +312,12 @@ export default function Profile() {
 
         // Fetch phone verification status
         if (profileData.phone) {
-          const { data: verifications } = await supabase
-            .from("profile_verifications")
-            .select("verified")
-            .eq("user_id", currentUser.id)
-            .eq("type", "phone")
-            .eq("contact", profileData.phone)
-            .eq("verified", true)
-            .limit(1);
-          setIsPhoneVerified(!!verifications?.length);
+          const verified = await userService().isContactVerified(
+            currentUser.id,
+            "phone",
+            profileData.phone,
+          );
+          setIsPhoneVerified(verified);
         } else {
           setIsPhoneVerified(false);
         }
@@ -498,34 +476,24 @@ export default function Profile() {
         avatarPath = await uploadAvatarService(user.id, avatarFile);
       }
 
-      const { error: upsertError } = await supabase
-        .from("user_profiles")
-        .upsert(
-          {
-            id: profile?.id, // Include id to ensure correct conflict resolution
-            user_id: user.id,
-            full_name: fullName || null,
-            handle: handle || null,
-            bio: bio || null,
-            job_title: jobTitle || null,
-            company: company || null,
-            website: website || null,
-            phone: phone || null,
-            date_of_birth: dateOfBirth || null,
-            avatar_url: avatarPath,
-            linkedin_url: linkedinUrl || null,
-            github_url: githubUrl || null,
-            twitter_url: twitterUrl || null,
-            instagram_url: instagramUrl || null,
-            portfolio_url: portfolioUrl || null,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: "user_id",
-          },
-        );
-
-      if (upsertError) throw upsertError;
+      await userService().upsertProfile({
+        id: profile?.id, // Include id to ensure correct conflict resolution
+        user_id: user.id,
+        full_name: fullName || null,
+        handle: handle || null,
+        bio: bio || null,
+        job_title: jobTitle || null,
+        company: company || null,
+        website: website || null,
+        phone: phone || null,
+        date_of_birth: dateOfBirth || null,
+        avatar_url: avatarPath,
+        linkedin_url: linkedinUrl || null,
+        github_url: githubUrl || null,
+        twitter_url: twitterUrl || null,
+        instagram_url: instagramUrl || null,
+        portfolio_url: portfolioUrl || null,
+      });
 
       toast({
         title: "Profile Updated",
@@ -552,7 +520,7 @@ export default function Profile() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await userService().signOut();
       navigate("/login");
     } catch (err) {
       console.error("Error signing out:", err);
@@ -1124,7 +1092,7 @@ export default function Profile() {
                       </span>
 
                       {/* Verification Status Badge */}
-                      {user?.email_confirmed_at ? (
+                      {user?.emailConfirmedAt ? (
                         <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full">
                           <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
                           <span className="text-xs font-medium text-green-700 dark:text-green-300">
@@ -1154,7 +1122,7 @@ export default function Profile() {
                     )}
 
                     {/* Verification Actions (Only if not verified and own profile) */}
-                    {isOwnProfile && !user?.email_confirmed_at && (
+                    {isOwnProfile && !user?.emailConfirmedAt && (
                       <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
                         <div className="flex items-start gap-3 mb-3">
                           <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
@@ -1252,10 +1220,9 @@ export default function Profile() {
                                         "Email verified successfully",
                                     });
                                     // Reload user
-                                    const {
-                                      data: { user: updated },
-                                    } = await supabase.auth.getUser();
-                                    setUser(updated as any);
+                                    const updated =
+                                      await userService().getCurrentUser();
+                                    setUser(updated);
                                     setEmailVerificationSent(false);
                                     setEmailToken("");
                                   } else {
@@ -1603,10 +1570,8 @@ export default function Profile() {
           onClose={() => setShowEmailChangeModal(false)}
           onSuccess={() => {
             // Refresh user data
-            supabase.auth.getUser().then(({ data }) => {
-              if (data.user) {
-                // User state will update automatically
-              }
+            userService().getCurrentUser().then((updated) => {
+              if (updated) setUser(updated);
             });
           }}
         />

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
+import type { UserDTO } from "@/shared/dtos/user.dto";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
 import { formatDate } from "@/lib/timeUtils";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,10 +42,11 @@ import { getEventImage } from "@/lib/eventImages";
 registerDefaults();
 
 const eventServiceCore = () => resolveService<IEventService>("EventService");
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
 export default function MyEvents() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserDTO | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
@@ -57,12 +58,9 @@ export default function MyEvents() {
     queryKey: ["my-events", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("created_by", user!.id);
-
-      if (error) throw error;
+      const data = await eventServiceCore().listEvents({
+        createdBy: user!.id,
+      });
 
       const now = new Date();
 
@@ -86,9 +84,7 @@ export default function MyEvents() {
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = await userServiceCore().getCurrentUser();
       if (!user) {
         toast({
           title: "Authentication required",

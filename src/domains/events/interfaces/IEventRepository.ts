@@ -4,7 +4,14 @@ export interface IEventRepository {
   getById(id: string): Promise<EventDTO | null>;
   getBySlug(slug: string): Promise<EventDTO | null>;
   list(
-    opts?: { limit?: number; offset?: number } | undefined,
+    opts?:
+      | {
+          limit?: number;
+          offset?: number;
+          activeOnly?: boolean;
+          createdBy?: string;
+        }
+      | undefined,
   ): Promise<EventDTO[]>;
   create(dto: Partial<EventDTO>): Promise<EventDTO>;
   update(id: string, dto: Partial<EventDTO>): Promise<EventDTO>;

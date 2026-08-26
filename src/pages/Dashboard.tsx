@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import type { UserDTO } from '@/shared/dtos/user.dto';
+import { registerDefaults } from '@/core/services/registerDefaults';
+import { resolveService } from '@/core/services/di';
+import type { IUserService } from '@/core/services/interfaces/IUserService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Calendar, Bookmark, FileText, Users, 
   GripVertical, Eye, EyeOff, Plus
 } from 'lucide-react';
+
+registerDefaults();
+
+const userService = () => resolveService<IUserService>('UserService');
 
 interface DashboardSection {
   id: string;
@@ -30,13 +36,13 @@ interface RegistrationWithEvent {
 }
 
 interface DashboardProps {
-  embeddedUser?: User | null;
+  embeddedUser?: UserDTO | null;
   userEvents?: RegistrationWithEvent[];
 }
 
 export default function Dashboard({ embeddedUser, userEvents = [] }: DashboardProps) {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(embeddedUser ?? null);
+  const [user, setUser] = useState<UserDTO | null>(embeddedUser ?? null);
   const [sections, setSections] = useState<DashboardSection[]>([]);
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
 
@@ -47,7 +53,7 @@ export default function Dashboard({ embeddedUser, userEvents = [] }: DashboardPr
         return;
       }
 
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const currentUser = await userService().getCurrentUser();
       if (!currentUser) {
         navigate('/signin');
         return;

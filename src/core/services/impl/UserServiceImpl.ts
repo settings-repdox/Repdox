@@ -1,8 +1,83 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { IUserService, UserProfileDTO } from "../interfaces/IUserService";
+import type {
+  IUserService,
+  UserProfileDTO,
+  FullUserProfileDTO,
+  UpsertProfilePayload,
+  DiscordLinkRequestDTO,
+} from "../interfaces/IUserService";
 import type { UserDTO } from "../../../shared/dtos/user.dto";
 
 export class UserServiceImpl implements IUserService {
+  async getDiscordLinkRequest(
+    token: string,
+  ): Promise<DiscordLinkRequestDTO | null> {
+    const { data, error } = await supabase
+      .from("discord_link_requests")
+      .select("*")
+      .eq("token", token)
+      .single();
+    if (error || !data) return null;
+    return {
+      id: data.id,
+      token: data.token,
+      discordId: data.discord_id,
+      discordUsername: data.discord_username,
+      expiresAt: data.expires_at,
+    };
+  }
+
+  async deleteDiscordLinkRequest(token: string): Promise<void> {
+    const { error } = await supabase
+      .from("discord_link_requests")
+      .delete()
+      .eq("token", token);
+    if (error) throw error;
+  }
+
+  async getFullProfile(userId: string): Promise<FullUserProfileDTO | null> {
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    if (error || !data) return null;
+    return data as FullUserProfileDTO;
+  }
+
+  async upsertProfile(payload: UpsertProfilePayload): Promise<void> {
+    const { error } = await supabase.from("user_profiles").upsert(
+      [
+        {
+          ...payload,
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      { onConflict: "user_id" },
+    );
+    if (error) throw error;
+  }
+
+  async isContactVerified(
+    userId: string,
+    type: "email" | "phone",
+    contact: string,
+  ): Promise<boolean> {
+    const { data } = await supabase
+      .from("profile_verifications")
+      .select("verified")
+      .eq("user_id", userId)
+      .eq("type", type)
+      .eq("contact", contact)
+      .eq("verified", true)
+      .limit(1);
+    return !!data?.length;
+  }
+
+  async signOut(): Promise<void> {
+    await supabase.auth.signOut();
+  }
+
   async getUserProfile(id: string): Promise<UserProfileDTO | null> {
     const { data, error } = await supabase
       .from("user_profiles")
@@ -59,6 +134,7 @@ export class UserServiceImpl implements IUserService {
       id: user.id,
       displayName,
       email: user.email,
+      emailConfirmedAt: user.email_confirmed_at ?? null,
     };
   }
 

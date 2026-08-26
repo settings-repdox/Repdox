@@ -25,9 +25,18 @@ export class SupabaseEventRepository implements IEventRepository {
   }
 
   async list(
-    opts?: { limit?: number; offset?: number } | undefined,
+    opts?:
+      | {
+          limit?: number;
+          offset?: number;
+          activeOnly?: boolean;
+          createdBy?: string;
+        }
+      | undefined,
   ): Promise<EventDTO[]> {
-    const q = supabase.from("events").select("*");
+    let q = supabase.from("events").select("*");
+    if (opts?.activeOnly) q = q.eq("is_active", true);
+    if (opts?.createdBy) q = q.eq("created_by", opts.createdBy);
     if (opts?.limit) q.limit(opts.limit);
     if (opts?.offset)
       q.range(opts.offset, (opts.offset || 0) + (opts.limit || 100) - 1);
