@@ -2,6 +2,12 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { isUserAdmin, ADMIN_EMAILS } from "@/lib/adminService";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
+
+registerDefaults();
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
 interface AuthContextType {
   user: User | null;
@@ -24,12 +30,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkProfileStatus = async (userId: string) => {
     try {
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("full_name, date_of_birth")
-        .eq("user_id", userId)
-        .maybeSingle();
-      setIsProfileComplete(!!(profile?.full_name && profile?.date_of_birth));
+      const profile = await userServiceCore().getUserProfile(userId);
+      setIsProfileComplete(!!(profile?.fullName && profile?.dateOfBirth));
     } catch (err) {
       console.error("Error checking profile completion:", err);
       setIsProfileComplete(false);
