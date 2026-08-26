@@ -18,6 +18,7 @@ const MIGRATED_DOMAIN_SERVICES = [
   "RegistrationService",
   "ProductionService",
   "TicketService",
+  "VolunteerService",
 ];
 
 describe("Architecture: migrated domain service registration", () => {

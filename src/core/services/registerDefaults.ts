@@ -11,6 +11,7 @@ import { RegistrationServiceImpl } from "@/domains/registrations/impl/Registrati
 import { ProductionServiceImpl } from "@/domains/production/impl/ProductionServiceImpl";
 import { TicketServiceImpl } from "@/domains/tickets/impl/TicketServiceImpl";
 import { SupabaseTicketRepository } from "@/domains/tickets/impl/SupabaseTicketRepository";
+import { VolunteerServiceImpl } from "@/domains/volunteers/impl/VolunteerServiceImpl";
 
 export function registerDefaults() {
   try {
@@ -25,6 +26,7 @@ export function registerDefaults() {
     registerService("RegistrationService", new RegistrationServiceImpl());
     registerService("ProductionService", new ProductionServiceImpl());
     registerService("TicketService", new TicketServiceImpl(new SupabaseTicketRepository()));
+    registerService("VolunteerService", new VolunteerServiceImpl());
   } catch (e) {
     // ignore if already registered
   }

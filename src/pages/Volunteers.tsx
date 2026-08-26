@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IVolunteerService } from "@/domains/volunteers/interfaces/IVolunteerService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,20 +31,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-// Dedicated client for the old volunteer database
-const OLD_PROJECT_URL = "https://fpdbrvmejpujuwtitfbi.supabase.co";
-const OLD_PROJECT_KEY = "sb_publishable__s8qGXZm8TyOT2X5QnQ-1g_MMeWWpS2";
-
-interface OldSupabaseClient {
-  createClient: (url: string, key: string) => any;
-}
-
-const oldDb = (window as unknown as { supabase?: OldSupabaseClient }).supabase
-  ?.createClient
-  ? (
-      window as unknown as { supabase: OldSupabaseClient }
-    ).supabase.createClient(OLD_PROJECT_URL, OLD_PROJECT_KEY)
-  : null;
+registerDefaults();
+const volunteerServiceCore = () =>
+  resolveService<IVolunteerService>("VolunteerService");
 
 export default function Volunteers() {
   const navigate = useNavigate();
@@ -90,38 +82,15 @@ export default function Volunteers() {
   ) => {
     if (!currentUser?.email) return;
     try {
-      // Try to fetch with new interview columns
-      let response = await fetch(
-        `${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${currentUser.email}&select=status,interview_time,meet_link`,
-        {
-          headers: {
-            apikey: OLD_PROJECT_KEY,
-            Authorization: `Bearer ${OLD_PROJECT_KEY}`,
-          },
-        },
+      const application = await volunteerServiceCore().getApplicationByEmail(
+        currentUser.email,
       );
 
-      if (!response.ok) {
-        // Fallback: fetch only status if the new columns don't exist yet
-        console.warn("Falling back to basic status check...");
-        response = await fetch(
-          `${OLD_PROJECT_URL}/rest/v1/survey_responses?email=eq.${currentUser.email}&select=status`,
-          {
-            headers: {
-              apikey: OLD_PROJECT_KEY,
-              Authorization: `Bearer ${OLD_PROJECT_KEY}`,
-            },
-          },
-        );
-      }
-
-      const data = await response.json();
-
-      if (data && data.length > 0) {
+      if (application) {
         setHasApplied(true);
-        setApplicationStatus(data[0].status);
-        setInterviewTime(data[0].interview_time || null);
-        setMeetLink(data[0].meet_link || null);
+        setApplicationStatus(application.status);
+        setInterviewTime(application.interviewTime);
+        setMeetLink(application.meetLink);
       }
     } catch (err) {
       console.error("Error checking status:", err);
@@ -136,38 +105,17 @@ export default function Volunteers() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(
-        `${OLD_PROJECT_URL}/rest/v1/survey_responses`,
-        {
-          method: "POST",
-          headers: {
-            apikey: OLD_PROJECT_KEY,
-            Authorization: `Bearer ${OLD_PROJECT_KEY}`,
-            "Content-Type": "application/json",
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify([
-            {
-              student_name: formData.fullName,
-              email: formData.email,
-              phone: formData.phone,
-              school: formData.school,
-              city: formData.city,
-              branch: formData.branch,
-              class: formData.class,
-              preferred_game: formData.rolePreference,
-              reason: formData.motivation,
-              status: "pending",
-              submitted_at: new Date().toISOString(),
-            },
-          ]),
-        },
-      );
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(errText || "Submission failed");
-      }
+      await volunteerServiceCore().createApplication({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        school: formData.school,
+        city: formData.city,
+        branch: formData.branch,
+        class: formData.class,
+        rolePreference: formData.rolePreference,
+        motivation: formData.motivation,
+      });
 
       setHasApplied(true);
       setApplicationStatus("pending");

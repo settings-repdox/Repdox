@@ -566,6 +566,10 @@ export type Database = {
           status: "pending" | "interview" | "approved" | "rejected";
           interview_time: string | null;
           meet_link: string | null;
+          school: string | null;
+          city: string | null;
+          branch: string | null;
+          class: string | null;
         };
         Insert: {
           id?: string;
@@ -579,6 +583,10 @@ export type Database = {
           status?: "pending" | "interview" | "approved" | "rejected";
           interview_time?: string | null;
           meet_link?: string | null;
+          school?: string | null;
+          city?: string | null;
+          branch?: string | null;
+          class?: string | null;
         };
         Update: {
           id?: string;
@@ -592,6 +600,10 @@ export type Database = {
           status?: "pending" | "interview" | "approved" | "rejected";
           interview_time?: string | null;
           meet_link?: string | null;
+          school?: string | null;
+          city?: string | null;
+          branch?: string | null;
+          class?: string | null;
         };
         Relationships: [];
       };
