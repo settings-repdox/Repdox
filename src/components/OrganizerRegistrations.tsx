@@ -7,14 +7,14 @@ import type { IRegistrationService } from "@/core/services/interfaces/IRegistrat
 import type { RegistrationDTO } from "@/shared/dtos/registration.dto";
 import { toast } from "@/hooks/use-toast";
 import { formatDateTime } from "@/lib/timeUtils";
-import { getRegistrationTableName } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { Trash2 } from "lucide-react";
 
 registerDefaults();
 
 const registrationService = () =>
   resolveService<IRegistrationService>("RegistrationService");
+const eventServiceCore = () => resolveService<IEventService>("EventService");
 
 type RegistrationRow = RegistrationDTO;
 
@@ -49,16 +49,8 @@ export default function OrganizerRegistrations({
         new Set(regs.map((r) => r.teamId).filter(Boolean)),
       ) as string[];
       if (teamIds.length > 0) {
-        const { data: teams } = await supabase
-          .from("event_teams")
-          .select("id, name")
-          .in("id", teamIds);
-
-        if (teams) {
-          const map: Record<string, string> = {};
-          teams.forEach((t) => (map[t.id] = t.name));
-          setTeamMap(map);
-        }
+        const map = await eventServiceCore().getTeamNamesByIds(teamIds);
+        setTeamMap(map);
       }
     } catch (err) {
       const error = err as Error;
@@ -76,24 +68,11 @@ export default function OrganizerRegistrations({
     if (!confirm("Are you sure you want to delete this registration?")) return;
 
     try {
-      const tableName = getRegistrationTableName({
-        id: eventId,
-        slug: eventSlug,
-      });
-
-      const { error: dynamicError } = await supabase
-        .from(tableName as any)
-        .delete()
-        .eq("id", registrationId);
-
-      if (dynamicError) throw dynamicError;
-
-      if (tableName !== "event_registrations") {
-        await supabase
-          .from("event_registrations")
-          .delete()
-          .eq("id", registrationId);
-      }
+      await registrationService().deleteEventRegistration(
+        registrationId,
+        eventId,
+        eventSlug,
+      );
 
       toast({
         title: "Registration deleted",

@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { registerDefaults } from "@/core/services/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
+import type { EventTeamDTO } from "@/domains/events/dtos/event.dto";
 import { toast } from "@/hooks/use-toast";
 
 registerDefaults();
 
 const registrationService = () =>
   resolveService<IRegistrationService>("RegistrationService");
-
-import { Database } from "@/integrations/supabase/types";
+const eventServiceCore = () => resolveService<IEventService>("EventService");
 
 type Registration = {
   id: string;
@@ -26,7 +26,7 @@ type Registration = {
 
 type TeamMember = Registration;
 
-type Team = Database["public"]["Tables"]["event_teams"]["Row"] & {
+type Team = EventTeamDTO & {
   members: TeamMember[];
 };
 
@@ -45,13 +45,7 @@ export default function OrganizerTeams({
       setLoading(true);
       try {
         // Fetch raw teams
-        const { data: rawTeams, error: teamsError } = await supabase
-          .from("event_teams")
-          .select("*")
-          .eq("event_id", eventId)
-          .order("created_at", { ascending: true });
-
-        if (teamsError) throw teamsError;
+        const rawTeams = await eventServiceCore().listTeams(eventId);
 
         // Fetch registrations via the centralized registration service
         let allRegs: Registration[] = [];
@@ -186,9 +180,9 @@ export default function OrganizerTeams({
                   </div>
                 </div>
 
-                {t.contact_email && (
+                {t.contactEmail && (
                   <div className="pt-2 text-xs text-muted-foreground border-t border-border/30">
-                    Contact: {t.contact_email}
+                    Contact: {t.contactEmail}
                   </div>
                 )}
               </div>

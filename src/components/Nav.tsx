@@ -9,10 +9,12 @@ import {
 } from "@/components/ui/navigation-menu";
 import CardNav from "@/components/ui/CardNav";
 import logo from "@/assets/logo.svg";
-import { supabase } from "@/integrations/supabase/client";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IUserService } from "@/core/services/interfaces/IUserService";
+import { getSignedUrl } from "@/lib/storageService";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Moon, Sun, ShieldCheck, Users } from "lucide-react";
-import type { User } from "@supabase/supabase-js";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Zap } from "lucide-react";
@@ -32,6 +34,9 @@ interface Metadata {
   avatar?: string | { url: string };
   photo_url?: string;
 }
+
+registerDefaults();
+const userServiceCore = () => resolveService<IUserService>("UserService");
 
 export default function Nav() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -58,11 +63,7 @@ export default function Nav() {
 
     const checkOnboarding = async () => {
       try {
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const profile = await userServiceCore().getUserProfile(user.id);
 
         if (!profile && window.location.pathname !== "/profile") {
           navigate("/profile?onboard=1");
@@ -85,40 +86,25 @@ export default function Nav() {
     const fetchAvatar = async () => {
       try {
         // First try to get avatar and full_name from user_profiles table
-        const { data: profile, error: profileErr } = await supabase
-          .from("user_profiles")
-          .select("avatar_url, full_name")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const profile = await userServiceCore().getUserProfile(user.id);
 
-        if (profileErr) {
-          console.error("Error fetching profile in Nav:", profileErr);
-        }
-
-        if (profile?.avatar_url) {
-          setAvatarPath(profile.avatar_url);
+        if (profile?.avatarUrl) {
+          setAvatarPath(profile.avatarUrl);
           // get signed url for private bucket
           try {
-            const objectPath = profile.avatar_url.startsWith("avatars/")
-              ? profile.avatar_url.substring("avatars/".length)
-              : profile.avatar_url;
-            const { data } = await supabase.storage
-              .from("avatars")
-              .createSignedUrl(objectPath, 60 * 60);
-
-            if (data?.signedUrl) {
-              setAvatarSrc(data.signedUrl);
-            } else {
-              setAvatarSrc(null);
-            }
+            const objectPath = profile.avatarUrl.startsWith("avatars/")
+              ? profile.avatarUrl.substring("avatars/".length)
+              : profile.avatarUrl;
+            const signedUrl = await getSignedUrl(objectPath, "avatars", 60 * 60);
+            setAvatarSrc(signedUrl || null);
           } catch (e) {
             console.error("Failed to create signed URL for avatar in Nav", e);
             setAvatarSrc(null);
           }
         }
 
-        if (profile?.full_name) {
-          setFullName(profile.full_name);
+        if (profile?.fullName) {
+          setFullName(profile.fullName);
         }
 
         // If we found a profile, stop here

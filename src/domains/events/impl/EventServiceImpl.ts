@@ -118,4 +118,14 @@ export class EventServiceImpl implements IEventService {
     const repo = await this.getRepo();
     return repo.deleteTeam(teamId);
   }
+
+  async existingEventIds(ids: string[]): Promise<string[]> {
+    const repo = await this.getRepo();
+    return repo.existingEventIds(ids);
+  }
+
+  async getTeamNamesByIds(teamIds: string[]): Promise<Record<string, string>> {
+    const repo = await this.getRepo();
+    return repo.getTeamNamesByIds(teamIds);
+  }
 }

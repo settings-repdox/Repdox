@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Calendar, MapPin } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { getEventImage } from "@/lib/eventImages";
 import { formatDate } from "@/lib/timeUtils";
+
+registerDefaults();
+const eventServiceCore = () => resolveService<IEventService>("EventService");
 
 interface RecentEvent {
   id: string;
@@ -32,14 +37,9 @@ export default function RecentlyViewedEvents() {
 
         // Filter out events that no longer exist in DB
         const ids = events.map((e) => e.id);
-        const { data: existingEvents, error } = await supabase
-          .from("events")
-          .select("id")
-          .in("id", ids);
-
-        if (error) throw error;
-
-        const existingIds = new Set(existingEvents?.map((e) => e.id));
+        const existingIds = new Set(
+          await eventServiceCore().existingEventIds(ids),
+        );
         const filtered = events.filter((e) => existingIds.has(e.id));
 
         // Update localStorage if some were removed

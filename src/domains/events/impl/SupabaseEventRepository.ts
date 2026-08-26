@@ -178,4 +178,26 @@ export class SupabaseEventRepository implements IEventRepository {
       .eq("id", teamId);
     if (error) throw error;
   }
+
+  async existingEventIds(ids: string[]): Promise<string[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase
+      .from("events")
+      .select("id")
+      .in("id", ids);
+    if (error || !data) return [];
+    return data.map((e) => e.id);
+  }
+
+  async getTeamNamesByIds(teamIds: string[]): Promise<Record<string, string>> {
+    if (teamIds.length === 0) return {};
+    const { data, error } = await supabase
+      .from("event_teams")
+      .select("id, name")
+      .in("id", teamIds);
+    if (error || !data) return {};
+    const map: Record<string, string> = {};
+    data.forEach((t) => (map[t.id] = t.name));
+    return map;
+  }
 }

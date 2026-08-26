@@ -28,4 +28,6 @@ export interface IEventService {
     maxMembers?: number | null;
   }): Promise<EventTeamDTO>;
   deleteTeam(teamId: string): Promise<void>;
+  existingEventIds(ids: string[]): Promise<string[]>;
+  getTeamNamesByIds(teamIds: string[]): Promise<Record<string, string>>;
 }

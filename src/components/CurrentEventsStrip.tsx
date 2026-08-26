@@ -3,9 +3,14 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ChevronLeft, ChevronRight, Mail, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventCard from "./EventCard";
-import { supabase } from "@/integrations/supabase/client";
+import { registerDefaults } from "@/core/services/registerDefaults";
+import { resolveService } from "@/core/services/di";
+import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
+
+registerDefaults();
+const eventServiceCore = () => resolveService<IEventService>("EventService");
 
 export default function CurrentEventsStrip() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -22,19 +27,21 @@ export default function CurrentEventsStrip() {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['current-events'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('is_active', true)
-        .order('start_at', { ascending: true })
-        .limit(6);
-      
-      if (error) throw error;
-      return (data || []).map(event => ({
-        ...event,
-        type: event.type as string | string[],
-        format: event.format as string | string[],
-      }));
+      const data = await eventServiceCore().listEvents({
+        activeOnly: true,
+        limit: 6,
+      });
+
+      return (data || [])
+        .map(event => ({
+          ...event,
+          type: event.type as string | string[],
+          format: event.format as string | string[],
+        }))
+        .sort(
+          (a, b) =>
+            new Date(a.start_at).getTime() - new Date(b.start_at).getTime(),
+        );
     },
   });
 
