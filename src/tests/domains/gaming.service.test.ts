@@ -1,387 +1,540 @@
-// Unit tests for GamingService (Phase 10)
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-interface TournamentRecord {
-  id: string;
-  event_id: string;
-  game_name: string;
-  status: string;
-  current_teams: number;
-  created_at: string;
-  updated_at?: string;
+// GamingServiceImpl takes no repository via constructor injection (unlike
+// TicketServiceImpl/EventServiceImpl) - it lazily does
+// `await import("@/integrations/supabase/client")` inside a private
+// getSupabase() method on every call. There's no constructor seam to
+// inject a fake repository into, so this test mocks the Supabase client
+// module itself with vi.mock() and drives the REAL GamingServiceImpl
+// against a small fake query-builder that mimics
+// .from().select().eq().order().maybeSingle() etc.
+//
+// This replaces the previous version of this file, which tested a
+// hand-written `MockGamingService` class that reimplemented a simplified
+// version of the real logic (and never imported GamingServiceImpl at
+// all) - it could not have caught a real regression in this file.
+
+// ---- Fake Supabase query builder -----------------------------------
+
+interface TableState {
+  rows: any[];
 }
 
-interface TournamentTeamRecord {
-  id: string;
-  tournament_id: string;
-  team_name: string;
-  checked_in: boolean;
-  seeding?: number;
-  created_at: string;
+function createFakeSupabase(tables: Record<string, any[]> = {}) {
+  const state: Record<string, TableState> = {};
+  for (const [table, rows] of Object.entries(tables)) {
+    state[table] = { rows: [...rows] };
+  }
+
+  function ensureTable(table: string): TableState {
+    if (!state[table]) state[table] = { rows: [] };
+    return state[table];
+  }
+
+  function from(table: string) {
+    const filters: Array<(row: any) => boolean> = [];
+    let orderKey: string | null = null;
+    let limitCount: number | null = null;
+    let pendingInsert: any[] | null = null;
+    let pendingUpdate: Record<string, unknown> | null = null;
+    let pendingUpsert: any | null = null;
+    let pendingDelete = false;
+    let selectCount = false;
+
+    const applyFiltersAndOrder = () => {
+      let rows = ensureTable(table).rows.filter((row) =>
+        filters.every((f) => f(row)),
+      );
+      if (orderKey) {
+        rows = [...rows].sort((a, b) =>
+          (a[orderKey as string] ?? "") > (b[orderKey as string] ?? "")
+            ? 1
+            : -1,
+        );
+      }
+      if (limitCount != null) rows = rows.slice(0, limitCount);
+      return rows;
+    };
+
+    const builder: any = {
+      select(_cols?: string, opts?: { count?: string; head?: boolean }) {
+        if (opts?.count) selectCount = true;
+        return builder;
+      },
+      eq(key: string, value: unknown) {
+        filters.push((row) => row[key] === value);
+        return builder;
+      },
+      order(key: string) {
+        orderKey = key;
+        return builder;
+      },
+      limit(n: number) {
+        limitCount = n;
+        return builder;
+      },
+      insert(rowsToInsert: any) {
+        pendingInsert = Array.isArray(rowsToInsert)
+          ? rowsToInsert
+          : [rowsToInsert];
+        return builder;
+      },
+      update(patch: Record<string, unknown>) {
+        pendingUpdate = patch;
+        return builder;
+      },
+      upsert(row: any) {
+        pendingUpsert = row;
+        return builder;
+      },
+      delete() {
+        pendingDelete = true;
+        return builder;
+      },
+      then(resolve: (v: any) => void, reject?: (e: any) => void) {
+        // Allow `await builder` directly (some call sites don't call a
+        // terminal method before awaiting, e.g. delete().eq(...))
+        return Promise.resolve(this.__exec()).then(resolve, reject);
+      },
+      __exec() {
+        const t = ensureTable(table);
+
+        if (pendingDelete) {
+          const before = t.rows.length;
+          t.rows = t.rows.filter((row) => !filters.every((f) => f(row)));
+          return { data: null, error: null, count: before - t.rows.length };
+        }
+
+        if (pendingInsert) {
+          const inserted = pendingInsert.map((row, i) => ({
+            id: row.id ?? `generated-${table}-${t.rows.length + i}`,
+            created_at: row.created_at ?? new Date().toISOString(),
+            ...row,
+          }));
+          t.rows.push(...inserted);
+          return {
+            data: inserted.length === 1 ? inserted[0] : inserted,
+            error: null,
+          };
+        }
+
+        if (pendingUpdate) {
+          const matched = t.rows.filter((row) =>
+            filters.every((f) => f(row)),
+          );
+          matched.forEach((row) => Object.assign(row, pendingUpdate));
+          return {
+            data: matched.length === 1 ? matched[0] : matched,
+            error: null,
+          };
+        }
+
+        if (pendingUpsert) {
+          const row = pendingUpsert;
+          const existingIdx = t.rows.findIndex(
+            (r) => r.id != null && r.id === row.id,
+          );
+          if (existingIdx >= 0) {
+            Object.assign(t.rows[existingIdx], row);
+            return { data: t.rows[existingIdx], error: null };
+          }
+          const created = {
+            id: row.id ?? `generated-${table}-${t.rows.length}`,
+            ...row,
+          };
+          t.rows.push(created);
+          return { data: created, error: null };
+        }
+
+        const rows = applyFiltersAndOrder();
+        if (selectCount) {
+          return { data: null, error: null, count: rows.length };
+        }
+        return { data: rows, error: null };
+      },
+      // Terminal helper used directly by GamingServiceImpl in most places
+      maybeSingle() {
+        return (async () => {
+          const result = builder.__exec();
+          const rows = Array.isArray(result.data)
+            ? result.data
+            : result.data
+              ? [result.data]
+              : [];
+          return {
+            data:
+              rows[0] ?? (Array.isArray(result.data) ? null : result.data),
+            error: result.error,
+          };
+        })();
+      },
+    };
+
+    return builder;
+  }
+
+  const channelMock = {
+    on: vi.fn().mockReturnThis(),
+    subscribe: vi.fn().mockReturnThis(),
+  };
+
+  return {
+    from,
+    channel: vi.fn(() => channelMock),
+    removeChannel: vi.fn(),
+    __state: state,
+  };
 }
 
-interface TournamentMatchRecord {
-  id: string;
-  tournament_id: string;
-  round_number: number;
-  match_number: number;
-  match_status: string;
-  team1_id?: string;
-  team2_id?: string;
-  winner_id?: string;
-  team1_score?: number;
-  team2_score?: number;
-  created_at: string;
-}
+// ---- Mock the module GamingServiceImpl dynamically imports ----------
 
-/**
- * Mock Gaming Repository
- */
-const createMockGamingRepository = () => ({
-  getTournament: vi.fn(),
-  getTournamentByEventId: vi.fn(),
-  createTournament: vi.fn(),
-  updateTournament: vi.fn(),
-  listTeams: vi.fn(),
-  getTeam: vi.fn(),
-  createTeam: vi.fn(),
-  updateTeam: vi.fn(),
-  listMatches: vi.fn(),
-  getMatch: vi.fn(),
-  createMatch: vi.fn(),
-  updateMatch: vi.fn(),
-});
+let fakeSupabase = createFakeSupabase();
 
-// Mock GamingService implementation
-class MockGamingService {
-  constructor(private repo: any) {}
+vi.mock("@/integrations/supabase/client", () => ({
+  get supabase() {
+    return fakeSupabase;
+  },
+}));
 
-  isGamingEvent(type: string): boolean {
-    return ["Esports", "Gaming", "Gaming Tournament"].includes(type);
-  }
+// Import AFTER the mock is registered.
+const { GamingServiceImpl } = await import(
+  "@/domains/gaming/impl/GamingServiceImpl"
+);
 
-  async getTournamentByEventId(
-    eventId: string,
-  ): Promise<TournamentRecord | null> {
-    return this.repo.getTournamentByEventId(eventId);
-  }
-
-  async ensureTournamentForEvent(eventId: string): Promise<TournamentRecord> {
-    let tournament = await this.repo.getTournamentByEventId(eventId);
-    if (!tournament) {
-      tournament = await this.repo.createTournament({
-        event_id: eventId,
-        game_name: "Default",
-        status: "registration_open",
-        current_teams: 0,
-      });
-    }
-    return tournament;
-  }
-
-  async listTournamentTeams(
-    tournamentId: string,
-  ): Promise<TournamentTeamRecord[]> {
-    return this.repo.listTeams(tournamentId);
-  }
-
-  async listTournamentMatches(
-    tournamentId: string,
-  ): Promise<TournamentMatchRecord[]> {
-    return this.repo.listMatches(tournamentId);
-  }
-
-  async generateTournamentBracket(tournamentId: string) {
-    const teams = await this.repo.listTeams(tournamentId);
-
-    if (teams.length === 0 || teams.length % 2 !== 0) {
-      throw new Error("Tournament must have even number of teams");
-    }
-
-    const tournament = await this.repo.updateTournament(tournamentId, {
-      status: "bracket_generated",
-    });
-
-    const matches = [];
-    for (let i = 0; i < teams.length; i += 2) {
-      const match = await this.repo.createMatch({
-        tournament_id: tournamentId,
-        round_number: 1,
-        match_number: i / 2 + 1,
-        team1_id: teams[i].id,
-        team2_id: teams[i + 1].id,
-        match_status: "upcoming",
-      });
-      matches.push(match);
-    }
-
-    return { tournament, matches };
-  }
-
-  async submitMatchResult(
-    matchId: string,
-    result: {
-      team1_score?: number;
-      team2_score?: number;
-      winner_id?: string;
-    },
-  ): Promise<TournamentMatchRecord> {
-    return this.repo.updateMatch(matchId, {
-      ...result,
-      match_status: "completed",
-    });
-  }
-}
-
-describe("GamingService", () => {
-  let service: MockGamingService;
-  let mockRepo: any;
+describe("GamingServiceImpl", () => {
+  let service: InstanceType<typeof GamingServiceImpl>;
 
   beforeEach(() => {
-    mockRepo = createMockGamingRepository();
-    service = new MockGamingService(mockRepo);
+    fakeSupabase = createFakeSupabase({
+      esports_tournaments: [],
+      esports_tournament_teams: [],
+      esports_tournament_matches: [],
+      esports_tournament_maps: [],
+      esports_players: [],
+      esports_player_match_stats: [],
+    });
+    service = new GamingServiceImpl();
   });
 
   describe("isGamingEvent", () => {
-    it("should return true for gaming event types", () => {
-      expect(service.isGamingEvent("Esports")).toBe(true);
-      expect(service.isGamingEvent("Gaming")).toBe(true);
+    it("matches on type field (case-insensitive)", () => {
+      expect(service.isGamingEvent({ type: "Gaming" })).toBe(true);
+      expect(service.isGamingEvent({ type: "gaming" })).toBe(true);
     });
 
-    it("should return false for non-gaming event types", () => {
-      expect(service.isGamingEvent("Hackathon")).toBe(false);
-      expect(service.isGamingEvent("Conference")).toBe(false);
+    it("matches on category, slug, title, or tags as fallbacks", () => {
+      expect(service.isGamingEvent({ category: "Esports Night" })).toBe(true);
+      expect(service.isGamingEvent({ slug: "valorant-showdown" })).toBe(true);
+      expect(service.isGamingEvent({ title: "CS2 Tournament" })).toBe(true);
+      expect(
+        service.isGamingEvent({ tags: ["community", "match-play"] }),
+      ).toBe(true);
+    });
+
+    it("returns false for non-gaming events", () => {
+      expect(service.isGamingEvent({ type: "Hackathon" })).toBe(false);
+      expect(
+        service.isGamingEvent({ type: "Workshop", title: "React 101" }),
+      ).toBe(false);
+    });
+
+    it("returns false for null/undefined event", () => {
+      expect(service.isGamingEvent(null)).toBe(false);
+      expect(service.isGamingEvent(undefined)).toBe(false);
     });
   });
 
-  describe("getTournamentByEventId", () => {
-    it("should retrieve tournament by event ID", async () => {
-      const tournament: TournamentRecord = {
-        id: "tournament-123",
-        event_id: "event-123",
-        game_name: "Valorant",
-        status: "registration_open",
-        current_teams: 8,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      mockRepo.getTournamentByEventId.mockResolvedValue(tournament);
-
-      const result = await service.getTournamentByEventId("event-123");
-
-      expect(result).toEqual(tournament);
-      expect(mockRepo.getTournamentByEventId).toHaveBeenCalledWith("event-123");
-    });
-
-    it("should return null if tournament not found", async () => {
-      mockRepo.getTournamentByEventId.mockResolvedValue(null);
-
-      const result = await service.getTournamentByEventId("event-999");
-
+  describe("getTournamentByEventId / ensureTournamentForEvent", () => {
+    it("returns null when no tournament exists for the event", async () => {
+      const result = await service.getTournamentByEventId("event-1");
       expect(result).toBeNull();
     });
-  });
 
-  describe("ensureTournamentForEvent", () => {
-    it("should return existing tournament if available", async () => {
-      const tournament: TournamentRecord = {
-        id: "tournament-123",
-        event_id: "event-123",
-        game_name: "Valorant",
-        status: "registration_open",
-        current_teams: 8,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      mockRepo.getTournamentByEventId.mockResolvedValue(tournament);
-
-      const result = await service.ensureTournamentForEvent("event-123");
-
-      expect(result).toEqual(tournament);
+    it("creates a tournament when none exists", async () => {
+      const created = await service.ensureTournamentForEvent("event-1");
+      expect(created.event_id).toBe("event-1");
+      expect(created.status).toBe("registration_open");
+      expect(created.game_name).toBe("Valorant");
     });
 
-    it("should create new tournament if none exists", async () => {
-      const newTournament: TournamentRecord = {
-        id: "tournament-new",
-        event_id: "event-999",
-        game_name: "Default",
-        status: "registration_open",
-        current_teams: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+    it("returns the existing tournament instead of creating a duplicate", async () => {
+      const first = await service.ensureTournamentForEvent("event-1");
+      const second = await service.ensureTournamentForEvent("event-1");
+      expect(second.id).toBe(first.id);
 
-      mockRepo.getTournamentByEventId.mockResolvedValue(null);
-      mockRepo.createTournament.mockResolvedValue(newTournament);
+      const all = fakeSupabase.__state["esports_tournaments"].rows;
+      expect(all.filter((t) => t.event_id === "event-1")).toHaveLength(1);
+    });
 
-      const result = await service.ensureTournamentForEvent("event-999");
-
-      expect(result).toEqual(newTournament);
-      expect(mockRepo.createTournament).toHaveBeenCalled();
+    it("honors a custom game_name on creation", async () => {
+      const created = await service.ensureTournamentForEvent("event-2", {
+        game_name: "CS2",
+      });
+      expect(created.game_name).toBe("CS2");
     });
   });
 
-  describe("listTournamentTeams", () => {
-    it("should list teams in tournament", async () => {
-      const teams: TournamentTeamRecord[] = [
-        {
-          id: "team-1",
-          tournament_id: "tournament-123",
-          team_name: "Team Alpha",
-          checked_in: true,
-          seeding: 1,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "team-2",
-          tournament_id: "tournament-123",
-          team_name: "Team Beta",
-          checked_in: false,
-          seeding: 2,
-          created_at: new Date().toISOString(),
-        },
-      ];
+  describe("createTournamentTeam / listTournamentTeams", () => {
+    it("creates a team and lists it back for the tournament", async () => {
+      const team = await service.createTournamentTeam({
+        tournamentId: "t-1",
+        teamName: "Team Alpha",
+      });
+      expect(team.team_name).toBe("Team Alpha");
+      expect(team.checked_in).toBe(false);
 
-      mockRepo.listTeams.mockResolvedValue(teams);
-
-      const result = await service.listTournamentTeams("tournament-123");
-
-      expect(result).toHaveLength(2);
-      expect(result[0].team_name).toBe("Team Alpha");
-      expect(mockRepo.listTeams).toHaveBeenCalledWith("tournament-123");
+      const teams = await service.listTournamentTeams("t-1");
+      expect(teams).toHaveLength(1);
+      expect(teams[0].team_name).toBe("Team Alpha");
     });
 
-    it("should return empty array if no teams", async () => {
-      mockRepo.listTeams.mockResolvedValue([]);
+    it("does not return teams belonging to a different tournament", async () => {
+      await service.createTournamentTeam({
+        tournamentId: "t-1",
+        teamName: "Team Alpha",
+      });
+      await service.createTournamentTeam({
+        tournamentId: "t-2",
+        teamName: "Team Beta",
+      });
 
-      const result = await service.listTournamentTeams("tournament-123");
-
-      expect(result).toEqual([]);
+      const teams = await service.listTournamentTeams("t-1");
+      expect(teams).toHaveLength(1);
+      expect(teams[0].team_name).toBe("Team Alpha");
     });
   });
 
-  describe("listTournamentMatches", () => {
-    it("should list matches in tournament", async () => {
-      const matches: TournamentMatchRecord[] = [
-        {
-          id: "match-1",
-          tournament_id: "tournament-123",
-          round_number: 1,
-          match_number: 1,
-          match_status: "upcoming",
-          team1_id: "team-1",
-          team2_id: "team-2",
-          winner_id: undefined,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "match-2",
-          tournament_id: "tournament-123",
-          round_number: 1,
-          match_number: 2,
-          match_status: "completed",
-          team1_id: "team-3",
-          team2_id: "team-4",
-          winner_id: "team-3",
-          created_at: new Date().toISOString(),
-        },
-      ];
+  describe("updateTournamentTeam / deleteTournamentTeam", () => {
+    it("updates a team's fields", async () => {
+      const team = await service.createTournamentTeam({
+        tournamentId: "t-1",
+        teamName: "Team Alpha",
+      });
+      const updated = await service.updateTournamentTeam(team.id, {
+        checked_in: true,
+      });
+      expect(updated.checked_in).toBe(true);
+    });
 
-      mockRepo.listMatches.mockResolvedValue(matches);
-
-      const result = await service.listTournamentMatches("tournament-123");
-
-      expect(result).toHaveLength(2);
-      expect(result[0].match_status).toBe("upcoming");
-      expect(result[1].winner_id).toBe("team-3");
-      expect(mockRepo.listMatches).toHaveBeenCalledWith("tournament-123");
+    it("removes a team", async () => {
+      const team = await service.createTournamentTeam({
+        tournamentId: "t-1",
+        teamName: "Team Alpha",
+      });
+      await service.deleteTournamentTeam(team.id);
+      const teams = await service.listTournamentTeams("t-1");
+      expect(teams).toHaveLength(0);
     });
   });
 
   describe("generateTournamentBracket", () => {
-    it("should generate bracket for even number of teams", async () => {
-      const teams: TournamentTeamRecord[] = Array.from(
-        { length: 4 },
-        (_, i) => ({
-          id: `team-${i}`,
-          tournament_id: "tournament-123",
-          team_name: `Team ${String.fromCharCode(65 + i)}`,
-          checked_in: true,
-          seeding: i,
-          created_at: new Date().toISOString(),
-        }),
+    it("throws when there are no checked-in teams", async () => {
+      await service.createTournamentTeam({
+        tournamentId: "t-1",
+        teamName: "Team Alpha",
+      });
+      await expect(service.generateTournamentBracket("t-1")).rejects.toThrow(
+        /checked-in/i,
       );
-
-      const tournament: TournamentRecord = {
-        id: "tournament-123",
-        event_id: "event-123",
-        game_name: "Valorant",
-        status: "bracket_generated",
-        current_teams: 4,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      mockRepo.listTeams.mockResolvedValue(teams);
-      mockRepo.updateTournament.mockResolvedValue(tournament);
-      mockRepo.createMatch.mockResolvedValue({});
-
-      const result = await service.generateTournamentBracket("tournament-123");
-
-      expect(result).toBeDefined();
-      expect(mockRepo.createMatch.mock.calls.length).toBeGreaterThan(0);
     });
 
-    it("should reject bracket generation with odd number of teams", async () => {
-      const teams: TournamentTeamRecord[] = Array.from(
-        { length: 3 },
-        (_, i) => ({
-          id: `team-${i}`,
-          tournament_id: "tournament-123",
-          team_name: `Team ${String.fromCharCode(65 + i)}`,
-          checked_in: true,
-          seeding: i,
-          created_at: new Date().toISOString(),
-        }),
+    it("pairs checked-in teams and marks the tournament bracket_generated", async () => {
+      fakeSupabase.__state["esports_tournaments"].rows.push({
+        id: "t-1",
+        event_id: "event-1",
+        game_name: "Valorant",
+        status: "registration_open",
+        current_teams: 0,
+        created_at: new Date().toISOString(),
+      });
+      for (const name of ["Alpha", "Beta", "Gamma", "Delta"]) {
+        const team = await service.createTournamentTeam({
+          tournamentId: "t-1",
+          teamName: name,
+        });
+        await service.updateTournamentTeam(team.id, { checked_in: true });
+      }
+
+      const { tournament, matches } =
+        await service.generateTournamentBracket("t-1");
+
+      expect(tournament.status).toBe("bracket_generated");
+      expect(tournament.current_teams).toBe(4);
+      // 4 teams -> round 1 has 2 matches, round 2 (final) has 1 match
+      expect(matches.filter((m: any) => m.round_number === 1)).toHaveLength(
+        2,
       );
+      expect(matches.filter((m: any) => m.round_number === 2)).toHaveLength(
+        1,
+      );
+    });
 
-      mockRepo.listTeams.mockResolvedValue(teams);
+    it("byes a lone unpaired team straight into completed status", async () => {
+      for (const name of ["Alpha", "Beta", "Gamma"]) {
+        const team = await service.createTournamentTeam({
+          tournamentId: "t-1",
+          teamName: name,
+        });
+        await service.updateTournamentTeam(team.id, { checked_in: true });
+      }
 
-      await expect(
-        service.generateTournamentBracket("tournament-123"),
-      ).rejects.toThrow();
+      // 3 teams -> nextPower = 4, one bracket slot is empty -> one round-1
+      // match is auto-completed with a bye winner.
+      const { matches } = await service.generateTournamentBracket("t-1");
+      const round1 = matches.filter((m: any) => m.round_number === 1);
+      const byeMatch = round1.find(
+        (m: any) => m.match_status === "completed",
+      );
+      expect(byeMatch).toBeDefined();
+      expect(byeMatch.winner_id).toBeTruthy();
+    });
+
+    it("clears previously generated matches before regenerating", async () => {
+      for (const name of ["Alpha", "Beta"]) {
+        const team = await service.createTournamentTeam({
+          tournamentId: "t-1",
+          teamName: name,
+        });
+        await service.updateTournamentTeam(team.id, { checked_in: true });
+      }
+      await service.generateTournamentBracket("t-1");
+      await service.generateTournamentBracket("t-1");
+
+      const allMatches = await service.listTournamentMatches("t-1");
+      // Regenerating should not leave duplicate matches from the first run.
+      expect(allMatches).toHaveLength(1);
     });
   });
 
   describe("submitMatchResult", () => {
-    it("should update match with result and winner", async () => {
-      const match: TournamentMatchRecord = {
-        id: "match-1",
-        tournament_id: "tournament-123",
-        round_number: 1,
-        match_number: 1,
-        match_status: "completed",
-        team1_id: "team-1",
-        team2_id: "team-2",
-        winner_id: "team-1",
-        team1_score: 13,
-        team2_score: 11,
-        created_at: new Date().toISOString(),
-      };
+    async function seedTwoTeamBracket() {
+      for (const name of ["Alpha", "Beta"]) {
+        const team = await service.createTournamentTeam({
+          tournamentId: "t-1",
+          teamName: name,
+        });
+        await service.updateTournamentTeam(team.id, { checked_in: true });
+      }
+      await service.generateTournamentBracket("t-1");
+      const [match] = await service.listTournamentMatches("t-1");
+      return match;
+    }
 
-      mockRepo.updateMatch.mockResolvedValue(match);
+    it("throws if the match does not exist", async () => {
+      await expect(
+        service.submitMatchResult("missing-match", {
+          teamAScore: 1,
+          teamBScore: 0,
+        }),
+      ).rejects.toThrow(/not found/i);
+    });
 
-      const result = await service.submitMatchResult("match-1", {
-        team1_score: 13,
-        team2_score: 11,
-        winner_id: "team-1",
+    it("records the winner based on the higher score", async () => {
+      const match = await seedTwoTeamBracket();
+      const updated = await service.submitMatchResult(match.id, {
+        teamAScore: 13,
+        teamBScore: 7,
       });
+      expect(updated.winner_id).toBe(match.team_a_id);
+      expect(updated.match_status).toBe("completed");
+    });
 
-      expect(result.match_status).toBe("completed");
-      expect(result.winner_id).toBe("team-1");
-      expect(mockRepo.updateMatch).toHaveBeenCalled();
+    it("marks a tied score as disputed with no winner", async () => {
+      const match = await seedTwoTeamBracket();
+      const updated = await service.submitMatchResult(match.id, {
+        teamAScore: 10,
+        teamBScore: 10,
+      });
+      expect(updated.winner_id).toBeNull();
+      expect(updated.match_status).toBe("disputed");
+    });
+  });
+
+  describe("getMatchCentreData", () => {
+    // NOTE: as currently written, GamingServiceImpl.getMatchCentreData's
+    // teamA/teamB lookups (`.from(teamsTable).select("*").maybeSingle()`)
+    // have no `.eq()` filter tying them to the match's actual
+    // team_a_id/team_b_id - they just fetch *some* row from the teams
+    // table (whichever the fake query builder or real Postgres happens
+    // to return first) rather than the specific teams playing in this
+    // match. This test documents that as the CURRENT, buggy behavior
+    // rather than silently working around it - flagged separately as a
+    // bug to fix, not something this test suite should paper over.
+    it("returns null when the match does not exist", async () => {
+      const result = await service.getMatchCentreData("missing-match");
+      expect(result).toBeNull();
+    });
+
+    it("returns match, tournament, and (unfiltered) team data when the match exists", async () => {
+      const team = await service.createTournamentTeam({
+        tournamentId: "t-1",
+        teamName: "Team Alpha",
+      });
+      await service.updateTournamentTeam(team.id, { checked_in: true });
+      const tournament = await service.ensureTournamentForEvent("event-1");
+      fakeSupabase.__state["esports_tournament_matches"].rows = [
+        {
+          id: "match-1",
+          tournament_id: tournament.id,
+          round_number: 1,
+          match_number: 1,
+          team_a_id: team.id,
+          team_b_id: null,
+          match_status: "upcoming",
+        },
+      ];
+
+      const result = await service.getMatchCentreData("match-1");
+      expect(result).not.toBeNull();
+      expect(result!.match.id).toBe("match-1");
+      // teamA is NOT necessarily the team actually in team_a_id - see the
+      // note above. This assertion documents that it returns *a* team
+      // row from the table (the only one seeded here), not that it
+      // correctly resolved team_a_id.
+      expect(result!.teamA?.id).toBe(team.id);
+    });
+  });
+
+  describe("findNextMatchForTournament / getLiveMatchOverlayData", () => {
+    it("finds the round-2 match that follows a round-1 match", async () => {
+      for (const name of ["Alpha", "Beta", "Gamma", "Delta"]) {
+        const team = await service.createTournamentTeam({
+          tournamentId: "t-1",
+          teamName: name,
+        });
+        await service.updateTournamentTeam(team.id, { checked_in: true });
+      }
+      await service.generateTournamentBracket("t-1");
+
+      const next = await service.findNextMatchForTournament("t-1", 1, 1);
+      expect(next).not.toBeNull();
+      expect(next!.round_number).toBe(2);
+    });
+
+    it("returns null when there is no next match", async () => {
+      const next = await service.findNextMatchForTournament(
+        "nonexistent-tournament",
+        1,
+        1,
+      );
+      expect(next).toBeNull();
+    });
+
+    it("returns null live overlay data when no match is flagged as streamed", async () => {
+      const result = await service.getLiveMatchOverlayData("t-1");
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("subscribeToTournamentUpdates", () => {
+    it("returns an unsubscribe function without throwing", () => {
+      const callback = vi.fn();
+      const unsubscribe = service.subscribeToTournamentUpdates(
+        "t-1",
+        callback,
+      );
+      expect(typeof unsubscribe).toBe("function");
+      expect(() => unsubscribe()).not.toThrow();
     });
   });
 });
