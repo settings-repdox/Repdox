@@ -208,10 +208,9 @@ swappable implementations) for the pages that don't go through them.
    the stale `src/core/services/interfaces/IEventService.ts`. Low risk
    (confirmed zero imports for all three), meaningful clarity gain.
 3. ~~**Resolve RFC 0001** (composition root location)~~ — done, see
-   ADR 0008. The **seeded E2E environment half of RFC 0002** is still
-   open and scoped, ready for a decision. RFC 0002's CI half already
-   shipped (`.github/workflows/ci.yml`) — see that RFC's own status
-   header.
+   ADR 0008. ~~**Seeded E2E environment half of RFC 0002**~~ — done, see
+   that RFC's own status header for what shipped and what still needs a
+   real verification run against the live E2E project.
 4. **Resolve the `send-verification` duplication** — confirm with whoever
    manages the Supabase project which copy is actually live, then delete
    or explicitly re-export the other one the same way

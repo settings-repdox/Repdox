@@ -8,6 +8,7 @@
     "build": "vite build",
     "verify:infra": "vitest run src/tests/architecture/infrastructure-isolation.test.ts",
     "verify:bootstrap": "vitest run src/tests/architecture/bootstrap-isolation.test.ts",
+    "seed:e2e": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/seed-e2e-data.ts",
     "verify:production-deps": "vitest run src/tests/architecture/domain-service-registration.test.ts",
     "build:dev": "vite build --mode development",
     "build:analyze": "ANALYZE=true vite build",

@@ -1,9 +1,12 @@
 # RFC 0002: CI Pipeline and a Seeded E2E Environment
 
-Status: **Partially resolved.** The CI-pipeline half (below) shipped as
+Status: **Resolved.** The CI-pipeline half shipped as
 `.github/workflows/ci.yml` — see "CI" section for what actually landed
-vs. what was proposed. The seeded-E2E-environment half is still
-**open — proposed, not yet approved or scheduled**.
+vs. what was proposed. The seeded-E2E-environment half also shipped
+(`scripts/seed-e2e-data.ts` + the `e2e` job in that same workflow) — see
+"Seeded E2E environment" section below for what changed from the
+original proposal and, importantly, what has not yet been verified with
+a real run.
 Author: Phase 11 documentation pass
 Related: ADR 0006 (Testing Strategy), `TECHNICAL_DEBT_PHASE10.md`
 
@@ -65,7 +68,68 @@ on its own trigger (paths under `functions/send-verification/**` and
 E2E (`npm run test:e2e`) is **not** wired into `ci.yml` — still blocked
 on the seeded environment below, same reasoning as originally proposed.
 
-### Seeded E2E environment — still open
+### Seeded E2E environment — **implemented**, with corrections to this
+### section's original assumptions
+
+What actually shipped, and how it differs from the proposal above:
+
+- **Only one event needs seeding, not three.** The proposal assumed all
+  three event types (Hackathon, Workshop, Gaming) needed fixture data.
+  An audit of the actual specs under `src/tests/e2e/` (done before
+  writing the seed script — this was exactly the missing prerequisite
+  this section originally called out) found `smoke.spec.ts` and
+  `ticketing-smoke.spec.ts` need no seed data at all, and
+  `gaming-registration-form.spec.ts` needs exactly one Gaming-type,
+  registration-open event — no team, no registration record, no
+  Hackathon or Workshop event. `scripts/seed-e2e-data.ts` seeds only
+  that. If a future spec needs more, extend the script then — don't
+  pre-seed data nothing currently exercises.
+- Also: this RFC's problem statement above says "4 Playwright E2E
+  specs" and this section originally referenced
+  `scripts/phase9-dry-run.ts` as an existing pattern to follow — neither
+  is accurate as of this update. There are 3 spec files under
+  `src/tests/e2e/`, and `scripts/phase9-dry-run.ts` does not exist
+  in the current tree. Corrected here rather than left stale.
+- **A dedicated hosted Supabase project** was created for this (not the
+  local-CLI/`supabase start` alternative this section originally
+  offered — that path remains untested and undocumented here, since it
+  wasn't the one chosen).
+- `scripts/seed-e2e-data.ts` upserts on a fixed slug
+  (`e2e-gaming-fixture`) rather than inserting fresh rows, so it's safe
+  to run on every CI job without accumulating duplicate fixture events.
+  It deliberately does not try to guess "is this really the E2E
+  project" from the URL — that project's real ref doesn't contain the
+  word "e2e", making any such heuristic unreliable — and relies instead
+  on `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` having no default value,
+  so it can't silently target the wrong project.
+- The CI job (`.github/workflows/ci.yml`) matches the shape below almost
+  exactly, with two differences: it uses `npm run test:e2e` (the
+  existing script, `playwright test`) rather than calling `playwright
+  test` directly, and it's gated on
+  `if: vars.E2E_SUPABASE_URL != ''` so it skips cleanly rather than
+  failing when the E2E project's repo variable/secrets aren't
+  configured (e.g. for forks, or before someone finishes the setup step
+  below).
+- **What's NOT verified**: the seed script was written and executed
+  against the real E2E project up to the point of the actual database
+  write — every step short of that (env var validation, guardrail
+  checks, request construction, reaching the live HTTPS endpoint) ran
+  successfully during development. The actual insert, and the full
+  Playwright run against the seeded data, could not be executed from
+  the sandbox this was developed in — no outbound network access to
+  Supabase, no Docker for a local alternative, no reachable CDN for
+  Playwright's browser binaries. **This still needs a real run — in CI,
+  or by whoever has access to the E2E project — before being trusted as
+  fully working.**
+
+**Remaining setup step, not yet done**: add the `E2E_SUPABASE_URL`
+repository variable and the `E2E_SUPABASE_ANON_KEY` /
+`E2E_SUPABASE_SERVICE_ROLE_KEY` repository secrets in GitHub so the `e2e`
+job actually runs instead of skipping. Until that's set, the job is
+present in the workflow but inert.
+
+Original proposal (superseded by the above, kept for the historical
+record):
 
 Stand up a dedicated Supabase project (or use the Supabase CLI's local
 Postgres + `supabase start`) exclusively for E2E runs, with a seed script

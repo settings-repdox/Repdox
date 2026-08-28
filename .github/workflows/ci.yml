@@ -10,8 +10,10 @@ name: CI
 #
 # See docs/architecture/PHASE11_COMPLIANCE_REPORT.md and RFC 0002
 # (docs/rfc/rfc-0002-ci-and-e2e-seed-environment.md) for the fuller
-# writeup of why this didn't exist until now and what's still out of
-# scope (E2E — needs a seeded Supabase project, tracked separately).
+# writeup. The E2E job below requires E2E_SUPABASE_URL (repo variable)
+# and E2E_SUPABASE_ANON_KEY / E2E_SUPABASE_SERVICE_ROLE_KEY (repo
+# secrets) pointing at a Supabase project dedicated to E2E testing —
+# it's skipped, not failed, when those aren't configured.
 
 on:
   push:
@@ -66,3 +68,47 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    # Requires repository secrets pointing at a dedicated E2E Supabase
+    # project (never production) - see scripts/seed-e2e-data.ts and
+    # docs/rfc/rfc-0002-ci-and-e2e-seed-environment.md for the full
+    # writeup, and docs/adr/ for the ADR once this is converted. Skips
+    # cleanly (rather than failing) when those secrets aren't configured,
+    # so this doesn't break CI for forks/PRs that can't access repo
+    # secrets.
+    if: ${{ vars.E2E_SUPABASE_URL != '' }}
+    env:
+      VITE_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_GAMING_EVENT_SLUG: e2e-gaming-fixture
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Seed E2E fixture data
+        run: npm run seed:e2e
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E suite
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
