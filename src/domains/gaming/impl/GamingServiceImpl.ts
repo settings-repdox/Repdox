@@ -350,27 +350,55 @@ export class GamingServiceImpl implements IGamingService {
       }
     };
 
-    const [matchRes, tournamentRes, teamARes, teamBRes] = await Promise.all([
+    // Fetch the match first - tournament/teamA/teamB all need to be
+    // filtered by IDs that live on the match row (tournament_id,
+    // team_a_id, team_b_id), so they can't be issued in parallel with
+    // the match lookup itself. Previously these three ran alongside the
+    // match query with no .eq() filter at all, meaning they returned
+    // *some* row from their table rather than the ones actually tied to
+    // this match.
+    const matchRes = await getSingle(
+      (supabase as any)
+        .from(matchesTable)
+        .select("*")
+        .eq("id", matchId)
+        .maybeSingle(),
+    );
+    const match = (matchRes.data as TournamentMatchRecord | null) ?? null;
+
+    if (!match) return null;
+
+    const [tournamentRes, teamARes, teamBRes] = await Promise.all([
       getSingle(
         (supabase as any)
-          .from(matchesTable)
+          .from(tournamentsTable)
           .select("*")
-          .eq("id", matchId)
+          .eq("id", (match as any).tournament_id)
           .maybeSingle(),
       ),
-      getSingle(
-        (supabase as any).from(tournamentsTable).select("*").maybeSingle(),
-      ),
-      getSingle((supabase as any).from(teamsTable).select("*").maybeSingle()),
-      getSingle((supabase as any).from(teamsTable).select("*").maybeSingle()),
+      (match as any).team_a_id
+        ? getSingle(
+            (supabase as any)
+              .from(teamsTable)
+              .select("*")
+              .eq("id", (match as any).team_a_id)
+              .maybeSingle(),
+          )
+        : Promise.resolve({ data: null, error: null }),
+      (match as any).team_b_id
+        ? getSingle(
+            (supabase as any)
+              .from(teamsTable)
+              .select("*")
+              .eq("id", (match as any).team_b_id)
+              .maybeSingle(),
+          )
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
-    const match = (matchRes.data as TournamentMatchRecord | null) ?? null;
     const tournament = (tournamentRes.data as TournamentRecord | null) ?? null;
     const teamA = (teamARes.data as TournamentTeamRecord | null) ?? null;
     const teamB = (teamBRes.data as TournamentTeamRecord | null) ?? null;
-
-    if (!match) return null;
 
     const [mapsRes, playersARes, playersBRes, statsRes] = await Promise.all([
       getSingle(

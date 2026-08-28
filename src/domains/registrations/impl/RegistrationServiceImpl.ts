@@ -186,7 +186,7 @@ export class RegistrationServiceImpl implements IRegistrationService {
   async getRegistration(id: string): Promise<RegistrationDTO | null> {
     const supabase = await this.getSupabase();
     const { data, error } = await supabase
-      // TODO: migrate to RegistrationService API (was .from('event_registrations'))
+      .from("event_registrations")
       .select("*")
       .eq("id", id)
       .maybeSingle();
@@ -220,7 +220,7 @@ export class RegistrationServiceImpl implements IRegistrationService {
 
     if (tableName !== "event_registrations") {
       const { data: centralData, error: centralError } = await supabase
-        // TODO: migrate to RegistrationService API (was .from('event_registrations'))
+        .from("event_registrations")
         .select("*")
         .eq("event_id", eventId)
         .order("created_at", { ascending: false });
@@ -270,7 +270,7 @@ export class RegistrationServiceImpl implements IRegistrationService {
 
     if (tableName !== "event_registrations") {
       const { data: fallbackData, error: fallbackError } = await supabase
-        // TODO: migrate to RegistrationService API (was .from('event_registrations'))
+        .from("event_registrations")
         .select("*")
         .eq("event_id", eventId)
         .eq("user_id", userId)
@@ -286,7 +286,7 @@ export class RegistrationServiceImpl implements IRegistrationService {
   async fetchRegistrationsByUser(userId: string): Promise<RegistrationDTO[]> {
     const supabase = await this.getSupabase();
     const { data, error } = await supabase
-      // TODO: migrate to RegistrationService API (was .from('event_registrations'))
+      .from("event_registrations")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
@@ -317,7 +317,7 @@ export class RegistrationServiceImpl implements IRegistrationService {
 
     if (error || tableName !== "event_registrations") {
       const { data: centralData } = await supabase
-        // TODO: migrate to RegistrationService API (was .from('event_registrations'))
+        .from("event_registrations")
         .select("*")
         .eq("event_id", eventId);
       if (centralData) {
@@ -325,8 +325,15 @@ export class RegistrationServiceImpl implements IRegistrationService {
       }
     }
 
+    // De-duplicate by id, same as fetchEventRegistrations() - a
+    // registration present in both the dynamic per-event table and the
+    // central event_registrations table should only be counted once.
+    const uniqueRegistrations = Array.from(
+      new Map(registrations.map((item) => [item.id, item])).values(),
+    );
+
     const counts: Record<string, number> = {};
-    registrations.forEach((reg) => {
+    uniqueRegistrations.forEach((reg) => {
       const key = (reg.role || "__no_role__") as string;
       counts[key] = (counts[key] || 0) + 1;
     });

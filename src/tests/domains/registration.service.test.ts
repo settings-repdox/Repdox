@@ -11,36 +11,30 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // hand-written mock class that never imported RegistrationServiceImpl -
 // it could not have caught a real regression in this file.
 //
-// IMPORTANT - this file documents two real bugs found while writing it,
-// rather than silently working around them:
+// HISTORY: writing this test suite originally surfaced a real bug -
+// getRegistration(), fetchRegistrationsByUser(), and the fallback
+// branches of fetchEventRegistrationByUser() and
+// countRegistrationsByRole() called `supabase.select(...)` directly
+// with no preceding `.from(table)` call (leftover from a half-finished
+// refactor, marked with "// TODO: migrate to RegistrationService API"
+// comments). That's been fixed in RegistrationServiceImpl.ts (the
+// missing .from("event_registrations") calls were restored), and the
+// countRegistrationsByRole() merge was also given the same
+// de-duplicate-by-id treatment fetchEventRegistrations() already had,
+// since restoring the fallback call means a registration present in
+// both the dynamic per-event table and the central table would
+// otherwise be double-counted. The tests below assert the current,
+// correct behavior.
 //
-// 1. getRegistration(), fetchRegistrationsByUser(), and the fallback
-//    branches of fetchEventRegistrationByUser() and
-//    countRegistrationsByRole() all call `supabase.select(...)`
-//    directly with NO preceding `.from(table)` call (see the
-//    "// TODO: migrate to RegistrationService API" comments in
-//    RegistrationServiceImpl.ts). supabase.select is not a function on
-//    a SupabaseClient instance - only .from(table).select() is valid.
-//    These code paths will throw `TypeError: supabase.select is not a
-//    function` at runtime, not return data.
-//    - fetchRegistrationsByUser() is called unconditionally from
-//      src/pages/Profile.tsx and will fail on every call.
-//    - countRegistrationsByRole()'s fallback branch is called from
-//      src/pages/EventDetail.tsx and only breaks for events using a
-//      non-standard (event_reg_<slug>) registration table.
-//    - getRegistration() currently has no real callers anywhere in the
-//      codebase, so this bug has not yet caused a user-facing incident.
-//    This was NOT introduced by this test suite and is NOT fixed here -
-//    it's flagged to the team separately as a bug needing its own
-//    decision on how to fix (most likely: these methods need a
-//    .from("event_registrations") call restored).
-//
-// The tests below for these three methods intentionally assert the
-// CURRENT throwing/broken behavior rather than the behavior the method
-// name implies, so a future fix will need to update these tests
-// alongside the fix - that's the point: right now, this suite proves
-// the bug exists and will fail loudly (in a different, correct way) once
-// someone fixes it.
+// Also worth knowing: getRegistrationTableName() (src/lib/utils.ts)
+// derives a per-event table name (event_reg_<id>) from the eventId
+// alone whenever there's no slug - it does NOT fall back to
+// "event_registrations" just because no slug was passed. In practice
+// this means the "central table" fallback/merge branches in this file
+// run far more often than their naming implies - almost always, not
+// just for events explicitly configured with a custom table. Several
+// tests below reflect that (e.g. seeding event_reg_event_1 rather than
+// event_registrations rows for a "plain" event).
 
 interface TableState {
   rows: any[];
@@ -239,20 +233,26 @@ describe("RegistrationServiceImpl", () => {
     });
   });
 
-  describe("getRegistration (BUG: no .from() call)", () => {
-    it("throws because supabase.select is not a function on the raw client", async () => {
-      // Documents the real bug described in the file-level comment.
-      // If this test starts failing because getRegistration() no
-      // longer throws, the bug has been fixed - update this test to
-      // assert the correct behavior instead of removing it silently.
-      await expect(service.getRegistration("reg-1")).rejects.toThrow(
-        /select is not a function/,
-      );
+  describe("getRegistration", () => {
+    it("returns the registration from event_registrations by id", async () => {
+      fakeSupabase.__state["event_registrations"].rows.push({
+        id: "reg-1",
+        event_id: "event-1",
+        name: "Ada",
+      });
+      const result = await service.getRegistration("reg-1");
+      expect(result?.id).toBe("reg-1");
+      expect(result?.name).toBe("Ada");
+    });
+
+    it("returns null when no registration matches the id", async () => {
+      const result = await service.getRegistration("nonexistent");
+      expect(result).toBeNull();
     });
   });
 
   describe("fetchEventRegistrations", () => {
-    it("BUG: throws for a plain event with no slug, because getRegistrationTableName derives event_reg_<id>, and that always triggers the unguarded fallback .select() call", async () => {
+    it("merges rows from a per-event dynamic table with event_registrations, de-duplicated by id", async () => {
       fakeSupabase.__state["event_reg_event_1"] = {
         rows: [
           {
@@ -263,25 +263,45 @@ describe("RegistrationServiceImpl", () => {
           },
         ],
       };
-      await expect(
-        service.fetchEventRegistrations("event-1"),
-      ).rejects.toThrow(/select is not a function/);
+      fakeSupabase.__state["event_registrations"].rows.push({
+        id: "reg-2",
+        event_id: "event-1",
+        name: "Grace",
+        created_at: "2026-01-02T00:00:00Z",
+      });
+
+      const results = await service.fetchEventRegistrations("event-1");
+      expect(results).toHaveLength(2);
+      expect(results.map((r) => r.id).sort()).toEqual(["reg-1", "reg-2"]);
     });
 
-    it("BUG: also throws for events explicitly using a dynamic table via a slug", async () => {
-      fakeSupabase.__state["event_reg_hackfest"] = {
-        rows: [
-          {
-            id: "reg-1",
-            event_id: "event-2",
-            name: "Ada",
-            created_at: "2026-01-02T00:00:00Z",
-          },
-        ],
+    it("does not double-count a registration present in both tables", async () => {
+      const shared = {
+        id: "reg-1",
+        event_id: "event-2",
+        name: "Ada",
+        created_at: "2026-01-01T00:00:00Z",
       };
-      await expect(
-        service.fetchEventRegistrations("event-2", "hackfest"),
-      ).rejects.toThrow(/select is not a function/);
+      fakeSupabase.__state["event_reg_hackfest"] = { rows: [shared] };
+      fakeSupabase.__state["event_registrations"].rows.push(shared);
+
+      const results = await service.fetchEventRegistrations(
+        "event-2",
+        "hackfest",
+      );
+      expect(results).toHaveLength(1);
+    });
+
+    it("returns registrations directly for an event with no dynamic-table rows", async () => {
+      fakeSupabase.__state["event_registrations"].rows.push({
+        id: "reg-1",
+        event_id: "event-1",
+        name: "Ada",
+        created_at: "2026-01-01T00:00:00Z",
+      });
+      const results = await service.fetchEventRegistrations("event-1");
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe("Ada");
     });
   });
 
@@ -304,50 +324,97 @@ describe("RegistrationServiceImpl", () => {
       expect(result?.id).toBe("reg-1");
     });
 
-    it("BUG: throws when nothing matches in the dynamic table, since the not-found case falls through to the broken fallback", async () => {
-      await expect(
-        service.fetchEventRegistrationByUser("event-1", "nonexistent-user"),
-      ).rejects.toThrow(/select is not a function/);
+    it("returns null when nothing matches in either table, without throwing", async () => {
+      const result = await service.fetchEventRegistrationByUser(
+        "event-1",
+        "nonexistent-user",
+      );
+      expect(result).toBeNull();
+    });
+
+    it("falls back to event_registrations when nothing matches in the dynamic table", async () => {
+      fakeSupabase.__state["event_registrations"].rows.push({
+        id: "reg-1",
+        event_id: "event-2",
+        user_id: "user-1",
+        name: "Ada",
+      });
+      const result = await service.fetchEventRegistrationByUser(
+        "event-2",
+        "user-1",
+        "hackfest",
+      );
+      expect(result?.id).toBe("reg-1");
     });
   });
 
-  describe("fetchRegistrationsByUser (BUG: no .from() call)", () => {
-    it("throws because supabase.select is not a function on the raw client", async () => {
-      // Called unconditionally from src/pages/Profile.tsx - this bug
-      // means that call currently fails every time for every user.
-      await expect(
-        service.fetchRegistrationsByUser("user-1"),
-      ).rejects.toThrow(/select is not a function/);
+  describe("fetchRegistrationsByUser", () => {
+    it("returns all registrations for a user, most recent first", async () => {
+      fakeSupabase.__state["event_registrations"].rows.push(
+        {
+          id: "reg-1",
+          user_id: "user-1",
+          name: "Ada",
+          created_at: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "reg-2",
+          user_id: "user-1",
+          name: "Ada",
+          created_at: "2026-02-01T00:00:00Z",
+        },
+        {
+          id: "reg-3",
+          user_id: "user-2",
+          name: "Grace",
+          created_at: "2026-01-15T00:00:00Z",
+        },
+      );
+      const results = await service.fetchRegistrationsByUser("user-1");
+      expect(results).toHaveLength(2);
+      expect(results.every((r) => r.id !== "reg-3")).toBe(true);
+    });
+
+    it("returns an empty array when the user has no registrations", async () => {
+      const results = await service.fetchRegistrationsByUser("user-1");
+      expect(results).toEqual([]);
     });
   });
 
   describe("countRegistrationsByRole", () => {
-    it("BUG: throws even for a nominally 'plain' event, because getRegistrationTableName always derives a per-event table from eventId when there's no slug", async () => {
-      // See the registerForEvent note above: with no slug, the derived
-      // table is event_reg_<id>, which is never "event_registrations" -
-      // so the (broken) fallback branch always runs. The only way to
-      // reach the standard-table-only code path is to pass
-      // eventSlug === undefined AND have getRegistrationTableName treat
-      // it as the bare "event_registrations" name, which in practice
-      // never happens once an eventId is present.
+    it("counts registrations by role for a plain event (per-event dynamic table)", async () => {
       fakeSupabase.__state["event_reg_event_1"] = {
         rows: [
           { id: "r1", event_id: "event-1", role: "participant" },
           { id: "r2", event_id: "event-1", role: "participant" },
+          { id: "r3", event_id: "event-1", role: "volunteer" },
         ],
       };
-      await expect(
-        service.countRegistrationsByRole("event-1"),
-      ).rejects.toThrow(/select is not a function/);
+      const counts = await service.countRegistrationsByRole("event-1");
+      expect(counts).toEqual({ participant: 2, volunteer: 1 });
     });
 
-    it("BUG: also throws for events explicitly using a dynamic table via a slug", async () => {
+    it("merges counts from both the dynamic table and event_registrations, without double-counting shared rows", async () => {
       fakeSupabase.__state["event_reg_hackfest"] = {
         rows: [{ id: "r1", event_id: "event-2", role: "participant" }],
       };
-      await expect(
-        service.countRegistrationsByRole("event-2", "hackfest"),
-      ).rejects.toThrow(/select is not a function/);
+      fakeSupabase.__state["event_registrations"].rows.push(
+        { id: "r1", event_id: "event-2", role: "participant" }, // duplicate of the dynamic-table row
+        { id: "r2", event_id: "event-2", role: "volunteer" },
+      );
+      const counts = await service.countRegistrationsByRole(
+        "event-2",
+        "hackfest",
+      );
+      expect(counts).toEqual({ participant: 1, volunteer: 1 });
+    });
+
+    it("buckets registrations with no role under __no_role__", async () => {
+      fakeSupabase.__state["event_reg_event_1"] = {
+        rows: [{ id: "r1", event_id: "event-1" }],
+      };
+      const counts = await service.countRegistrationsByRole("event-1");
+      expect(counts).toEqual({ __no_role__: 1 });
     });
   });
 
@@ -372,21 +439,30 @@ describe("RegistrationServiceImpl", () => {
       expect(result).toBe(true);
     });
 
-    it("BUG: throws instead of enforcing capacity, because it calls the broken countRegistrationsByRole whenever a role has a capacity limit", async () => {
-      // This is the practical, user-facing consequence of the
-      // countRegistrationsByRole bug documented above: ANY event with
-      // a capacity-limited role will throw here instead of correctly
-      // allowing or blocking registration - canRegister can currently
-      // never return a real capacity decision for a capacity-limited
-      // role, regardless of whether capacity has actually been reached.
+    it("allows registration under capacity", async () => {
       fakeSupabase.__state["events"].rows.push({
         id: "event-1",
         roles: [{ name: "participant", capacity: 2 }],
-        slug: null,
+        slug: "test-event",
       });
-      await expect(
-        service.canRegister("event-1", "participant"),
-      ).rejects.toThrow(/select is not a function/);
+      fakeSupabase.__state["event_reg_test_event"] = {
+        rows: [{ id: "r1", event_id: "event-1", role: "participant" }],
+      };
+      const result = await service.canRegister("event-1", "participant");
+      expect(result).toBe(true);
+    });
+
+    it("blocks registration at capacity", async () => {
+      fakeSupabase.__state["events"].rows.push({
+        id: "event-1",
+        roles: [{ name: "participant", capacity: 1 }],
+        slug: "test-event",
+      });
+      fakeSupabase.__state["event_reg_test_event"] = {
+        rows: [{ id: "r1", event_id: "event-1", role: "participant" }],
+      };
+      const result = await service.canRegister("event-1", "participant");
+      expect(result).toBe(false);
     });
   });
 

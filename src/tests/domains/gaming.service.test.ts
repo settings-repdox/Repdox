@@ -451,35 +451,49 @@ describe("GamingServiceImpl", () => {
   });
 
   describe("getMatchCentreData", () => {
-    // NOTE: as currently written, GamingServiceImpl.getMatchCentreData's
-    // teamA/teamB lookups (`.from(teamsTable).select("*").maybeSingle()`)
-    // have no `.eq()` filter tying them to the match's actual
-    // team_a_id/team_b_id - they just fetch *some* row from the teams
-    // table (whichever the fake query builder or real Postgres happens
-    // to return first) rather than the specific teams playing in this
-    // match. This test documents that as the CURRENT, buggy behavior
-    // rather than silently working around it - flagged separately as a
-    // bug to fix, not something this test suite should paper over.
     it("returns null when the match does not exist", async () => {
       const result = await service.getMatchCentreData("missing-match");
       expect(result).toBeNull();
     });
 
-    it("returns match, tournament, and (unfiltered) team data when the match exists", async () => {
-      const team = await service.createTournamentTeam({
-        tournamentId: "t-1",
-        teamName: "Team Alpha",
+    it("resolves the tournament and both teams that actually belong to the match, not just any row in those tables", async () => {
+      // Seed a decoy tournament and decoy teams first, so a test that
+      // resolved the *wrong* row (the bug this test guards against)
+      // would fail here instead of accidentally passing.
+      const decoyTournament = await service.ensureTournamentForEvent(
+        "decoy-event",
+      );
+      const decoyTeamA = await service.createTournamentTeam({
+        tournamentId: decoyTournament.id,
+        teamName: "Decoy Alpha",
       });
-      await service.updateTournamentTeam(team.id, { checked_in: true });
-      const tournament = await service.ensureTournamentForEvent("event-1");
+      const decoyTeamB = await service.createTournamentTeam({
+        tournamentId: decoyTournament.id,
+        teamName: "Decoy Beta",
+      });
+
+      const realTournament = await service.ensureTournamentForEvent(
+        "real-event",
+      );
+      const realTeamA = await service.createTournamentTeam({
+        tournamentId: realTournament.id,
+        teamName: "Real Alpha",
+      });
+      const realTeamB = await service.createTournamentTeam({
+        tournamentId: realTournament.id,
+        teamName: "Real Beta",
+      });
+      await service.updateTournamentTeam(realTeamA.id, { checked_in: true });
+      await service.updateTournamentTeam(realTeamB.id, { checked_in: true });
+
       fakeSupabase.__state["esports_tournament_matches"].rows = [
         {
           id: "match-1",
-          tournament_id: tournament.id,
+          tournament_id: realTournament.id,
           round_number: 1,
           match_number: 1,
-          team_a_id: team.id,
-          team_b_id: null,
+          team_a_id: realTeamA.id,
+          team_b_id: realTeamB.id,
           match_status: "upcoming",
         },
       ];
@@ -487,11 +501,36 @@ describe("GamingServiceImpl", () => {
       const result = await service.getMatchCentreData("match-1");
       expect(result).not.toBeNull();
       expect(result!.match.id).toBe("match-1");
-      // teamA is NOT necessarily the team actually in team_a_id - see the
-      // note above. This assertion documents that it returns *a* team
-      // row from the table (the only one seeded here), not that it
-      // correctly resolved team_a_id.
-      expect(result!.teamA?.id).toBe(team.id);
+      expect(result!.tournament?.id).toBe(realTournament.id);
+      expect(result!.tournament?.id).not.toBe(decoyTournament.id);
+      expect(result!.teamA?.id).toBe(realTeamA.id);
+      expect(result!.teamA?.id).not.toBe(decoyTeamA.id);
+      expect(result!.teamB?.id).toBe(realTeamB.id);
+      expect(result!.teamB?.id).not.toBe(decoyTeamB.id);
+    });
+
+    it("returns null teamB when the match has no team_b_id (e.g. a bye match)", async () => {
+      const tournament = await service.ensureTournamentForEvent("event-1");
+      const teamA = await service.createTournamentTeam({
+        tournamentId: tournament.id,
+        teamName: "Team Alpha",
+      });
+      fakeSupabase.__state["esports_tournament_matches"].rows = [
+        {
+          id: "match-1",
+          tournament_id: tournament.id,
+          round_number: 1,
+          match_number: 1,
+          team_a_id: teamA.id,
+          team_b_id: null,
+          match_status: "upcoming",
+        },
+      ];
+
+      const result = await service.getMatchCentreData("match-1");
+      expect(result).not.toBeNull();
+      expect(result!.teamA?.id).toBe(teamA.id);
+      expect(result!.teamB).toBeNull();
     });
   });
 
