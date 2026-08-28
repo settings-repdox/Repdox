@@ -18,6 +18,10 @@ and still open, not resolved by this document existing.
 - `domains` / `core` → `infrastructure` only through
   `infrastructure/di.ts`'s `resolveAdapter()`, never a direct import of an
   adapter implementation.
+- `bootstrap` → everything (`domains`, `core`, `infrastructure`, `shared`).
+  This is the composition root — the one layer allowed to import concrete
+  `*Impl` classes directly, in order to wire them into the DI registry
+  (`registerService()`/`registerAdapter()`). See ADR 0008.
 
 ## Disallowed dependencies
 
@@ -28,52 +32,59 @@ and still open, not resolved by this document existing.
 - `core` → `domains`
 - `infrastructure` → `pages` / `components`
 - `infrastructure` → `domains` / `core`
+- anything outside `bootstrap` → any domain's `impl/` directly. Resolve
+  through `resolveService()` instead. (Test files under `src/tests/` that
+  unit-test a concrete `*ServiceImpl` on purpose are the one expected
+  exception to this — see the automated check below.)
 
 ## Automated enforcement
-
-Only one of the rules above currently has an automated test:
 
 - **`infrastructure` → `domains`/`core` isolation**:
   `verifyInfrastructureIsolation()` (`src/infrastructure/verifyArchitecture.ts`),
   run as `src/tests/architecture/infrastructure-isolation.test.ts`
   (Phase 10) and via `npm run verify:infra`.
+- **`bootstrap` isolation** (no file outside `src/bootstrap` imports a
+  concrete `@/domains/*/impl/*` class, except test files under
+  `src/tests/`, which legitimately unit-test implementations directly):
+  `verifyBootstrapIsolation()` (`src/bootstrap/verifyArchitecture.ts`),
+  run as `src/tests/architecture/bootstrap-isolation.test.ts`
+  (RFC 0001 / ADR 0008) and via `npm run verify:bootstrap`.
 
 Everything else is enforced by code review and this document only. RFC
-0001 proposes extending automated checks to cover the `core` → `domains`
-rule (once the one sanctioned exception, the composition root, has a
-proper home) and RFC 0002/the standards doc recommend the same treatment
-for the `pages` → `supabase` rule eventually.
+0002/the standards doc recommend the same automated-check treatment for
+the `pages` → `supabase` rule eventually.
 
 ## Known exceptions and violations (as of Phase 11 — see compliance report for detail)
 
-- **`core` → `domains`, sanctioned exception**:
-  `src/core/services/registerDefaults.ts` (the composition root) imports
-  concrete `*Impl` classes from all four `src/domains/*` folders to wire
-  them into the DI registry. This is the one place in the codebase that
-  legitimately needs to know about concrete implementations. It currently
-  lives inside `src/core`, which makes it read as a bare rule violation
-  rather than a documented exception — RFC 0001 proposes relocating it to
-  a new `src/bootstrap/` layer that's explicitly exempted from this rule.
-  Until that lands, treat only this one file as exempt; it is not
-  precedent for any other file under `core`.
-- **`pages`/`components` → `supabase`, NOT sanctioned, not yet fixed**:
-  25 files under `src/pages` and `src/components` import
-  `@/integrations/supabase` directly (bypassing domain services entirely),
-  and 5 of those also import the legacy `@/lib/tournamentService`. This
-  predates Phase 9 and was not caught by that phase's completion report,
-  which claimed full compliance without re-auditing every page. See
-  `docs/architecture/PHASE11_COMPLIANCE_REPORT.md` for the full file list.
-  Not fixed in Phase 11 (documentation phase, not a refactor) — recommended
-  as a Phase 12 priority given its size (nearly a quarter of all
-  pages/components).
+- **`core` → `domains`**: resolved. The composition root
+  (`registerDefaults()`) lives in `src/bootstrap/registerDefaults.ts`, not
+  `src/core`, as of RFC 0001 / ADR 0008. `core` itself now has no `domains`
+  imports at all, and `verifyBootstrapIsolation()` (above) enforces that
+  going forward — this is no longer just a documented convention.
+- **`pages`/`components` → `supabase`**: resolved. The ~25 files that
+  bypassed domain services by importing `@/integrations/supabase` or the
+  legacy `@/lib/tournamentService` directly (see
+  `docs/architecture/PHASE11_COMPLIANCE_REPORT.md` for the original file
+  list) have all been migrated onto proper domain services, with two
+  categories of narrow, reviewed exceptions that remain and are not
+  considered violations of this rule: (1) direct
+  `supabase.auth.*`/`supabase.channel()` calls, which are genuine
+  session/realtime infrastructure with no domain-service equivalent
+  (`AuthContext.tsx`, `EventRegister.tsx`, `MatchCentre.tsx`,
+  `login-form.tsx`, `EmailChangeModal.tsx`); and (2) `Volunteers.tsx`,
+  which previously talked to an entirely separate legacy Supabase project
+  and now goes through a proper `IVolunteerService` against this
+  project's own `volunteer_applications` table. This rule does not yet
+  have an automated check (see RFC 0002/the standards doc above).
 
 ## Key rules (unchanged from earlier phases)
 
 - Domain modules own their public contracts (their `interfaces/` folder).
 - Production consumes domain state (via `IEventService`) but does not own
   event domain data or write to it directly.
-- Core provides shared cross-cutting concerns and the composition root
-  (pending RFC 0001) only — not business logic for a specific domain.
+- Core provides shared cross-cutting concerns only — the composition root
+  lives in `bootstrap`, not `core` (see above).
 - Infrastructure is a runtime concern (broadcast adapters, Supabase client)
   and should be accessed through adapters/services, never imported
   directly by UI code.
+

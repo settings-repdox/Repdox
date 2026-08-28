@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import CardNav from "@/components/ui/CardNav";
 import logo from "@/assets/logo.svg";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IUserService } from "@/core/services/interfaces/IUserService";
 import { getSignedUrl } from "@/lib/storageService";

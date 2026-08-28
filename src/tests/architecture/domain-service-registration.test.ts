@@ -4,7 +4,7 @@
 // loader for reasons unrelated to the check itself (see TECHNICAL_DEBT_PHASE10.md).
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { clearServices, resolveService } from "@/core/services/di";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 
 const MIGRATED_DOMAIN_SERVICES = [
   "AuthService",

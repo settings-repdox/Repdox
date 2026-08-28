@@ -36,7 +36,7 @@ const mockFetchEventRegistrationByUser = vi.fn();
 const mockUpsertEventRegistration = vi.fn();
 const mockIsGamingEvent = vi.fn();
 
-vi.mock("@/core/services/registerDefaults", () => ({
+vi.mock("@/bootstrap/registerDefaults", () => ({
   registerDefaults: vi.fn(),
 }));
 

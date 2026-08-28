@@ -3,7 +3,7 @@
 // this helper returns the compiled import so Vite serves the image correctly.
 
 import { supabase } from "@/integrations/supabase/client";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import eventHackathon from "@/assets/event-hackathon.jpg";
 import eventWorkshop from "@/assets/event-workshop.jpg";
 import eventGaming from "@/assets/event-gaming.jpg";

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { isUserAdmin, ADMIN_EMAILS } from "@/lib/adminService";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IUserService } from "@/core/services/interfaces/IUserService";
 

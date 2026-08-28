@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { resolveService } from "@/core/services/di";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import type { IUserService } from "@/core/services/interfaces/IUserService";
 import type { UserDTO } from "@/shared/dtos/user.dto";
 import { motion } from "framer-motion";

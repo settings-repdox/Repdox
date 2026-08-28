@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useQuery } from "@tanstack/react-query";
 import { resolveService } from "@/core/services/di";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { useSearchParams } from "react-router-dom";
 import EventCard from "@/components/EventCard";

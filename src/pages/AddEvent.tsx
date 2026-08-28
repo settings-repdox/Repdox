@@ -29,7 +29,7 @@ import {
   CheckCircle2,
   User as UserIcon,
 } from "lucide-react";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "verify:infra": "vitest run src/tests/architecture/infrastructure-isolation.test.ts",
+    "verify:bootstrap": "vitest run src/tests/architecture/bootstrap-isolation.test.ts",
     "verify:production-deps": "vitest run src/tests/architecture/domain-service-registration.test.ts",
     "build:dev": "vite build --mode development",
     "build:analyze": "ANALYZE=true vite build",

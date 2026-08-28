@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Calendar, MapPin } from "lucide-react";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { getEventImage } from "@/lib/eventImages";

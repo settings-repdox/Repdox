@@ -1,4 +1,4 @@
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IGamingService } from "@/domains/gaming/interfaces/IGamingService";
 import type {

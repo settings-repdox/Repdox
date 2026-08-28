@@ -77,7 +77,7 @@ describe("Broadcast: adapter registry (src/infrastructure/di.ts)", () => {
 describe("Broadcast: registerDefaultInfrastructureAdapters()", () => {
   // registerAdapter() throws on duplicate keys, and registerDefaults uses the
   // fixed keys ("RunPodAdapter", "MediaMTXAdapter", ...) with no try/catch guard
-  // (unlike core registerDefaults(), which swallows duplicate-registration
+  // (unlike bootstrap's registerDefaults(), which swallows duplicate-registration
   // errors — see TECHNICAL_DEBT_PHASE10.md). So this only runs once per process;
   // calling it again in another test file will throw. We assert the one call
   // succeeds and every expected key resolves.

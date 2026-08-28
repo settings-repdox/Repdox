@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { UserDTO } from '@/shared/dtos/user.dto';
-import { registerDefaults } from '@/core/services/registerDefaults';
+import { registerDefaults } from '@/bootstrap/registerDefaults';
 import { resolveService } from '@/core/services/di';
 import type { IUserService } from '@/core/services/interfaces/IUserService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

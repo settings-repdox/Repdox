@@ -51,7 +51,7 @@ this. It's worth treating as a standing practice, not a one-time audit.
 |---|---|---|
 | `infrastructure` → `domains`/`core` isolation | ✅ Enforced automatically | `verifyInfrastructureIsolation()`, tested |
 | `domain A` → `domain B`'s `impl/` | ✅ Compliant | Only cross-domain dependency found is `ProductionServiceImpl` → `IEventService` (an interface, not an impl) — the correct pattern |
-| `core` → `domains` | ⚠️ One known, documented exception | `src/core/services/registerDefaults.ts` imports 4 domains' `*Impl` classes (the composition root). Not automated-checked. RFC 0001 proposes relocating it to a new `src/bootstrap/` layer that's explicitly exempt, rather than leaving it as an undistinguished exception inside `core`. |
+| `core` → `domains` | ✅ Resolved (ADR 0008) | `registerDefaults.ts` (the composition root) moved to `src/bootstrap/registerDefaults.ts`. `src/core` no longer imports any domain. Automated-checked as of ADR 0008: `verifyBootstrapIsolation()` / `npm run verify:bootstrap`. |
 | `pages`/`components` → `@/integrations/supabase` | ❌ Violated, not fixed this phase | **25 files** import the raw Supabase client directly (list below). 5 of those also import the legacy `@/lib/tournamentService`. This predates Phase 9; Phase 9's completion report's compliance claim did not hold up under this audit. Not automated-checked. |
 
 ### The 25 files importing `@/integrations/supabase` directly
@@ -207,10 +207,11 @@ swappable implementations) for the pages that don't go through them.
 2. **Delete dead code**: `src/services/`, `src/modules/platform/*`, and
    the stale `src/core/services/interfaces/IEventService.ts`. Low risk
    (confirmed zero imports for all three), meaningful clarity gain.
-3. **Resolve RFC 0001** (composition root location) and the **seeded E2E
-   environment half of RFC 0002** — both are scoped and ready for a
-   decision. RFC 0002's CI half already shipped
-   (`.github/workflows/ci.yml`) — see that RFC's own status header.
+3. ~~**Resolve RFC 0001** (composition root location)~~ — done, see
+   ADR 0008. The **seeded E2E environment half of RFC 0002** is still
+   open and scoped, ready for a decision. RFC 0002's CI half already
+   shipped (`.github/workflows/ci.yml`) — see that RFC's own status
+   header.
 4. **Resolve the `send-verification` duplication** — confirm with whoever
    manages the Supabase project which copy is actually live, then delete
    or explicitly re-export the other one the same way

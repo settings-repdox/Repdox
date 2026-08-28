@@ -1,8 +1,9 @@
 # RFC 0001: Give the Composition Root a Home That Isn't `src/core`
 
-Status: **Open — proposed, not yet approved or scheduled**
+Status: **Approved — see ADR 0008**
 Author: Phase 11 documentation pass
-Related: ADR 0002 (Domain-Driven Layering), ADR 0003 (Service Locator DI)
+Related: ADR 0002 (Domain-Driven Layering), ADR 0003 (Service Locator DI),
+ADR 0008 (this RFC's resolution)
 
 ## Problem
 

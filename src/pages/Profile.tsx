@@ -3,7 +3,7 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import type { IUserService } from "@/core/services/interfaces/IUserService";
 import {
   uploadAvatar as uploadAvatarService,
@@ -365,7 +365,7 @@ export default function Profile() {
       // Resolve event details via Event core when possible
       const eventsResolved = await Promise.all(
         eventIds.map((id) =>
-          import("@/core/services/registerDefaults")
+          import("@/bootstrap/registerDefaults")
             .then((mod) => {
               mod.registerDefaults();
               return import("@/core/services/di").then((di) =>

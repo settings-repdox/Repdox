@@ -4,8 +4,10 @@ Date: 2026-07-15 (retroactive — documents decisions made across Phases 2-9)
 
 ## Status
 
-Accepted, with one known deviation tracked as a technical debt item (see
-Consequences and `docs/architecture/PHASE11_COMPLIANCE_REPORT.md`).
+Accepted. Both known deviations noted below have since been resolved —
+see ADR 0008 (composition root relocation) and
+`docs/architecture/PHASE11_COMPLIANCE_REPORT.md`'s tracked cleanup (the
+`pages`/`components` → `supabase` bypass) for what changed and when.
 
 ## Context
 
@@ -57,28 +59,34 @@ Rules (as implemented and partially automated — see Consequences):
   repository layer and never touch a real Supabase client).
 - New domains have a clear template to follow: `dtos/`, `interfaces/`,
   `impl/`, optionally `__tests__/`.
-- **Known deviation, accepted for now**: `src/core/services/registerDefaults.ts`
-  (the composition root that wires concrete `*Impl` classes into the DI
-  registry) imports directly from all four domains' `impl/` folders. That's
-  a literal "core → domains" import, which the rule above forbids. This is
-  arguably unavoidable for a composition root — *something* has to import
-  concrete implementations to register them — but as written it lives
-  inside `src/core`, so it reads as a rule violation rather than a
-  documented exception. RFC 0001 proposes moving it to a dedicated location
-  the dependency rules explicitly carve out. Until that's resolved, treat
-  this one file as the sanctioned exception, not a precedent for other
-  `core` files importing `domains`.
-- **Known deviation, not yet fixed**: 25 files under `src/pages` and
-  `src/components` still import `@/integrations/supabase` directly (the
-  Supabase client, bypassing domain services entirely), and 5 of those also
-  import the legacy `@/lib/tournamentService`. This was true before Phase 9
-  and Phase 9's completion report claims full compliance
-  ("Pages → Domains / Core / Shared ✅") without having actually re-checked
-  every page — Phase 11's audit found the gap. See
-  `docs/architecture/PHASE11_COMPLIANCE_REPORT.md` for the full file list
-  and `docs/architecture/dependency-rules.md` for the corrected compliance
-  status.
-- Only `infrastructure` isolation is currently enforced by an automated
-  test. The `pages`/`components` → `supabase` rule and the `core` → `domains`
-  rule have no automated check yet — both are asserted in docs only. Adding
-  tests for these is recommended for Phase 12 (see RFC 0001).
+- **Resolved deviation**: `src/core/services/registerDefaults.ts` (the
+  composition root that wires concrete `*Impl` classes into the DI
+  registry) used to import directly from all four domains' `impl/`
+  folders while physically living inside `src/core` — a literal
+  "core → domains" import the rule above forbids, arguably unavoidable
+  for a composition root but reading as a bare violation rather than a
+  documented exception. Resolved by ADR 0008: the file moved to
+  `src/bootstrap/registerDefaults.ts`, a new layer the dependency rules
+  explicitly exempt from this rule, with an automated check
+  (`verifyBootstrapIsolation()`) enforcing that nothing outside
+  `src/bootstrap` (besides test files, which legitimately unit-test
+  implementations directly) does the same thing.
+- **Resolved deviation**: 25 files under `src/pages` and `src/components`
+  used to import `@/integrations/supabase` directly (the Supabase client,
+  bypassing domain services entirely), and 5 of those also imported the
+  legacy `@/lib/tournamentService`. This was true before Phase 9 and
+  Phase 9's completion report claimed full compliance
+  ("Pages → Domains / Core / Shared ✅") without having actually
+  re-checked every page — Phase 11's audit found the gap. All ~25 files
+  have since been migrated onto proper domain services (see
+  `docs/architecture/dependency-rules.md` for the remaining narrow,
+  reviewed exceptions — direct Supabase auth/realtime calls with no
+  domain-service equivalent, and the `Volunteers.tsx` legacy-project
+  migration). See `docs/architecture/PHASE11_COMPLIANCE_REPORT.md` for
+  the original file list this was audited against.
+- `infrastructure` and `bootstrap` isolation are both enforced by
+  automated tests as of ADR 0008 (`verifyInfrastructureIsolation()` and
+  `verifyBootstrapIsolation()` respectively). The `pages`/`components` →
+  `supabase` rule still has no automated check — it's asserted in docs
+  only, tracked for a future RFC per
+  `docs/architecture/dependency-rules.md`.

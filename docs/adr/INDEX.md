@@ -13,6 +13,7 @@ reused, even if a later ADR supersedes an earlier one (mark the earlier one
 | 0005 | [Broadcast infrastructure as swappable adapters](0005-broadcast-infrastructure-adapter-pattern.md) | Accepted (interfaces/pattern only — see adapter status table) |
 | 0006 | [Testing strategy: Vitest + Playwright](0006-testing-strategy-vitest-and-playwright.md) | Accepted |
 | 0007 | [Ticketing & QR check-in system](0007-ticketing-and-qr-checkin-system.md) | Accepted |
+| 0008 | [Composition root location (`src/bootstrap`)](0008-composition-root-location.md) | Accepted and implemented |
 
 ADRs 0002–0006 were written retroactively in Phase 11, documenting
 decisions actually made across Phases 2–10 that were never recorded at the

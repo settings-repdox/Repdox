@@ -3,7 +3,7 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ChevronLeft, ChevronRight, Mail, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventCard from "./EventCard";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import { useQuery } from "@tanstack/react-query";

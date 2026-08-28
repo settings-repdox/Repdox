@@ -50,7 +50,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
 import type { IUserService } from "@/core/services/interfaces/IUserService";

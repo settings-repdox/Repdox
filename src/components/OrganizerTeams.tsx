@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IRegistrationService } from "@/core/services/interfaces/IRegistrationService";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";

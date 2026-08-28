@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users } from "lucide-react";
 import OrganizerTeams from "@/components/OrganizerTeams";
-import { registerDefaults } from "@/core/services/registerDefaults";
+import { registerDefaults } from "@/bootstrap/registerDefaults";
 import { resolveService } from "@/core/services/di";
 import type { IEventService } from "@/domains/events/interfaces/IEventService";
 import type { IUserService } from "@/core/services/interfaces/IUserService";
